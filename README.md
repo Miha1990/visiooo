@@ -29,7 +29,7 @@ bash ops/deploy.sh
 
 Windows: `powershell -ExecutionPolicy Bypass -File ops/start.ps1`; для SQLite добавить `-SQLite`. Подробности: [app/README.md](app/README.md). `compose.yaml` предназначен для локальной базы, `compose.production.yaml` — для сервера.
 
-GitHub Actions проверяет тесты Django с PostgreSQL, миграции, настройки безопасности, JavaScript и сборку серверного образа.
+Проверки выполняются локально перед отправкой изменений. GitHub используется для хранения кода; автоматические тесты и сборки в GitHub отключены.
 
 ## Перед запуском продаж
 
