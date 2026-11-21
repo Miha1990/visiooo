@@ -1,0 +1,17 @@
+.venv/
+**/__pycache__/
+*.py[cod]
+.env
+**/db.sqlite3
+**/staticfiles/
+**/private-media/
+*.log
+.artifacts/
+.env.*
+!.env.*.example
+backups/
+*.dump
+*.pem
+*.key
+node_modules/
+.pytest_cache/

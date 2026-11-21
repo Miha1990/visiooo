@@ -1,0 +1,10 @@
+[Unit]
+Description=Process myQR domain jobs and monitor DNS/TLS
+
+[Timer]
+OnBootSec=30s
+OnUnitInactiveSec=15s
+Unit=myqr-domains.service
+
+[Install]
+WantedBy=timers.target

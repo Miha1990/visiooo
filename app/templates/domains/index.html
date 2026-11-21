@@ -1,0 +1,55 @@
+{% extends 'base.html' %}{% load static %}
+{% block title %}Свой домен — Визитка{% endblock %}
+{% block content %}
+<section class="shell dashboard" {% if binding.state == 'queued' or binding.state == 'issuing' %}data-domain-poll{% endif %}>
+  <a class="back-link" href="{% url 'dashboard' %}">← Мои визитки</a>
+  <p class="eyebrow">ВАШ АДРЕС В ИНТЕРНЕТЕ</p><h1>Свой домен<span class="blue">.</span></h1>
+  <p class="lead">Открывайте визитку по собственному адресу. Например, https://anna.ru/. Исходная ссылка и QR / NFC платформы продолжат работать.</p>
+  {% if not configured %}<p class="notice">Подключение можно подготовить сейчас. Для проверки DNS и HTTPS администратору нужно настроить публичный IP сервиса и сервер подключения доменов.</p>{% endif %}
+  {% if not binding %}
+  <div class="panel narrow domain-add"><h2>Привязать домен к визитке</h2><p class="muted micro">Один свой домен на рабочее пространство. Домен приобретается отдельно у регистратора.</p>
+    <form method="post" class="stack">{% csrf_token %}{{ form.as_div }}<button class="button">Добавить домен →</button></form>
+  </div>
+  {% else %}
+  {{ form.non_field_errors }}
+  <div class="physical-grid">
+    <div class="panel domain-status-panel">
+      <div class="panel-heading"><h2>{{ binding.hostname }}</h2><span class="status {% if binding.routable %}success{% endif %}">{% if binding.blocked %}Заблокирован{% else %}{{ binding.get_state_display }}{% endif %}</span></div>
+      <p>Визитка: <strong>{{ binding.root_card.draft.name|default:'Удалена' }}</strong></p>
+      <details><summary>Изменить привязанную визитку</summary><form method="post" action="{% url 'domain_target' binding.pk %}" class="stack">{% csrf_token %}{{ target_form.as_div }}<button class="button" {% if binding.blocked %}disabled{% endif %}>Сохранить привязку</button></form></details>
+      {% if binding.error %}<p class="message error">{{ binding.error }}</p>{% endif %}
+      <p class="muted micro">Последняя проверка DNS: {{ binding.checked_at|date:'d.m.Y H:i'|default:'ещё не выполнялась' }}<br>Сертификат до: {{ binding.certificate_expires_at|date:'d.m.Y H:i'|default:'ещё не выпущен' }}</p>
+      <div class="domain-actions">
+        <form method="post" action="{% url 'domain_action' binding.pk 'verify' %}">{% csrf_token %}<button class="button" {% if not configured or binding.blocked %}disabled{% endif %}>Проверить DNS</button></form>
+        <form method="post" action="{% url 'domain_action' binding.pk 'certificate' %}">{% csrf_token %}<button class="button" {% if not binding.verified_at or not worker_ready or binding.blocked or binding.state == 'queued' or binding.state == 'issuing' %}disabled{% endif %}>Выпустить HTTPS</button></form>
+      </div>
+      {% if not worker_ready %}<p class="muted micro">Сервис выпуска сертификатов пока не запущен. Его один раз настраивает администратор сервера, как в SPCh.</p>{% endif %}
+      {% if binding.routable %}<p><a class="button" href="https://{{ binding.hostname }}/" target="_blank" rel="noopener">Открыть мой домен ↗</a></p><p><a href="{% url 'domain_qr' binding.pk %}" download="my-domain-qr.png">Скачать QR со своим доменом ↓</a></p>{% endif %}
+      <p class="muted micro">Публичная визитка открывается с активным Профи и после публикации. При снятии с публикации или окончании Профи домен не показывает контакты. QR со своим доменом зависит от сохранения и продления этого домена.</p>
+      <details class="danger-zone"><summary>Отключить или удалить привязку</summary>
+        {% if binding.state != 'disabled' %}<form method="post" action="{% url 'domain_action' binding.pk 'disable' %}">{% csrf_token %}<p>Доступ по домену закроется. Для повторного подключения потребуется новая TXT-запись.</p><button class="button danger-button">Отключить домен</button></form>
+        {% else %}<form method="post" action="{% url 'domain_action' binding.pk 'remove' %}">{% csrf_token %}<p>Удаление освободит домен для нового подключения с новой проверкой владения.</p><button class="button danger-button">Удалить привязку</button></form>{% endif %}
+      </details>
+    </div>
+    <div class="panel"><h2>Что указать в DNS</h2>
+      <p class="muted micro">Создайте эти записи в панели регистратора. Имя записи и значение — разные поля.</p>
+      <label class="micro" for="domain-txt-name">TXT · полное имя записи</label><input id="domain-txt-name" value="_myqr-verification.{{ binding.hostname }}" readonly>
+      <p><button class="text-button" type="button" data-copy="domain-txt-name">Копировать имя</button></p>
+      <label class="micro" for="domain-txt-value">TXT · значение</label><input id="domain-txt-value" value="{{ binding.verification_token }}" readonly>
+      <p><button class="text-button" type="button" data-copy="domain-txt-value">Копировать значение</button></p>
+      {% for address in addresses %}<p><strong>A</strong> · {{ binding.hostname }} → <code>{{ address }}</code></p>{% empty %}<p class="notice">Публичный IPv4 сервера пока не настроен администратором.</p>{% endfor %}
+      <p id="share-status" role="status" class="micro blue"></p>
+      <ol class="domain-help">
+        <li>В TXT вставьте значение целиком, без кавычек. Если панель сама приписывает домен зоны, введите только левую часть имени. Например, для card.example.ru в зоне example.ru: <code>_myqr-verification.card</code>.</li>
+        <li>A должна вести на указанный IP. Для корня зоны обычно используется <code>@</code>, для card.example.ru — <code>card</code>.</li>
+        <li>Уберите конфликтующие A, AAAA и CNAME для этого адреса; прокси CDN отключите. Почтовые MX не меняйте. Эта версия подключения рассчитана на IPv4.</li>
+        <li>Дождитесь обновления DNS и нажмите «Проверить DNS». Сохраните TXT после подключения.</li>
+        <li>Опубликуйте визитку, подключите Профи и нажмите «Выпустить HTTPS». Когда появится «HTTPS подключён», откройте домен.</li>
+      </ol>
+      <p class="micro muted">Адреса с www и без www подключаются отдельно. Клиентский домен показывает публичные визитки вашего пространства; кабинет и оплата остаются на основном адресе сервиса.</p>
+    </div>
+  </div>
+  {% endif %}
+</section>
+<script src="{% static 'domains.js' %}" defer></script>
+{% endblock %}

@@ -1,0 +1,8 @@
+# Источники значков
+
+- Instagram, Threads, Telegram, VK, OK: Simple Icons 16.0.0, https://github.com/simple-icons/simple-icons/tree/16.0.0/icons. Геометрия SVG сохранена; для Telegram/VK/OK установлен фирменный цвет заливки. Проект Simple Icons распространяет значки под CC0-1.0: https://github.com/simple-icons/simple-icons/blob/16.0.0/LICENSE.md. Названия и товарные знаки принадлежат владельцам.
+- MAX: официальный брендбук https://go.max.ru/brandbook, архив https://st.max.ru/brandbook/max-colored.zip, файл `Max colored.svg`.
+- Avito: векторный знак из четырёх цветных кругов; локальная геометрическая отрисовка.
+- Сайт: собственный SVG со значком глобуса.
+
+Значки — статические ресурсы проекта. Загрузка SVG пользователями не разрешена. Внешних запросов за логотипами при просмотре визитки нет.

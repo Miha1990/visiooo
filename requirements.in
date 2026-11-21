@@ -1,0 +1,6 @@
+Django>=5.2.8,<5.3
+psycopg[binary]>=3.3,<4
+qrcode[pil]>=8,<9
+jsonschema[format]>=4,<5
+python-dotenv>=1,<2
+dnspython>=2.8,<3

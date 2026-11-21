@@ -1,0 +1,13 @@
+# Начальный HTTP-сайт для выпуска сертификата. Отдельный файл только для visiooo.ru.
+# Размещение приложения: /opt/myQR; изменить пути, если выбран другой каталог.
+server {
+    listen 80;
+    server_name visiooo.ru;
+    location ^~ /.well-known/acme-challenge/ {
+        root /var/lib/myqr-acme;
+        default_type text/plain;
+    }
+    location / {
+        return 503;
+    }
+}

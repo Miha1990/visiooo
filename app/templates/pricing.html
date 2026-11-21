@@ -1,0 +1,4 @@
+{% extends 'base.html' %}{% load static %}
+{% block title %}Тариф Профи — стоимость и возможности электронной визитки{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'landing.css' %}"><meta name="description" content="Условия Профи: до трёх визиток, оформление, соцсети, QR/NFC и свой домен. Сравните возможности до оплаты и после активации.">{% endblock %}
+{% block content %}<div class="marketing"><section class="shell m-section">{% include 'marketing_plan.html' with plan_heading="h1" %}<p class="m-pricing-back"><a class="m-text-link" href="/#possibilities">← Все возможности сервиса</a><a class="m-text-link" href="/#questions">Ответы на вопросы ↗</a></p></section></div>{% endblock %}

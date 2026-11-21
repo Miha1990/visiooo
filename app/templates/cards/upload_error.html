@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}Загрузка фото — Визитка{% endblock %}
+{% block content %}<section class="shell narrow panel"><h1>Фото не загружено</h1>
+<p class="muted">Исправьте ошибку и выберите фото повторно. Ваша визитка не изменилась.</p>
+{{ form.errors }}
+{% if pk %}<a class="button" href="{% url 'edit' pk %}">Вернуться в редактор</a>{% else %}<a class="button" href="{% url 'dashboard' %}">Мои визитки</a>{% endif %}
+</section>{% endblock %}

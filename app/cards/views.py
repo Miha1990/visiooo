@@ -1,0 +1,188 @@
+from io import BytesIO
+import qrcode
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
+from django.db import connection
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
+from accounts.views import redirect303
+from .forms import CardForm, AvatarUploadForm
+from .models import Card
+from .image_slots import IMAGE_FIELDS
+from .services import (workspace_for, own_card, active_subscription, create_card, save_card,
+                       publish_card, public_card, Conflict)
+from .vcard import render_vcard
+
+
+def public_url(card):
+    return f'{settings.PUBLIC_BASE_URL}/c/{card.public_id}'
+
+
+def qr_response(url, filename='card-qr.png'):
+    output = BytesIO()
+    qrcode.make(url, error_correction=qrcode.constants.ERROR_CORRECT_M, border=4).save(output, format='PNG')
+    response = HttpResponse(output.getvalue(), content_type='image/png')
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+    return response
+
+
+@require_GET
+def home(request):
+    from .examples import example_cards
+    return render(request, 'home.html', {'examples': example_cards()})
+
+
+@login_required
+@never_cache
+@require_http_methods(['GET', 'POST'])
+def dashboard(request):
+    workspace = workspace_for(request.user)
+    if request.method == 'POST':
+        try:
+            card = create_card(request.user)
+        except ValidationError as error:
+            messages.error(request, ' '.join(error.messages))
+        else:
+            return redirect303(f'/app/cards/{card.pk}/edit')
+        return redirect303('/app/cards')
+    cards = Card.objects.filter(workspace=workspace).exclude(status='deleted').select_related('published_revision').order_by('-updated_at')
+    return render(request, 'cards/dashboard.html', {'cards': cards,
+        'subscription': workspace.subscription, 'active_pro': active_subscription(workspace)})
+
+
+@login_required
+@never_cache
+@require_http_methods(['GET', 'POST'])
+def edit(request, pk):
+    card = own_card(request.user, pk)
+    form = CardForm.for_card(card, request.POST if request.method == 'POST' else None)
+    status = 200
+    if request.method == 'POST':
+        status = 422
+        if form.is_valid():
+            try:
+                save_card(request.user, pk, form.cleaned_data['draft_version'], form.content)
+            except Conflict as error:
+                form.add_error(None, str(error))
+                status = 409
+            else:
+                messages.success(request, 'Черновик сохранён. Для обновления публичной страницы нажмите «Опубликовать».')
+                return redirect303(f'/app/cards/{pk}/edit')
+    image_panels = []
+    descriptions = {
+        'background': ('Фон', 'Фотография на фоне всей визитки. Текст останется на светлой подложке.'),
+        'avatar': ('Фото', 'Ваш портрет или логотип в круглом блоке профиля.'),
+        'header': ('Шапка', 'Отдельная фотография в верхней части визитки.'),
+    }
+    for target, field in IMAGE_FIELDS.items():
+        label, description = descriptions[target]
+        image_panels.append({'target': target, 'label': label, 'description': description,
+            'asset_id': card.draft.get(field),
+            'form': AvatarUploadForm(auto_id=f'{target}_%s', initial={
+                'card_id': card.pk, 'draft_version': card.draft_version, 'target': target})})
+    return render(request, 'cards/edit.html', {'card': card, 'form': form, 'content': card.draft,
+        'image_panels': image_panels,
+        'public_url': public_url(card), 'active_pro': active_subscription(card.workspace)}, status=status)
+
+
+@login_required
+@require_POST
+def publish(request, pk):
+    own_card(request.user, pk)
+    if request.POST.get('public_consent') != 'yes':
+        return HttpResponse('Подтвердите, что контакты станут публичными.', status=422)
+    try:
+        version = int(request.POST.get('draft_version', '0'))
+    except ValueError:
+        return HttpResponse('Некорректная версия черновика.', status=422)
+    try:
+        conditions = request.POST.get('publication_conditions', '').strip()
+        if len(conditions) > 2000:
+            return HttpResponse('Условия публикации: не более 2000 символов.', status=422)
+        from django.db import transaction
+        from accounts.legal import record_acceptance
+        with transaction.atomic():
+            published = publish_card(request.user, pk, version, conditions)
+            record_acceptance(request, 'publication', {'card': str(published.pk),
+                'revision': str(published.published_revision_id),
+                'fields': list(published.published_revision.content.keys()), 'conditions': conditions})
+    except Conflict as error:
+        return HttpResponse(str(error), status=409)
+    except ValidationError as error:
+        return HttpResponse(' '.join(error.messages), status=422)
+    messages.success(request, 'Визитка опубликована. Ссылка и QR остались прежними.')
+    return redirect303(f'/app/cards/{pk}/edit')
+
+
+@login_required
+@require_POST
+def unpublish(request, pk):
+    card = own_card(request.user, pk)
+    Card.objects.filter(pk=card.pk).update(status='draft')
+    messages.success(request, 'Публичный доступ закрыт.')
+    return redirect303(f'/app/cards/{pk}/edit')
+
+
+@login_required
+@require_POST
+def delete(request, pk):
+    card = own_card(request.user, pk)
+    # Tombstone retains the ID so old printed QR codes can never be reassigned.
+    Card.objects.filter(pk=card.pk).update(status='deleted', draft={}, published_revision=None)
+    card.revisions.all().delete()
+    messages.success(request, 'Визитка удалена.')
+    return redirect303('/app/cards')
+
+
+@login_required
+@never_cache
+@require_GET
+def qr(request, pk):
+    card = own_card(request.user, pk)
+    return qr_response(public_url(card))
+
+
+@never_cache
+@require_GET
+def public_qr(request, public_id):
+    return qr_response(public_url(public_card(public_id, workspace=getattr(request, 'domain_workspace', None))))
+
+
+@never_cache
+@require_GET
+def public(request, public_id):
+    card = public_card(public_id, workspace=getattr(request, 'domain_workspace', None))
+    response = render(request, 'cards/public.html', {'card': card, 'content': card.published_revision.content,
+                      'publication_conditions': card.published_revision.publication_conditions})
+    response['X-Robots-Tag'] = 'noindex, nofollow'
+    return response
+
+
+@never_cache
+@require_GET
+def vcard(request, public_id):
+    card = public_card(public_id, workspace=getattr(request, 'domain_workspace', None))
+    response = HttpResponse(render_vcard(card.published_revision.content, public_url(card)),
+                            content_type='text/vcard; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="contact.vcf"'
+    response['X-Robots-Tag'] = 'noindex, nofollow'
+    return response
+
+
+@require_GET
+def live(request):
+    return JsonResponse({'status': 'ok'})
+
+
+@require_GET
+def ready(request):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT 1')
+    except Exception:
+        return JsonResponse({'status': 'unavailable'}, status=503)
+    return JsonResponse({'status': 'ok'})

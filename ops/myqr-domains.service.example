@@ -1,0 +1,14 @@
+[Unit]
+Description=myQR domain DNS and HTTPS worker
+After=network-online.target nginx.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/myQR
+EnvironmentFile=/opt/myQR/app/.env
+ExecStart=/opt/myQR/.venv/bin/python /opt/myQR/app/manage.py process_domains
+TimeoutStartSec=600
+PrivateTmp=true
+NoNewPrivileges=true

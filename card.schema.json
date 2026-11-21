@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:business-card:content:v1",
+  "title": "Содержимое электронной визитки",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "name", "template", "accent", "links"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "name": {"type": "string", "minLength": 1, "maxLength": 100, "pattern": "\\S"},
+    "title": {"type": "string", "maxLength": 120},
+    "company": {"type": "string", "maxLength": 160},
+    "bio": {"type": "string", "maxLength": 1000},
+    "phone": {"type": "string", "pattern": "^\\+[1-9][0-9]{7,14}$"},
+    "email": {"type": "string", "format": "email", "maxLength": 254},
+    "website": {"type": "string", "format": "uri", "pattern": "^https?://", "maxLength": 2048},
+    "avatarAssetId": {"type": "string", "format": "uuid"},
+    "backgroundAssetId": {"type": "string", "format": "uuid"},
+    "headerAssetId": {"type": "string", "format": "uuid"},
+    "socials": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "instagram": {"$ref": "#/$defs/socialUrl"},
+        "threads": {"$ref": "#/$defs/socialUrl"},
+        "telegram": {"$ref": "#/$defs/socialUrl"},
+        "vk": {"$ref": "#/$defs/socialUrl"},
+        "ok": {"$ref": "#/$defs/socialUrl"},
+        "max": {"$ref": "#/$defs/socialUrl"},
+        "avito": {"$ref": "#/$defs/socialUrl"}
+      }
+    },
+    "template": {"enum": ["classic", "minimal", "profile"]},
+    "accent": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+    "links": {
+      "type": "array", "maxItems": 10,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["label", "url"],
+        "properties": {
+          "label": {"type": "string", "minLength": 1, "maxLength": 60, "pattern": "\\S"},
+          "url": {"type": "string", "format": "uri", "pattern": "^https?://", "maxLength": 2048}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "socialUrl": {"type": "string", "format": "uri", "pattern": "^https?://", "maxLength": 2048}
+  },
+  "examples": [
+    {"schemaVersion": 1, "name": "Анна Иванова", "title": "Дизайнер", "template": "minimal", "accent": "#2457DB", "links": []}
+  ],
+  "$comment": "Включать format validation явно. Пустые необязательные поля редактор удаляет. Владение изображением, лимиты, контраст цвета и нормализация проверяются сервером отдельно. Это содержимое, не полный объект Card."
+}

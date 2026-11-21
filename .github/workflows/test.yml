@@ -1,0 +1,49 @@
+name: Django checks
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: vizitka
+          POSTGRES_USER: vizitka
+          POSTGRES_PASSWORD: ci-password
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U vizitka" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      SECRET_KEY: ci-only-key-with-no-production-use-2bd85099e54d654ac689f8d
+      DATABASE_URL: postgresql://vizitka:ci-password@localhost:5432/vizitka
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pip install -r requirements.lock
+      - run: python app/manage.py migrate --noinput
+      - run: python app/manage.py makemigrations --check --dry-run
+      - run: python app/manage.py test tests
+      - run: node --test app/tests/js/card-interactions.test.cjs
+      - run: python app/manage.py check --deploy --fail-level WARNING
+        env:
+          DEBUG: 'false'
+          ALLOWED_HOSTS: example.com
+  production-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash -n ops/deploy.sh
+      - run: docker build -t visiooo:local .
+      - run: python3 ops/init_production_env.py
+      - run: docker compose --env-file app/.env -f compose.production.yaml up -d --wait db
+      - run: docker compose --env-file app/.env -f compose.production.yaml run --rm web python manage.py migrate --noinput
+      - run: docker compose --env-file app/.env -f compose.production.yaml up -d --wait --wait-timeout 120 web
+      - run: curl --fail -H 'Host:visiooo.ru' -H 'X-Forwarded-Proto:https' http://127.0.0.1:18080/health/ready
+      - if: always()
+        run: docker compose --env-file app/.env -f compose.production.yaml logs --tail 100

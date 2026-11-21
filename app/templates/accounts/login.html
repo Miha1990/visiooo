@@ -1,0 +1,10 @@
+{% extends 'base.html' %}{% block title %}Вход — Визитка{% endblock %}
+{% block content %}
+<section class="auth-layout shell">
+  <div><p class="eyebrow">РАДЫ ВАС ВИДЕТЬ</p><h1 class="page-title">Продолжим<br><em>знакомство.</em></h1><p class="lead">Ваши контакты, визитки и новые возможности — в одном месте.</p></div>
+  <div class="panel"><h2>Войти в аккаунт</h2><p class="muted">Ещё нет аккаунта? <a href="/accounts/register">Создать</a></p>
+    <form method="post" class="stack">{% csrf_token %}{{ form.as_div }}<input type="hidden" name="next" value="{{ next }}"><button class="button">Войти →</button></form>
+    <p class="auth-back"><a href="{% url 'password_reset' %}">Не помню пароль</a></p>
+  </div>
+</section>
+{% endblock %}
