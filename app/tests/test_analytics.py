@@ -3,6 +3,7 @@ from datetime import timedelta
 from io import StringIO
 
 from django.core.cache import cache
+from django.conf import settings
 from django.core.management import call_command
 from django.test import Client, TestCase, override_settings
 from django.utils import timezone
@@ -18,7 +19,7 @@ class AnalyticsTests(TestCase):
         cache.clear()
 
     def choose(self, choice='granted', **kwargs):
-        return self.client.post('/analytics/consent', {'choice': choice, 'version': '2026-11-22.1', **kwargs})
+        return self.client.post('/analytics/consent', {'choice': choice, 'version': settings.ANALYTICS_CONSENT_VERSION, **kwargs})
 
     def test_opt_in_stores_exact_separate_document_and_signed_browser_receipt(self):
         self.assertIsNone(self.client.get('/analytics/consent').json()['choice'])
@@ -66,7 +67,7 @@ class AnalyticsTests(TestCase):
         token = state.json()['csrf_token']
         self.assertIn('no-store', state['Cache-Control'])
         self.assertEqual(csrf_client.post('/analytics/consent', {'choice': 'granted',
-            'version': '2026-11-22.1'}, HTTP_X_CSRFTOKEN=token).status_code, 200)
+            'version': settings.ANALYTICS_CONSENT_VERSION}, HTTP_X_CSRFTOKEN=token).status_code, 200)
         self.assertEqual(self.choose('surprise').status_code, 400)
         self.assertEqual(self.choose(version='old').status_code, 409)
 
