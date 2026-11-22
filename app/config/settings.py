@@ -108,11 +108,12 @@ OPERATOR_NAME = 'Дворников Михаил Валериевич'
 OPERATOR_PHONE = '+7 928 909-18-17'
 OPERATOR_EMAIL = 'm@ros100.ru'
 OPERATOR_INN = os.getenv('OPERATOR_INN', '615308640848')
-OPERATOR_ADDRESS = os.getenv('OPERATOR_ADDRESS', '')
+OPERATOR_ADDRESS = (os.getenv('OPERATOR_ADDRESS', '').strip()
+                    or 'г. Ростов-на-Дону, ул. Зорге, д. 27, кв. 30')
 DATA_HOSTING_PROVIDER = os.getenv('DATA_HOSTING_PROVIDER', '')
 DATA_MAIL_PROVIDER = os.getenv('DATA_MAIL_PROVIDER', '')
 LEGAL_LAUNCH_CONFIRMED = os.getenv('LEGAL_LAUNCH_CONFIRMED', 'false').lower() == 'true'
-LEGAL_VERSION = '2026-11-22'
+LEGAL_VERSION = '2026-11-22.2'
 YOOKASSA_ENABLED = os.getenv('YOOKASSA_ENABLED', 'false').lower() == 'true'
 YOOKASSA_SHOP_ID = os.getenv('YOOKASSA_SHOP_ID', '')
 YOOKASSA_SECRET_KEY = os.getenv('YOOKASSA_SECRET_KEY', '')
