@@ -106,7 +106,7 @@ DOMAIN_ACME_EMAIL = os.getenv('DOMAIN_ACME_EMAIL', '')
 DOMAIN_UPSTREAM_PORT = int(os.getenv('DOMAIN_UPSTREAM_PORT', '8000'))
 OPERATOR_NAME = 'Дворников Михаил Валериевич'
 OPERATOR_PHONE = '+7 928 909-18-17'
-OPERATOR_EMAIL = 'm@ros100.ru'
+OPERATOR_EMAIL = 'support@visiooo.ru'
 OPERATOR_INN = os.getenv('OPERATOR_INN', '615308640848')
 OPERATOR_ADDRESS = (os.getenv('OPERATOR_ADDRESS', '').strip()
                     or 'г. Ростов-на-Дону, ул. Зорге, д. 27, кв. 30')
@@ -119,7 +119,7 @@ DATA_HOSTING_PROVIDER = (os.getenv('DATA_HOSTING_PROVIDER', '').strip() or (
 ))
 DATA_MAIL_PROVIDER = os.getenv('DATA_MAIL_PROVIDER', '')
 LEGAL_LAUNCH_CONFIRMED = os.getenv('LEGAL_LAUNCH_CONFIRMED', 'false').lower() == 'true'
-LEGAL_VERSION = '2026-11-22.3'
+LEGAL_VERSION = '2026-11-22.4'
 YOOKASSA_ENABLED = os.getenv('YOOKASSA_ENABLED', 'false').lower() == 'true'
 YOOKASSA_SHOP_ID = os.getenv('YOOKASSA_SHOP_ID', '')
 YOOKASSA_SECRET_KEY = os.getenv('YOOKASSA_SECRET_KEY', '')

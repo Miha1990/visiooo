@@ -12,6 +12,8 @@ class PublicServiceTests(SimpleTestCase):
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, 200)
                 self.assertContains(response, '615308640848')
+                self.assertContains(response, 'mailto:support@visiooo.ru')
+                self.assertNotContains(response, 'mailto:m@ros100.ru')
                 self.assertContains(response, 'href="/contacts"')
 
     def test_public_price_matches_checkout_and_access_is_explained(self):
