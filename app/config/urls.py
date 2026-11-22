@@ -12,8 +12,13 @@ from cards import examples
 from domains import views as domain_views
 from billing import views as billing
 from . import legal_views
+from . import webapp
 
 urlpatterns = [
+    path('favicon.ico', webapp.favicon, name='favicon'),
+    path('apple-touch-icon.png', webapp.apple_touch_icon, name='apple_touch_icon'),
+    path('apple-touch-icon-precomposed.png', webapp.apple_touch_icon),
+    path('manifest.webmanifest', webapp.manifest, name='webapp_manifest'),
     path('', views.home, name='home'),
     path('pricing', TemplateView.as_view(template_name='pricing.html'), name='pricing'),
     path('contacts', TemplateView.as_view(template_name='contacts.html'), name='contacts'),

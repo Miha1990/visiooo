@@ -1,5 +1,6 @@
 from django.urls import path
 from cards import views, asset_views, physical_views
+from config import webapp
 
 
 def root(request):
@@ -7,6 +8,9 @@ def root(request):
 
 
 urlpatterns = [
+    path('favicon.ico', webapp.favicon),
+    path('apple-touch-icon.png', webapp.apple_touch_icon),
+    path('apple-touch-icon-precomposed.png', webapp.apple_touch_icon),
     path('', root, name='domain_root'),
     path('c/<str:public_id>', views.public, name='public'),
     path('c/<str:public_id>/contact.vcf', views.vcard, name='vcard'),
