@@ -154,6 +154,8 @@ em{font-family:Georgia,serif;font-weight:400;color:var(--blue)}
 .check-label{display:flex;gap:10px;align-items:flex-start;font-size:12px!important;font-weight:400!important}
 .danger-zone{margin:28px 0;color:#a14233;font-size:12px}
 .danger-zone summary{cursor:pointer}
+summary { list-style: none; }
+summary::-webkit-details-marker { display: none; }
 .danger-zone p{margin-top:15px}
 .danger-button{background:#a14233}
 .share-panel h2{font-size:21px}
@@ -305,7 +307,6 @@ em{font-family:Georgia,serif;font-weight:400;color:var(--blue)}
 .social-link:hover { border-color: var(--accent); box-shadow: 0 3px 12px #17272d0b; }
 .social-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: #f0f3ee; flex-shrink: 0; }
 .social-icon img { display: block; width: 21px; height: 21px; object-fit: contain; }
-.social-arrow { margin-left: auto; color: #6e7b7f; font-size: 12px; }
 .social-instagram .social-icon { background: linear-gradient(35deg, #ffb941, #e62d78 50%, #7949c9); }
 .social-threads .social-icon { background: #101010; }
 .social-instagram .social-icon img, .social-threads .social-icon img { filter: invert(1); }

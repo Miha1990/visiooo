@@ -2,13 +2,13 @@
 {% block title %}Свой домен — Визитка{% endblock %}
 {% block content %}
 <section class="shell dashboard" {% if binding.state == 'queued' or binding.state == 'issuing' %}data-domain-poll{% endif %}>
-  <a class="back-link" href="{% url 'dashboard' %}">← Мои визитки</a>
+  <a class="back-link" href="{% url 'dashboard' %}">Мои визитки</a>
   <p class="eyebrow">ВАШ АДРЕС В ИНТЕРНЕТЕ</p><h1>Свой домен<span class="blue">.</span></h1>
   <p class="lead">Открывайте визитку по собственному адресу. Например, https://anna.ru/. Исходная ссылка и QR / NFC платформы продолжат работать.</p>
   {% if not configured %}<p class="notice">Подключение можно подготовить сейчас. Для проверки DNS и HTTPS администратору нужно настроить публичный IP сервиса и сервер подключения доменов.</p>{% endif %}
   {% if not binding %}
   <div class="panel narrow domain-add"><h2>Привязать домен к визитке</h2><p class="muted micro">Один свой домен на рабочее пространство. Домен приобретается отдельно у регистратора.</p>
-    <form method="post" class="stack">{% csrf_token %}{{ form.as_div }}<button class="button">Добавить домен →</button></form>
+    <form method="post" class="stack">{% csrf_token %}{{ form.as_div }}<button class="button">Добавить домен</button></form>
   </div>
   {% else %}
   {{ form.non_field_errors }}
@@ -24,7 +24,7 @@
         <form method="post" action="{% url 'domain_action' binding.pk 'certificate' %}">{% csrf_token %}<button class="button" {% if not binding.verified_at or not worker_ready or binding.blocked or binding.state == 'queued' or binding.state == 'issuing' %}disabled{% endif %}>Выпустить HTTPS</button></form>
       </div>
       {% if not worker_ready %}<p class="muted micro">Сервис выпуска сертификатов пока не запущен. Его один раз настраивает администратор сервера, как в SPCh.</p>{% endif %}
-      {% if binding.routable %}<p><a class="button" href="https://{{ binding.hostname }}/" target="_blank" rel="noopener">Открыть мой домен ↗</a></p><p><a href="{% url 'domain_qr' binding.pk %}" download="my-domain-qr.png">Скачать QR со своим доменом ↓</a></p>{% endif %}
+      {% if binding.routable %}<p><a class="button" href="https://{{ binding.hostname }}/" target="_blank" rel="noopener">Открыть мой домен</a></p><p><a href="{% url 'domain_qr' binding.pk %}" download="my-domain-qr.png">Скачать QR со своим доменом</a></p>{% endif %}
       <p class="muted micro">Публичная визитка открывается с активным Профи и после публикации. При снятии с публикации или окончании Профи домен не показывает контакты. QR со своим доменом зависит от сохранения и продления этого домена.</p>
       <details class="danger-zone"><summary>Отключить или удалить привязку</summary>
         {% if binding.state != 'disabled' %}<form method="post" action="{% url 'domain_action' binding.pk 'disable' %}">{% csrf_token %}<p>Доступ по домену закроется. Для повторного подключения потребуется новая TXT-запись.</p><button class="button danger-button">Отключить домен</button></form>
@@ -37,7 +37,7 @@
       <p><button class="text-button" type="button" data-copy="domain-txt-name">Копировать имя</button></p>
       <label class="micro" for="domain-txt-value">TXT · значение</label><input id="domain-txt-value" value="{{ binding.verification_token }}" readonly>
       <p><button class="text-button" type="button" data-copy="domain-txt-value">Копировать значение</button></p>
-      {% for address in addresses %}<p><strong>A</strong> · {{ binding.hostname }} → <code>{{ address }}</code></p>{% empty %}<p class="notice">Публичный IPv4 сервера пока не настроен администратором.</p>{% endfor %}
+      {% for address in addresses %}<p><strong>A</strong> · {{ binding.hostname }}<code>{{ address }}</code></p>{% empty %}<p class="notice">Публичный IPv4 сервера пока не настроен администратором.</p>{% endfor %}
       <p id="share-status" role="status" class="micro blue"></p>
       <ol class="domain-help">
         <li>В TXT вставьте значение целиком, без кавычек. Если панель сама приписывает домен зоны, введите только левую часть имени. Например, для card.example.ru в зоне example.ru: <code>_myqr-verification.card</code>.</li>

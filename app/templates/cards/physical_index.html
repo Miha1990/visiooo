@@ -2,20 +2,20 @@
 {% block title %}Физические визитки QR / NFC — Визитка{% endblock %}
 {% block content %}
 <section class="shell dashboard">
-  <a class="back-link" href="{% url 'dashboard' %}">← Мои визитки</a>
+  <a class="back-link" href="{% url 'dashboard' %}">Мои визитки</a>
   <h1>Физические визитки<span class="blue">.</span></h1>
   <p class="lead">Одна постоянная ссылка для QR на карточке и её NFC-чипа. Электронную визитку по этой ссылке можно менять здесь.</p>
   <div class="physical-grid">
     <div class="panel"><h2>Добавить QR / NFC</h2>
       <p class="muted micro">Создайте ссылку перед печатью QR и записью NFC. Доступно до 20 физических визиток.</p>
-      <form method="post" class="stack">{% csrf_token %}{{ form.as_div }}<button class="button">Создать привязку →</button></form>
+      <form method="post" class="stack">{% csrf_token %}{{ form.as_div }}<button class="button">Создать привязку</button></form>
     </div>
     <div class="physical-list">
     {% for item in items %}
       <article class="panel"><h2>{{ item.label }}</h2>
         <p>{% if item.blocked %}<span class="status danger">Заблокирована</span>{% elif not item.enabled or not item.card or item.card.status == 'deleted' %}<span class="status">Отключена</span>{% else %}<span class="status success">Привязка включена</span>{% endif %}</p>
         <p class="muted">{% if item.card and item.card.status != 'deleted' %}Открывает: {{ item.card.draft.name }}{% else %}Выберите электронную визитку{% endif %}</p>
-        <a class="card-edit" href="{% url 'physical_edit' item.pk %}">QR, NFC и настройки <span>↗</span></a>
+        <a class="card-edit" href="{% url 'physical_edit' item.pk %}">QR, NFC и настройки</a>
       </article>
     {% empty %}<div class="panel"><h2>Подготовьте свою первую карточку</h2><p class="muted">После создания скачайте QR и запишите ту же ссылку в NFC. Публикация электронной визитки и активный Профи нужны для доступа получателей.</p></div>{% endfor %}
     </div>

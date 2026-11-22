@@ -2,9 +2,9 @@
 {% block title %}Редактор — Визитка{% endblock %}
 {% block content %}
 <section class="shell editor" data-view="edit">
-  <a class="back-link" href="/app/cards">← Мои визитки</a>
-  <a class="back-link physical-link" href="{% url 'physical_index' %}?card={{ card.pk }}">Привязать физическую визитку QR / NFC ↗</a>
-  <a class="back-link physical-link" href="{% url 'domains' %}?card={{ card.pk }}">Свой домен ↗</a>
+  <a class="back-link" href="/app/cards">Мои визитки</a>
+  <a class="back-link physical-link" href="{% url 'physical_index' %}?card={{ card.pk }}">Привязать физическую визитку QR / NFC</a>
+  <a class="back-link physical-link" href="{% url 'domains' %}?card={{ card.pk }}">Свой домен</a>
   <div class="page-heading"><div><p class="eyebrow">ВАША ИСТОРИЯ В ДЕТАЛЯХ</p><h1>Редактор визитки<span class="blue">.</span></h1></div>
     <span class="status">{% if card.blocked %}Заблокирована{% elif card.has_changes %}Есть неопубликованные изменения{% elif card.status == 'published' %}Опубликовано{% else %}Черновик{% endif %}</span>
   </div>
@@ -25,7 +25,7 @@
               <div class="social-field"><label for="{{ item.field.id_for_label }}"><img src="{% static 'icons/' %}{{ item.key }}.svg" width="23" height="23" alt="">{{ item.field.label }}</label>{{ item.field }}{{ item.field.errors }}</div>
             {% endfor %}
           </fieldset>
-          <button class="button">Сохранить черновик →</button>
+          <button class="button">Сохранить черновик</button>
         </form>
       </div>
       <section class="styling-section" aria-label="Фон, фото и шапка">
@@ -39,7 +39,7 @@
             <img class="styling-thumbnail styling-{{ panel.target }}" src="{% url 'preview_asset' card.pk panel.asset_id %}" alt="{{ panel.label }} — текущее изображение" loading="lazy">
           {% endif %}
           <form method="post" action="{% url 'upload_asset' %}" enctype="multipart/form-data" class="stack">
-            {% csrf_token %}{{ panel.form.as_div }}<button class="button">{% if panel.asset_id %}Заменить изображение{% else %}Загрузить изображение{% endif %} ↑</button>
+            {% csrf_token %}{{ panel.form.as_div }}<button class="button">{% if panel.asset_id %}Заменить изображение{% else %}Загрузить изображение{% endif %}</button>
           </form>
           {% if panel.asset_id %}
           <form method="post" action="{% url 'remove_avatar' card.pk %}" class="avatar-remove">
@@ -57,7 +57,7 @@
           <p class="micro">Публикуются только заполненные вами поля и выбранные изображения. Удалите из черновика данные, которые не хотите открывать посетителям.</p>
           <label for="publication-conditions">Дополнительные условия и запреты на обработку опубликованных данных</label><textarea id="publication-conditions" name="publication_conditions" maxlength="2000" rows="3" placeholder="Например: запрещаю использовать контакты для рекламных рассылок"></textarea>
           <label class="check-label"><input type="checkbox" name="public_consent" value="yes" required> <span>Даю отдельное <a href="/legal/publication" target="_blank" rel="noopener">согласие на распространение выбранных персональных данных</a>. Размещаю собственные данные и изображения либо имею необходимое правовое основание.</span></label>
-          <button class="button" {% if not active_pro or not user.email_verified_at or card.blocked %}disabled{% endif %}>Опубликовать визитку ↗</button>
+          <button class="button" {% if not active_pro or not user.email_verified_at or card.blocked %}disabled{% endif %}>Опубликовать визитку</button>
         </form>
         {% if card.status == 'published' %}<form method="post" action="{% url 'unpublish' card.pk %}">{% csrf_token %}<button class="text-button">Снять с публикации</button></form>{% endif %}
       </div>
@@ -69,11 +69,11 @@
       <p class="muted micro preview-hint">Предпросмотр обновляется при вводе.<br>Правки попадут на публичную страницу после сохранения и публикации.</p>
       <div class="panel share-panel">
         <h2>Поделитесь знакомством</h2>
-        <div class="share-row"><img src="{% url 'qr' card.pk %}" alt="QR-код постоянной ссылки" width="112" height="112"><div><a href="{% url 'qr' card.pk %}" download="vizitka-qr.png">Скачать QR PNG ↓</a><p class="micro muted">Этот QR останется прежним после изменения контактов.</p></div></div>
+        <div class="share-row"><img src="{% url 'qr' card.pk %}" alt="QR-код постоянной ссылки" width="112" height="112"><div><a href="{% url 'qr' card.pk %}" download="vizitka-qr.png">Скачать QR PNG</a><p class="micro muted">Этот QR останется прежним после изменения контактов.</p></div></div>
         <label class="micro" for="public-url">Постоянная ссылка</label><input id="public-url" value="{{ public_url }}" readonly>
-        <div class="share-buttons"><button class="text-button" type="button" data-copy="public-url">Копировать ссылку</button><button class="text-button" type="button" data-share="public-url">Поделиться ↗</button></div>
+        <div class="share-buttons"><button class="text-button" type="button" data-copy="public-url">Копировать ссылку</button><button class="text-button" type="button" data-share="public-url">Поделиться</button></div>
         <p class="micro muted">Ссылка работает для посетителей только после публикации и с активным Профи.</p>
-        {% if card.status == 'published' and active_pro %}<a href="{{ public_url }}" target="_blank" rel="noopener">Открыть опубликованную версию ↗</a>{% endif %}
+        {% if card.status == 'published' and active_pro %}<a href="{{ public_url }}" target="_blank" rel="noopener">Открыть опубликованную версию</a>{% endif %}
         <span id="share-status" role="status" class="micro"></span>
       </div>
     </div></aside>

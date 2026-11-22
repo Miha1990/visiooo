@@ -38,22 +38,24 @@ if (form) {
       const anchor = document.createElement('a');
       anchor.textContent = label;
       anchor.href = href;
-      const span = document.createElement('span');
-      span.textContent = detail;
-      anchor.append(span);
+      if (detail) {
+        const span = document.createElement('span');
+        span.textContent = detail;
+        anchor.append(span);
+      }
       if (external) { anchor.target = '_blank'; anchor.rel = 'noopener noreferrer'; }
       actions.append(anchor);
     };
     const phone = form.elements.namedItem('phone').value.trim();
     const email = form.elements.namedItem('email').value.trim();
-    if (/^\+[1-9][0-9]{7,14}$/.test(phone)) add('↗ Позвонить', `tel:${phone}`, phone);
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) add('↗ Написать', `mailto:${email}`, email);
+    if (/^\+[1-9][0-9]{7,14}$/.test(phone)) add('Позвонить', `tel:${phone}`, phone);
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) add('Написать', `mailto:${email}`, email);
     for (const line of form.elements.namedItem('links').value.split('\n').filter(line => line.trim()).slice(0, 10)) {
       const divider = line.indexOf('|');
       if (divider === -1) continue;
       const label = line.slice(0, divider).trim();
       const url = line.slice(divider + 1).trim();
-      if (label && safeHttp(url)) add(label, url, '↗', true);
+      if (label && safeHttp(url)) add(label, url, '', true);
     }
   };
   for (const key of ['phone', 'email', 'website', 'links']) form.elements.namedItem(key).addEventListener('input', updateActions);
@@ -62,7 +64,7 @@ if (form) {
   const socialSection = card.querySelector('.social-section');
   const socialContainer = card.querySelector('.social-links');
   const socialFields = [...form.querySelectorAll('[data-social]')];
-  const iconBase = new URL('icons/', new URL(document.querySelector('script[src$="app.js"]').src)).href;
+  const iconBase = new URL('icons/', document.currentScript.src).href;
   const updateSocials = () => {
     socialContainer.replaceChildren();
     for (const input of socialFields) {
@@ -85,11 +87,7 @@ if (form) {
       icon.append(img);
       const label = document.createElement('span');
       label.textContent = input.dataset.label;
-      const arrow = document.createElement('span');
-      arrow.className = 'social-arrow';
-      arrow.textContent = '↗';
-      arrow.setAttribute('aria-hidden', 'true');
-      anchor.append(icon, label, arrow);
+      anchor.append(icon, label);
       socialContainer.append(anchor);
     }
     socialSection.hidden = !socialContainer.childElementCount;

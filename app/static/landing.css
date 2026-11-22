@@ -127,7 +127,7 @@
 .m-plan-card ul { padding: 20px 0; margin: 0; list-style: none; font-size: 12px; border-top: 1px solid var(--m-border); }
 .m-plan-card li { padding: 7px 0 7px 23px; position: relative; }
 .m-plan-card li::before { content: '✓'; color: var(--blue); position: absolute; left: 0; }
-.m-plan-card .button { width: 100%; justify-content: space-between; margin-top: 20px; }
+.m-plan-card .button { width: 100%; justify-content: center; margin-top: 20px; }
 .m-payment-note { padding: 14px; border-radius: 8px; background: #f0f3fa; font-size: 11px; color: #445c7b; line-height: 1.8; }
 .m-table-wrap { overflow-x: auto; }
 .m-plan-details table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
