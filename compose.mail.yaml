@@ -1,0 +1,98 @@
+name: visiooo-mail
+services:
+  mailserver:
+    image: ghcr.io/docker-mailserver/docker-mailserver:17.0.0
+    hostname: mail.visiooo.ru
+    restart: unless-stopped
+    ports:
+      - '25:25'
+      - '587:587'
+      - '993:993'
+    environment:
+      TZ: Europe/Moscow
+      DMS_TRUSTED_NETWORKS: none
+      SPOOF_PROTECTION: '1'
+      SSL_TYPE: letsencrypt
+      POSTMASTER_ADDRESS: support@visiooo.ru
+      ENABLE_IMAP: '1'
+      ENABLE_POP3: '0'
+      ENABLE_SPAMASSASSIN: '1'
+      ENABLE_CLAMAV: '0'
+      ENABLE_FAIL2BAN: '1'
+      POSTFIX_INET_PROTOCOLS: ipv4
+      DOVECOT_INET_PROTOCOLS: ipv4
+      POSTFIX_MESSAGE_SIZE_LIMIT: '20971520'
+      POSTFIX_MAILBOX_SIZE_LIMIT: '1073741824'
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - mail_data:/var/mail
+      - mail_state:/var/mail-state
+      - mail_logs:/var/log/mail
+      - ./mail-data/config:/tmp/docker-mailserver
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    networks:
+      default:
+        aliases:
+          - mail.visiooo.ru
+    healthcheck:
+      test: [CMD-SHELL, "ss --listening --tcp | grep -q ':smtp '"]
+      interval: 20s
+      timeout: 10s
+      start_period: 60s
+      retries: 10
+    logging:
+      options:
+        max-size: 10m
+        max-file: '3'
+  webmail_db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: roundcube
+      POSTGRES_USER: roundcube
+      POSTGRES_PASSWORD: ${MAIL_DB_PASSWORD:?Run python3 ops/mail/init.py}
+    volumes:
+      - webmail_database:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U roundcube -d roundcube']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  webmail:
+    image: roundcube/roundcubemail:1.7.6-apache
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:${WEBMAIL_PORT:-18082}:80'
+    environment:
+      ROUNDCUBEMAIL_DB_TYPE: pgsql
+      ROUNDCUBEMAIL_DB_HOST: webmail_db
+      ROUNDCUBEMAIL_DB_NAME: roundcube
+      ROUNDCUBEMAIL_DB_USER: roundcube
+      ROUNDCUBEMAIL_DB_PASSWORD: ${MAIL_DB_PASSWORD:?Mail database password required}
+      ROUNDCUBE_DES_KEY: ${ROUNDCUBE_DES_KEY:?Roundcube encryption key required}
+      ROUNDCUBEMAIL_DEFAULT_HOST: ssl://mail.visiooo.ru
+      ROUNDCUBEMAIL_DEFAULT_PORT: '993'
+      ROUNDCUBEMAIL_SMTP_SERVER: tls://mail.visiooo.ru
+      ROUNDCUBEMAIL_SMTP_PORT: '587'
+      ROUNDCUBEMAIL_USERNAME_DOMAIN: visiooo.ru
+      ROUNDCUBEMAIL_PLUGINS: archive,zipdownload
+      ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE: 10M
+    volumes:
+      - ./ops/mail/roundcube.php:/var/roundcube/config/visiooo.php:ro
+      - webmail_temp:/tmp/roundcube-temp
+    depends_on:
+      webmail_db:
+        condition: service_healthy
+      mailserver:
+        condition: service_healthy
+    logging:
+      options:
+        max-size: 10m
+        max-file: '3'
+volumes:
+  mail_data:
+  mail_state:
+  mail_logs:
+  webmail_database:
+  webmail_temp:
