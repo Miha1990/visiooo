@@ -53,7 +53,12 @@ class VerticalTests(TestCase):
         response = self.client.post('/accounts/register', {'email': 'New@Example.test',
             'password1': 'SomethingUnique-912!', 'password2': 'SomethingUnique-912!', 'consent': 'on', 'terms': 'on'})
         self.assertEqual(response.status_code, 303)
+        self.assertFalse(User.objects.filter(email='new@example.test').exists())
+        import re
+        code = re.search(r'\b([0-9]{6})\b', mail.outbox[-1].body)[1]
+        self.assertEqual(self.client.post('/accounts/registration-code', {'code': code}).status_code, 303)
         user = User.objects.get(email='new@example.test')
+        self.assertIsNotNone(user.email_verified_at)
         self.assertTrue(user.check_password('SomethingUnique-912!'))
         self.assertEqual(Workspace.objects.filter(owner=user).count(), 1)
         self.assertEqual(Membership.objects.filter(user=user).count(), 1)

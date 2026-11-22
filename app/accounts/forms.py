@@ -5,6 +5,8 @@ from django.utils.safestring import mark_safe
 
 
 class RegistrationForm(UserCreationForm):
+    first_name = forms.CharField(label='Имя', max_length=150, required=False)
+    last_name = forms.CharField(label='Фамилия', max_length=150, required=False)
     email = forms.EmailField(label='Электронная почта')
     consent = forms.BooleanField(label='Даю отдельное согласие на обработку персональных данных',
         help_text=mark_safe('<a href="/legal/processing" target="_blank" rel="noopener">Текст согласия</a> · <a href="/legal/privacy" target="_blank" rel="noopener">Политика обработки данных</a>'))
@@ -13,7 +15,7 @@ class RegistrationForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ('email', 'password1', 'password2')
+        fields = ('first_name', 'last_name', 'email', 'password1', 'password2')
 
     def clean_email(self):
         email = self.cleaned_data['email'].strip().lower()
@@ -27,3 +29,10 @@ class LoginForm(AuthenticationForm):
 
     def clean_username(self):
         return self.cleaned_data['username'].strip().lower()
+
+
+class RegistrationCodeForm(forms.Form):
+    code = forms.RegexField(regex=r'\A[0-9]{6}\Z', label='Код из письма',
+        error_messages={'invalid': 'Введите шесть цифр из письма.'},
+        widget=forms.TextInput(attrs={'inputmode': 'numeric', 'autocomplete': 'one-time-code',
+                                     'maxlength': 6, 'autofocus': True}))

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Подтверждение почты — Визитка{% endblock %}
+{% block content %}
+<section class="shell narrow panel">
+  <p class="eyebrow">ПОДТВЕРЖДЕНИЕ ПОЧТЫ</p>
+  <h1>Введите код из письма</h1>
+  <p>Введите шестизначный код для <strong>{{ pending.email }}</strong>. Код действует 10 минут. Проверьте также папку «Спам».</p>
+  <form method="post" class="stack">{% csrf_token %}{{ form.as_div }}<button class="button">Подтвердить и создать аккаунт</button></form>
+  <form method="post" action="/accounts/registration-code/resend" class="stack">{% csrf_token %}<p class="muted">Новое письмо можно запросить через минуту. Не более пяти писем в час.</p><button class="button secondary">Отправить код повторно</button></form>
+  <p><a href="/accounts/register">Изменить почту или данные</a></p>
+</section>
+{% endblock %}

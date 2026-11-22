@@ -4,6 +4,7 @@ from django.views.generic import TemplateView
 from accounts import views as accounts
 from accounts.forms import LoginForm
 from accounts import password_reset
+from accounts import registration
 from cards import views
 from cards import asset_views
 from cards import physical_views
@@ -21,7 +22,9 @@ urlpatterns = [
     path('examples/<slug:slug>/qr.png', examples.qr, name='example_qr'),
     path('examples/<slug:slug>/contact.vcf', examples.vcard, name='example_vcard'),
     path('admin/', admin.site.urls),
-    path('accounts/register', accounts.register, name='register'),
+    path('accounts/register', registration.start, name='register'),
+    path('accounts/registration-code', registration.confirm, name='registration_code'),
+    path('accounts/registration-code/resend', registration.resend, name='registration_code_resend'),
     path('accounts/login', accounts.SessionLoginView.as_view(template_name='accounts/login.html', authentication_form=LoginForm), name='login'),
     path('accounts/logout', accounts.SessionLogoutView.as_view(), name='logout'),
     path('accounts/verify/<str:token>', accounts.verify, name='verify'),

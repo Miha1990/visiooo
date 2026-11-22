@@ -44,6 +44,21 @@ class EmailToken(models.Model):
     used_at = models.DateTimeField(null=True, blank=True)
 
 
+class PendingRegistration(models.Model):
+    email = models.EmailField(unique=True)
+    browser_token = models.UUIDField(default=uuid.uuid4, unique=True)
+    password = models.CharField(max_length=128)
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    legal_documents = models.JSONField(default=list)
+    code_digest = models.CharField(max_length=64, blank=True)
+    expires_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    last_sent_at = models.DateTimeField(null=True)
+    window_started_at = models.DateTimeField()
+    send_count = models.PositiveSmallIntegerField(default=0)
+
+
 class PasswordResetToken(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     digest = models.CharField(max_length=64, unique=True)

@@ -3,18 +3,14 @@ import secrets
 from datetime import timedelta
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import login
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
-from django.db import transaction, IntegrityError
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
-from billing.models import Subscription
-from workspaces.models import Workspace, Membership
-from .forms import RegistrationForm
 from .models import EmailToken
 
 
@@ -47,36 +43,6 @@ def issue_verification(user):
               f'Для подтверждения электронной почты откройте {settings.PUBLIC_BASE_URL}/accounts/verify/{token}\n'
               'Ссылка действует 24 часа. Подтверждение выполняется кнопкой на странице.',
               settings.DEFAULT_FROM_EMAIL, [user.email])
-
-
-@require_http_methods(['GET', 'POST'])
-def register(request):
-    if request.user.is_authenticated:
-        return redirect303('/app/cards')
-    form = RegistrationForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
-        try:
-            with transaction.atomic():
-                user = form.save()
-                workspace = Workspace.objects.create(owner=user)
-                Membership.objects.create(user=user, workspace=workspace)
-                Subscription.objects.create(workspace=workspace)
-                from .legal import record_acceptance
-                request.user = user
-                record_acceptance(request, 'processing')
-                record_acceptance(request, 'offer', {'action': 'registration'})
-        except IntegrityError:
-            form.add_error('email', 'Аккаунт с этим email уже существует.')
-        else:
-            login(request, user)
-            try:
-                issue_verification(user)
-                messages.success(request, 'Аккаунт создан. Подтвердите электронную почту по ссылке из письма.')
-            except OSError:
-                messages.warning(request, 'Аккаунт создан, но письмо не отправлено. Повторите отправку в кабинете.')
-            return redirect303('/app/cards')
-    return render(request, 'accounts/register.html', {'form': form},
-                  status=422 if request.method == 'POST' else 200)
 
 
 @require_http_methods(['GET', 'POST'])
