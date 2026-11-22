@@ -374,5 +374,14 @@ summary::-webkit-details-marker { display: none; }
 .publication-conditions { padding: 15px; border: 1px solid #dce2d9; border-radius: 8px; margin-bottom: 22px; font-size: 11px; overflow-wrap: anywhere; }
 .publication-conditions p { white-space: normal; margin: 8px 0 0; }
 .public-legal { width: min(420px,100%); margin: 20px auto 0; font-size: 11px; text-align: center; color: #53636a; }
+.analytics-banner { position: fixed; z-index: 1000; bottom: 20px; left: 20px; width: min(570px,calc(100% - 40px)); padding: 22px; border: 1px solid #dce2d9; border-radius: 16px; background: #fff; color: #162238; box-shadow: 0 8px 40px #16223826; max-height: calc(100dvh - 40px); overflow-y: auto; }
+.analytics-banner[hidden] { display: none; }
+.analytics-banner h2 { font-size: 20px; margin: 0 0 12px; }
+.analytics-banner p { font-size: 14px; line-height: 1.5; margin: 10px 0; }
+.analytics-banner a { text-decoration: underline; }
+.analytics-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.analytics-actions button { flex: 1 1 190px; padding: 12px 16px; border: 1px solid #2457db; border-radius: 9px; background: white; color: #2457db; font: inherit; font-size: 14px; cursor: pointer; }
+.analytics-actions button:hover,.analytics-actions button:focus-visible { background: #edf2fd; }
+.analytics-actions button:disabled { opacity: .6; cursor: wait; }
 @media(max-width:600px) { .billing-plans { grid-template-columns: 1fr; } .payment-history article { flex-direction: column; align-items: start; } .header nav { gap: 10px; font-size: 11px; } .header .brand { font-size: 21px; } .header nav .text-button { font-size: 11px; } }
 @media(max-width:600px) { .header { gap: 12px; } .header .brand { flex-shrink: 0; } .header nav { min-width: 0; flex-wrap: wrap; justify-content: flex-end; } }

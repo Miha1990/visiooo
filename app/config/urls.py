@@ -14,8 +14,10 @@ from billing import views as billing
 from . import legal_views
 from . import webapp
 from . import seo
+from . import analytics
 
 urlpatterns = [
+    path('analytics/consent', analytics.consent, name='analytics_consent'),
     path('robots.txt', seo.robots, name='robots'),
     path('sitemap.xml', seo.sitemap, name='sitemap'),
     path('favicon.ico', webapp.favicon, name='favicon'),

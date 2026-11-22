@@ -1,0 +1,11 @@
+{% load static %}{% if analytics.configured %}
+<section class="analytics-banner" data-analytics-banner role="region" aria-label="Выбор аналитики" hidden>
+  <h2 tabindex="-1">Разрешить Яндекс Метрику?</h2>
+  <p>С вашего разрешения собираем технические данные о посещениях рекламных страниц. Это помогает улучшать сайт. При отказе все функции останутся доступны.</p>
+  <p><a href="/legal/analytics" target="_blank" rel="noopener">Отдельное согласие на аналитику</a> · <a href="/legal/cookies" target="_blank" rel="noopener">О файлах cookie</a></p>
+  <p data-analytics-status role="status" aria-live="polite"></p>
+  <div class="analytics-actions"><button type="button" data-analytics-choice="denied">Без аналитики</button><button type="button" data-analytics-choice="granted">Разрешить аналитику</button></div>
+</section>
+{{ analytics|json_script:'analytics-config' }}
+<script src="{% static 'analytics-consent.js' %}" defer></script>
+{% endif %}

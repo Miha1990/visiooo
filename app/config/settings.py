@@ -119,7 +119,12 @@ DATA_HOSTING_PROVIDER = (os.getenv('DATA_HOSTING_PROVIDER', '').strip() or (
 ))
 DATA_MAIL_PROVIDER = os.getenv('DATA_MAIL_PROVIDER', '')
 LEGAL_LAUNCH_CONFIRMED = os.getenv('LEGAL_LAUNCH_CONFIRMED', 'false').lower() == 'true'
-LEGAL_VERSION = '2026-11-22.4'
+LEGAL_VERSION = '2026-11-22.5'
+ANALYTICS_CONSENT_VERSION = '2026-11-22.1'
+YANDEX_METRIKA_ID = os.getenv('YANDEX_METRIKA_ID', '').strip()
+if YANDEX_METRIKA_ID and (len(YANDEX_METRIKA_ID) > 15 or not YANDEX_METRIKA_ID.isascii() or not YANDEX_METRIKA_ID.isdigit()
+                         or not 0 < int(YANDEX_METRIKA_ID) < 10 ** 15):
+    raise ImproperlyConfigured('YANDEX_METRIKA_ID must be a positive counter number or empty')
 YOOKASSA_ENABLED = os.getenv('YOOKASSA_ENABLED', 'false').lower() == 'true'
 YOOKASSA_SHOP_ID = os.getenv('YOOKASSA_SHOP_ID', '')
 YOOKASSA_SECRET_KEY = os.getenv('YOOKASSA_SECRET_KEY', '')

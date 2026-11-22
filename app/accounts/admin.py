@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
-from .models import User, LegalAcceptance
+from .models import User, LegalAcceptance, AnalyticsConsent
 from config.admin_localization import RussianPermissionLabelsMixin
 
 
@@ -38,6 +38,22 @@ class LegalAcceptanceAdmin(admin.ModelAdmin):
     readonly_fields = tuple(field.name for field in LegalAcceptance._meta.fields)
 
     def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(AnalyticsConsent)
+class AnalyticsConsentAdmin(admin.ModelAdmin):
+    list_display = ('created_at', 'choice', 'counter_id', 'version')
+    list_filter = ('choice', 'version')
+    readonly_fields = tuple(field.name for field in AnalyticsConsent._meta.fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
         return False
 
     def has_delete_permission(self, request, obj=None):

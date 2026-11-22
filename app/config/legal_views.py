@@ -3,6 +3,8 @@ from django.shortcuts import render
 from django.views.decorators.http import require_GET
 
 DOCUMENTS = {'privacy': 'Политика обработки персональных данных', 'offer': 'Публичная оферта',
+             'cookies': 'Файлы cookie и Яндекс Метрика',
+             'analytics': 'Согласие на обработку данных для аналитики',
              'processing': 'Согласие на обработку персональных данных',
              'publication': 'Согласие на распространение персональных данных'}
 

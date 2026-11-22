@@ -4,7 +4,8 @@ from django.conf import settings
 def public_context(request):
     from billing.services import enabled
     from .seo import metadata
-    return {'seo': metadata(request), 'operator': {'name': settings.OPERATOR_NAME, 'phone': settings.OPERATOR_PHONE,
+    from .analytics import configuration
+    return {'analytics': configuration(request), 'seo': metadata(request), 'operator': {'name': settings.OPERATOR_NAME, 'phone': settings.OPERATOR_PHONE,
                          'email': settings.OPERATOR_EMAIL, 'inn': settings.OPERATOR_INN,
                          'address': settings.OPERATOR_ADDRESS},
             'legal_version': settings.LEGAL_VERSION,

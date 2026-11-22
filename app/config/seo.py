@@ -18,6 +18,8 @@ PUBLIC_PAGES = {
     '/legal/privacy': ('Политика обработки персональных данных — Визитка', 'Цели, условия и порядок обработки персональных данных пользователей сервиса Визитка.'),
     '/legal/processing': ('Согласие на обработку персональных данных — Визитка', 'Условия согласия на обработку персональных данных в сервисе Визитка.'),
     '/legal/publication': ('Согласие на распространение персональных данных — Визитка', 'Условия публикации данных в электронной визитке и управления публичным доступом.'),
+    '/legal/cookies': ('Файлы cookie и Яндекс Метрика — Визитка', 'Какие файлы использует сайт, как разрешить необязательную аналитику и отозвать согласие.'),
+    '/legal/analytics': ('Согласие на аналитику — Визитка', 'Отдельное добровольное согласие на обработку технических данных с помощью Яндекс Метрики.'),
 }
 
 
@@ -49,7 +51,7 @@ def card_metadata(request, card):
 @require_safe
 def robots(request):
     lines = ['User-agent: *', 'Allow: /', 'Disallow: /admin/', 'Disallow: /accounts/',
-             'Disallow: /app/', 'Disallow: /payments/', 'Disallow: /health/']
+             'Disallow: /app/', 'Disallow: /payments/', 'Disallow: /health/', 'Disallow: /analytics/']
     if not hasattr(request, 'domain_binding'):
         lines += ['', f'Sitemap: {settings.PUBLIC_BASE_URL}/sitemap.xml']
     response = HttpResponse('\n'.join(lines) + '\n', content_type='text/plain; charset=utf-8')

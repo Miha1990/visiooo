@@ -21,7 +21,7 @@ class DiscoveryTests(SimpleTestCase):
         root = ElementTree.fromstring(response.content)
         locations = [node.text for node in root.iter('{http://www.sitemaps.org/schemas/sitemap/0.9}loc')]
         self.assertIn('https://visiooo.ru/pricing', locations)
-        self.assertEqual(len(locations), 7)
+        self.assertEqual(len(locations), 9)
         self.assertFalse(any('/c/' in url or '/app/' in url or '/accounts/' in url for url in locations))
         for path in ['/robots.txt', '/sitemap.xml', '/favicon.ico']:
             self.assertEqual(self.client.head(path).status_code, 200)

@@ -12,7 +12,7 @@ class SensitiveRequestLimit:
         self.get_response = get_response
 
     def __call__(self, request):
-        if request.method == 'POST' and request.path.startswith('/accounts/'):
+        if request.method == 'POST' and (request.path.startswith('/accounts/') or request.path == '/analytics/consent'):
             remote = request.META.get('REMOTE_ADDR', '')
             if settings.TRUST_PROXY:
                 # The loopback-only upstream accepts headers overwritten by our Nginx.

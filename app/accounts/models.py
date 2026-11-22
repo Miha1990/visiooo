@@ -98,3 +98,22 @@ class LegalAcceptance(models.Model):
 
     def __str__(self):
         return f'Подтверждение — {self.get_document_display()}'
+
+
+class AnalyticsConsent(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    choice = models.CharField(max_length=16, verbose_name='Выбор', choices=[
+        ('granted', 'Разрешена аналитика'), ('denied', 'Отказ от аналитики'), ('withdrawn', 'Согласие отозвано')])
+    counter_id = models.CharField(max_length=15, verbose_name='Номер счётчика')
+    version = models.CharField(max_length=32, verbose_name='Редакция согласия')
+    document_sha256 = models.CharField(max_length=64, verbose_name='Контрольная сумма документа')
+    document_text = models.TextField(verbose_name='Текст согласия')
+    previous_receipt = models.UUIDField(null=True, blank=True, verbose_name='Предыдущее подтверждение браузера')
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='Дата выбора')
+
+    class Meta:
+        verbose_name = 'выбор аналитики'
+        verbose_name_plural = 'Согласия и отказы от аналитики'
+
+    def __str__(self):
+        return f'{self.get_choice_display()} — {self.created_at}'
