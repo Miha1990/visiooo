@@ -12,12 +12,16 @@ from django.shortcuts import get_object_or_404, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.debug import sensitive_post_parameters
+from django.core.exceptions import ValidationError
 from accounts.legal import record_acceptance
 from accounts.views import redirect303
 from cards.services import workspace_for
 from workspaces.models import Workspace
 from .models import Payment, Subscription
 from . import services, gateway
+from . import promotions
+from .forms import PromoCodeForm
 
 
 @login_required
@@ -30,7 +34,36 @@ def index(request):
              for period, price in services.PRICES.items()]
     return render(request, 'billing/index.html', {'plans': plans, 'payment_enabled': services.enabled(),
         'payment_test': settings.YOOKASSA_TEST_MODE, 'subscription': Subscription.objects.filter(workspace=workspace).first(),
-        'payments': Payment.objects.filter(workspace=workspace)[:30]})
+        'payments': Payment.objects.filter(workspace=workspace)[:30], 'promo_form': PromoCodeForm(),
+        'access_grants': workspace.accessgrant_set.select_related('promo').order_by('-starts_at')[:30]})
+
+
+@login_required
+@never_cache
+@sensitive_post_parameters('code')
+@require_POST
+def redeem_promo(request):
+    key = 'promo-attempt:' + str(request.user.pk)
+    cache.add(key, 0, 600)
+    try:
+        attempts = cache.incr(key)
+    except ValueError:
+        attempts = 1
+    if attempts > 10:
+        response = HttpResponse('Слишком много попыток. Повторите через 10 минут.', status=429)
+        response['Retry-After'] = '600'
+        return response
+    form = PromoCodeForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, 'Введите промокод длиной до 40 символов.')
+    else:
+        try:
+            grant = promotions.redeem(request.user, form.cleaned_data['code'])
+        except ValidationError as error:
+            messages.error(request, ' '.join(error.messages))
+        else:
+            messages.success(request, f'Промокод активирован. Добавлено бесплатных дней Профи: {grant.days}.')
+    return redirect303('/app/subscription')
 
 
 @login_required
@@ -38,6 +71,9 @@ def index(request):
 @require_POST
 def checkout(request):
     workspace = workspace_for(request.user)
+    subscription = Subscription.objects.filter(workspace=workspace).first()
+    if subscription and subscription.is_permanent:
+        return HttpResponse('У вас уже есть бессрочный доступ к Профи.', status=422)
     if not services.enabled():
         return HttpResponse('Подключение оплаты ещё не завершено.', status=503)
     if not request.user.email_verified_at:

@@ -197,3 +197,63 @@ class ConcurrentRequestsTests(TransactionTestCase):
             self.assertEqual(card.draft.get('avatarAssetId'), str(asset.pk) if attached else None)
             self.assertEqual(Asset.objects.filter(pk=asset.pk).exists(), attached)
             self.assertEqual(private_storage().exists(asset.object_key), attached)
+
+    def test_parallel_promo_redemption_is_once_per_user(self):
+        from billing.models import PromoCode, AccessGrant
+        from billing.promotions import redeem
+        self.user.email_verified_at = timezone.now()
+        self.user.save()
+        promo = PromoCode.objects.create(code='PARALLEL', max_uses=None)
+        def operation(user, index):
+            try:
+                redeem(user, promo.code)
+                return 'applied'
+            except ValidationError:
+                return 'rejected'
+        self.assertCountEqual(self.parallel(operation), ['applied', 'rejected'])
+        self.assertEqual(AccessGrant.objects.filter(promo=promo).count(), 1)
+
+    def test_parallel_promo_final_use_cannot_be_overbooked(self):
+        from billing.models import PromoCode, AccessGrant
+        from billing.promotions import redeem
+        self.user.email_verified_at = timezone.now()
+        self.user.save()
+        other = User.objects.create_user('promo-last-use@example.test', email_verified_at=timezone.now())
+        workspace = Workspace.objects.create(owner=other)
+        Membership.objects.create(user=other, workspace=workspace)
+        promo = PromoCode.objects.create(code='LASTONE', max_uses=1)
+        def operation(user, index):
+            if index:
+                user = User.objects.get(pk=other.pk)
+            try:
+                redeem(user, promo.code)
+                return 'applied'
+            except ValidationError:
+                return 'rejected'
+        self.assertCountEqual(self.parallel(operation), ['applied', 'rejected'])
+        self.assertEqual(AccessGrant.objects.filter(promo=promo).count(), 1)
+
+    def test_parallel_payment_and_promo_preserve_both_periods(self):
+        from django.test import override_settings
+        from billing.models import PromoCode, Payment
+        from billing.promotions import redeem
+        from billing.services import apply, add_months
+        self.user.email_verified_at = timezone.now()
+        self.user.save()
+        previous = self.workspace.subscription.paid_until
+        promo = PromoCode.objects.create(code='WITHPAY', days=7)
+        payment = Payment.objects.create(workspace=self.workspace, user=self.user, period='month',
+            amount='199.00', shop_id='parallel-shop', test=True)
+        data = self.payment_data(payment)
+        def operation(user, index):
+            if index:
+                redeem(user, promo.code)
+            else:
+                apply(payment.pk, data)
+            return 'applied'
+        with override_settings(YOOKASSA_SHOP_ID='parallel-shop', YOOKASSA_TEST_MODE=True):
+            self.assertEqual(self.parallel(operation), ['applied', 'applied'])
+        subscription = Subscription.objects.get(workspace=self.workspace)
+        self.assertIn(subscription.access_until, (
+            add_months(previous, 1) + timedelta(days=7),
+            add_months(previous + timedelta(days=7), 1)))

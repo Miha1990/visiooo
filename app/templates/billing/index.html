@@ -1,1 +1,39 @@
-{% extends 'base.html' %}{% block title %}Подписка и платежи — Визитка{% endblock %}{% block content %}<section class="shell dashboard"><a class="back-link" href="/app/cards">Мои визитки</a><h1>Подписка «Профи»</h1><p>До трёх визиток, оформление, соцсети, QR, бесконтактные карты и собственный домен.</p><p>{% if subscription.is_active %}Доступ оплачен до <strong>{{ subscription.paid_until|date:'d.m.Y H:i' }}</strong>. Продление добавится к этому сроку.{% else %}Подготовьте черновик, затем оплатите доступ для публикации.{% endif %} Автосписаний нет.</p>{% if payment_test %}<div class="notice">Тестовый режим: реальные деньги не принимаются. Для публикации сервиса требуется подключить рабочий магазин.</div>{% endif %}{% if not payment_enabled %}<div class="notice">Подключение оплаты ещё не завершено. Попробовать редактор можно сейчас; приём платежей появится после настройки магазина.</div>{% endif %}{% if not user.email_verified_at %}<div class="notice">Перед оплатой подтвердите электронную почту в кабинете.</div>{% endif %}<div class="billing-plans">{% for plan in plans %}<form method="post" action="{% url 'checkout' %}" class="panel stack">{% csrf_token %}<input type="hidden" name="token" value="{{ plan.token }}"><h2>{{ plan.label }}</h2><p class="billing-price">{{ plan.price|floatformat:0 }} ₽</p><p class="micro">{% if plan.period == 'month' %}Один календарный месяц{% else %}12 календарных месяцев{% endif %}. Разовый платёж через ЮКассу.</p><label class="check-label"><input type="checkbox" name="offer" value="yes" required><span>Принимаю <a href="/legal/offer" target="_blank" rel="noopener">публичную оферту</a>, цену и срок доступа.</span></label><label class="check-label"><input type="checkbox" name="processing" value="yes" required><span>Даю отдельное <a href="/legal/processing" target="_blank" rel="noopener">согласие на обработку данных</a> для исполнения заказа. <a href="/legal/privacy" target="_blank" rel="noopener">Политика</a>.</span></label><button class="button" {% if not payment_enabled or not user.email_verified_at %}disabled{% endif %}>Оплатить {{ plan.price|floatformat:0 }} ₽</button></form>{% endfor %}</div><h2>История платежей</h2><div class="payment-history">{% for payment in payments %}<article class="panel"><div><strong>{{ payment.created_at|date:'d.m.Y H:i' }} · {{ payment.amount|floatformat:0 }} ₽</strong><p>{{ payment.get_period_display }} · {{ payment.get_status_display }}{% if payment.test %} · тестовый{% endif %}</p>{% if payment.refunded_amount %}<p>Возвращено {{ payment.refunded_amount }} ₽. Перерасчёт доступа проверяется исполнителем.</p>{% endif %}</div><a class="button small" href="{% url 'payment_detail' payment.pk %}">Подробнее</a></article>{% empty %}<p class="muted">Платежей пока нет.</p>{% endfor %}</div><p class="micro">Чек НПД формирует исполнитель через «Мой налог». После формирования ссылка появится в платеже; чек также передаётся на почту аккаунта. Вопросы и возвраты: <a href="mailto:{{ operator.email }}">{{ operator.email }}</a>.</p></section>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Подписка и платежи — Визитка{% endblock %}
+{% block content %}
+<section class="shell dashboard">
+  <a class="back-link" href="/app/cards">Мои визитки</a><h1>Подписка «Профи»</h1>
+  <p>До трёх визиток, оформление, соцсети, QR, бесконтактные карты и собственный домен.</p>
+  <p>{% if subscription.is_permanent %}<strong>Вам предоставлен бессрочный доступ к Профи.</strong>{% elif subscription.is_active %}Доступ активен до <strong>{{ subscription.access_until|date:'d.m.Y H:i' }}</strong>. Продление добавится к этому сроку.{% else %}Подготовьте черновик, затем оплатите доступ или активируйте промокод для публикации.{% endif %} Автосписаний нет.</p>
+
+  {% if not subscription.is_permanent %}
+  <section class="panel stack" aria-labelledby="promo-heading">
+    <h2 id="promo-heading">Есть промокод?</h2><p>Получите бесплатные дни Профи. Они добавятся к оставшемуся сроку доступа.</p>
+    <form method="post" action="{% url 'redeem_promo' %}" class="stack">{% csrf_token %}{{ promo_form.as_div }}<button class="button" {% if not user.email_verified_at %}disabled{% endif %}>Активировать промокод</button></form>
+    {% if not user.email_verified_at %}<p class="muted">Сначала подтвердите электронную почту в кабинете.</p>{% endif %}
+  </section>
+  {% if payment_test %}<div class="notice">Тестовый режим оплаты: реальные деньги не принимаются.</div>{% endif %}
+  {% if not payment_enabled %}<div class="notice">Приём платежей пока недоступен. Бесплатные доступы и промокоды работают независимо от оплаты.</div>{% endif %}
+  {% if not user.email_verified_at %}<div class="notice">Перед оплатой подтвердите электронную почту в кабинете.</div>{% endif %}
+  <div class="billing-plans">{% for plan in plans %}
+    <form method="post" action="{% url 'checkout' %}" class="panel stack">{% csrf_token %}
+      <input type="hidden" name="token" value="{{ plan.token }}"><h2>{{ plan.label }}</h2><p class="billing-price">{{ plan.price|floatformat:0 }} ₽</p>
+      <p class="micro">{% if plan.period == 'month' %}Один календарный месяц{% else %}12 календарных месяцев{% endif %}. Разовый платёж через ЮКассу.</p>
+      <label class="check-label"><input type="checkbox" name="offer" value="yes" required><span>Принимаю <a href="/legal/offer" target="_blank" rel="noopener">публичную оферту</a>, цену и срок доступа.</span></label>
+      <label class="check-label"><input type="checkbox" name="processing" value="yes" required><span>Даю отдельное <a href="/legal/processing" target="_blank" rel="noopener">согласие на обработку данных</a> для исполнения заказа. <a href="/legal/privacy" target="_blank" rel="noopener">Политика</a>.</span></label>
+      <button class="button" {% if not payment_enabled or not user.email_verified_at %}disabled{% endif %}>Оплатить {{ plan.price|floatformat:0 }} ₽</button>
+    </form>
+  {% endfor %}</div>
+  {% endif %}
+
+  {% if access_grants %}<h2>Бесплатный доступ</h2><div class="payment-history">{% for grant in access_grants %}
+    <article class="panel"><strong>{% if grant.promo %}По промокоду {{ grant.promo.code }}{% else %}Предоставлен сервисом{% endif %}</strong>
+      <p>{% if grant.revoked_at %}Отозван {{ grant.revoked_at|date:'d.m.Y' }}{% elif grant.permanent %}Бессрочно{% else %}{{ grant.days }} дней · до {{ grant.ends_at|date:'d.m.Y H:i' }}{% endif %}</p>
+    </article>
+  {% endfor %}</div>{% endif %}
+  <h2>История платежей</h2><div class="payment-history">{% for payment in payments %}
+    <article class="panel"><div><strong>{{ payment.created_at|date:'d.m.Y H:i' }} · {{ payment.amount|floatformat:0 }} ₽</strong><p>{{ payment.get_period_display }} · {{ payment.get_status_display }}{% if payment.test %} · тестовый{% endif %}</p>{% if payment.refunded_amount %}<p>Возвращено {{ payment.refunded_amount }} ₽. Перерасчёт доступа проверяется исполнителем.</p>{% endif %}</div><a class="button small" href="{% url 'payment_detail' payment.pk %}">Подробнее</a></article>
+  {% empty %}<p class="muted">Платежей пока нет.</p>{% endfor %}</div>
+  <p class="micro">Чек НПД формирует исполнитель через «Мой налог». После формирования ссылка появится в платеже; чек также передаётся на почту аккаунта. Вопросы и возвраты: <a href="mailto:{{ operator.email }}">{{ operator.email }}</a>.</p>
+</section>
+{% endblock %}

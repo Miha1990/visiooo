@@ -2,6 +2,10 @@ from django.db import models
 from django.utils import timezone
 from workspaces.models import Workspace
 from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
+from django.db.models.functions import Lower
+from django.db.models import Q, Max, Count
+import secrets
 import uuid
 
 
@@ -14,7 +18,94 @@ class Subscription(models.Model):
 
     @property
     def is_active(self):
-        return self.status == 'active' and self.paid_until is not None and self.paid_until > timezone.now()
+        now = timezone.now()
+        if self.status == 'active' and self.paid_until and self.paid_until > now:
+            return True
+        return AccessGrant.objects.filter(workspace_id=self.workspace_id, revoked_at__isnull=True,
+            starts_at__lte=now).filter(Q(permanent=True) | Q(ends_at__gt=now)).exists()
+
+    def access_state(self):
+        now = timezone.now()
+        paid = self.paid_until if self.status == 'active' and self.paid_until and self.paid_until > now else None
+        grants = AccessGrant.objects.filter(workspace_id=self.workspace_id, revoked_at__isnull=True,
+                                           starts_at__lte=now).filter(Q(permanent=True) | Q(ends_at__gt=now))
+        result = grants.aggregate(until=Max('ends_at'), permanent=Count('pk', filter=Q(permanent=True)))
+        ends = [value for value in (paid, result['until']) if value]
+        return (max(ends) if ends else None, bool(result['permanent']))
+
+    @property
+    def access_until(self):
+        return self.access_state()[0]
+
+    @property
+    def is_permanent(self):
+        return self.access_state()[1]
+
+
+def new_promo_code():
+    return secrets.token_hex(6).upper()
+
+
+class PromoCode(models.Model):
+    code = models.CharField('Промокод', max_length=40, unique=True, default=new_promo_code,
+        validators=[RegexValidator(r'\A[A-Z0-9_-]{4,40}\Z', 'Используйте 4–40 латинских букв, цифр, дефисов или подчёркиваний.')])
+    days = models.PositiveSmallIntegerField('Бесплатных дней Профи', default=30,
+        validators=[MinValueValidator(1), MaxValueValidator(3650)])
+    active = models.BooleanField('Действует', default=True)
+    starts_at = models.DateTimeField('Действует с', default=timezone.now)
+    expires_at = models.DateTimeField('Действует до', null=True, blank=True)
+    max_uses = models.PositiveIntegerField('Лимит активаций', default=1, null=True, blank=True,
+        validators=[MinValueValidator(1)], help_text='Пустое значение — без общего лимита. Каждый аккаунт — один раз.')
+    email = models.EmailField('Только для почты', blank=True, help_text='Пустое значение — для любых аккаунтов.')
+    note = models.CharField('Примечание', max_length=250, blank=True)
+
+    class Meta:
+        verbose_name = 'промокод'
+        verbose_name_plural = 'Промокоды'
+        constraints = [models.UniqueConstraint(Lower('code'), name='promo_code_case_unique'),
+            models.CheckConstraint(condition=Q(days__gte=1, days__lte=3650), name='promo_days_valid'),
+            models.CheckConstraint(condition=Q(max_uses__isnull=True) | Q(max_uses__gte=1), name='promo_limit_valid')]
+
+    def save(self, *args, **kwargs):
+        self.code = self.code.strip().upper()
+        self.email = self.email.strip().lower()
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.code
+
+    @property
+    def uses(self):
+        return self.accessgrant_set.count() if self.pk else 0
+
+
+class AccessGrant(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, verbose_name='Аккаунт')
+    workspace = models.ForeignKey(Workspace, on_delete=models.PROTECT, verbose_name='Кабинет')
+    days = models.PositiveSmallIntegerField('Бесплатных дней', default=30,
+        validators=[MinValueValidator(1), MaxValueValidator(3650)])
+    permanent = models.BooleanField('Бессрочный доступ', default=False, help_text='Если включено, число дней не учитывается.')
+    starts_at = models.DateTimeField('Выдан', default=timezone.now, editable=False)
+    ends_at = models.DateTimeField('Доступ до', null=True, blank=True, editable=False)
+    promo = models.ForeignKey(PromoCode, on_delete=models.PROTECT, null=True, blank=True, verbose_name='Промокод')
+    issued_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
+                                 related_name='issued_access_grants', verbose_name='Выдал')
+    note = models.CharField('Примечание', max_length=250, blank=True)
+    revoked_at = models.DateTimeField('Отозван', null=True, blank=True, editable=False)
+    revoked_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                  related_name='revoked_access_grants', verbose_name='Отозвал')
+
+    class Meta:
+        verbose_name = 'бесплатный доступ'
+        verbose_name_plural = 'Бесплатные доступы'
+        ordering = ['-starts_at']
+        constraints = [models.UniqueConstraint(fields=['promo', 'user'], name='promo_once_per_user'),
+            models.CheckConstraint(condition=Q(days__gte=1, days__lte=3650), name='grant_days_valid'),
+            models.CheckConstraint(condition=Q(permanent=True, ends_at__isnull=True) | Q(permanent=False, ends_at__isnull=False), name='grant_end_valid')]
+
+    def __str__(self):
+        return f'{self.user}: ' + ('бессрочно' if self.permanent else f'{self.days} дней')
 
 
 class Payment(models.Model):

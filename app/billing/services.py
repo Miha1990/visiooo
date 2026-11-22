@@ -71,7 +71,8 @@ def apply(payment_id, data):
         if payment.applied_at is None:
             sub, _ = Subscription.objects.get_or_create(workspace_id=payment.workspace_id)
             now = timezone.now()
-            start = max(now, sub.paid_until) if sub.is_active else now
+            access_until = sub.access_until
+            start = max(now, access_until) if access_until else now
             end = add_months(start, 1 if payment.period == 'month' else 12)
             sub.status, sub.paid_until = 'active', end
             sub.save(update_fields=['status', 'paid_until'])

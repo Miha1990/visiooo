@@ -35,6 +35,7 @@ urlpatterns = [
     path('app/cards', views.dashboard, name='dashboard'),
     path('app/subscription', billing.index, name='subscription'),
     path('app/subscription/checkout', billing.checkout, name='checkout'),
+    path('app/subscription/promo', billing.redeem_promo, name='redeem_promo'),
     path('app/payments/<uuid:pk>', billing.detail, name='payment_detail'),
     path('app/payments/<uuid:pk>/check', billing.check, name='payment_check'),
     path('app/payments/<uuid:pk>/status', billing.status, name='payment_status'),
