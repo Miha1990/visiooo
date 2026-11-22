@@ -10,11 +10,11 @@ import uuid
 
 
 class Subscription(models.Model):
-    workspace = models.OneToOneField(Workspace, on_delete=models.CASCADE)
-    plan = models.CharField(max_length=10, default='pro', editable=False)
+    workspace = models.OneToOneField(Workspace, on_delete=models.CASCADE, verbose_name='Личный кабинет')
+    plan = models.CharField(max_length=10, default='pro', editable=False, verbose_name='Тариф', choices=[('pro', 'Профи')])
     status = models.CharField(max_length=10, choices=[('pending', 'Ожидает оплаты'), ('active', 'Активна'),
-                                                    ('expired', 'Истекла')], default='pending')
-    paid_until = models.DateTimeField(null=True, blank=True)
+                                                    ('expired', 'Истекла')], default='pending', verbose_name='Статус оплаты')
+    paid_until = models.DateTimeField(null=True, blank=True, verbose_name='Оплачено до')
 
     @property
     def is_active(self):
@@ -40,6 +40,13 @@ class Subscription(models.Model):
     @property
     def is_permanent(self):
         return self.access_state()[1]
+
+    def __str__(self):
+        return f'Подписка — {self.workspace.owner.email}'
+
+    class Meta:
+        verbose_name = 'подписка'
+        verbose_name_plural = 'Подписки'
 
 
 def new_promo_code():
@@ -109,26 +116,31 @@ class AccessGrant(models.Model):
 
 
 class Payment(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    workspace = models.ForeignKey(Workspace, on_delete=models.PROTECT)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
-    period = models.CharField(max_length=8, choices=[('month', 'Месяц'), ('year', 'Год')])
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, verbose_name='Идентификатор')
+    workspace = models.ForeignKey(Workspace, on_delete=models.PROTECT, verbose_name='Личный кабинет')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, verbose_name='Пользователь')
+    period = models.CharField(max_length=8, choices=[('month', 'Месяц'), ('year', 'Год')], verbose_name='Срок подписки')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Сумма, ₽')
     status = models.CharField(max_length=20, default='new', choices=[('new', 'Создан'),
-        ('pending', 'Ожидает оплаты'), ('succeeded', 'Оплачен'), ('canceled', 'Отменён')])
-    provider_id = models.CharField(max_length=64, unique=True, null=True, blank=True)
-    confirmation_url = models.URLField(max_length=2048, blank=True)
-    shop_id = models.CharField(max_length=64)
-    test = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    applied_at = models.DateTimeField(null=True, blank=True)
-    access_start = models.DateTimeField(null=True, blank=True)
-    access_end = models.DateTimeField(null=True, blank=True)
-    refunded_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    refund_review = models.BooleanField(default=False)
-    receipt_url = models.URLField(max_length=2048, blank=True)
-    receipt_sent_at = models.DateTimeField(null=True, blank=True)
+        ('pending', 'Ожидает оплаты'), ('succeeded', 'Оплачен'), ('canceled', 'Отменён')], verbose_name='Статус')
+    provider_id = models.CharField(max_length=64, unique=True, null=True, blank=True, verbose_name='Идентификатор в ЮКассе')
+    confirmation_url = models.URLField(max_length=2048, blank=True, verbose_name='Ссылка на оплату')
+    shop_id = models.CharField(max_length=64, verbose_name='Номер магазина ЮКассы')
+    test = models.BooleanField(default=True, verbose_name='Тестовый платёж')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    applied_at = models.DateTimeField(null=True, blank=True, verbose_name='Дата начисления доступа')
+    access_start = models.DateTimeField(null=True, blank=True, verbose_name='Начало доступа')
+    access_end = models.DateTimeField(null=True, blank=True, verbose_name='Окончание доступа')
+    refunded_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Возвращено, ₽')
+    refund_review = models.BooleanField(default=False, verbose_name='Требуется проверка возврата')
+    receipt_url = models.URLField(max_length=2048, blank=True, verbose_name='Ссылка на чек НПД')
+    receipt_sent_at = models.DateTimeField(null=True, blank=True, verbose_name='Чек отправлен')
 
     class Meta:
+        verbose_name = 'платёж'
+        verbose_name_plural = 'Платежи'
         ordering = ['-created_at']
         constraints = [models.CheckConstraint(condition=models.Q(amount__gt=0), name='payment_positive_amount')]
+
+    def __str__(self):
+        return f'Платёж {self.pk}'

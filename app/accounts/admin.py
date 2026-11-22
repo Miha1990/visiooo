@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from .models import User, LegalAcceptance
+from config.admin_localization import RussianPermissionLabelsMixin
 
 
 class AccountCreationForm(UserCreationForm):
@@ -17,7 +18,7 @@ class AccountChangeForm(UserChangeForm):
 
 
 @admin.register(User)
-class AccountAdmin(UserAdmin):
+class AccountAdmin(RussianPermissionLabelsMixin, UserAdmin):
     add_form = AccountCreationForm
     form = AccountChangeForm
     ordering = ('email',)
