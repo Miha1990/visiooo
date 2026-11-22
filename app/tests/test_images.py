@@ -149,12 +149,17 @@ class ImageTests(TestCase):
         self.assertEqual(self.client.get(reverse('preview_asset', args=[self.card.pk, asset.pk])).status_code, 302)
 
     def test_storage_quota_and_cleanup_after_failed_save(self):
-        Asset.objects.create(workspace=self.workspace, object_key='not-a-real-file.webp', bytes=50 * 1024 * 1024,
-                             width=1, height=1)
+        occupied = Asset.objects.create(workspace=self.workspace, object_key='not-a-real-file.webp', bytes=50 * 1024 * 1024,
+                                       width=1, height=1)
+        save_card(self.user, self.card.pk, self.card.draft_version, dict(self.card.draft, headerAssetId=str(occupied.pk)))
         with self.assertRaises(ValidationError):
             self.upload()
         self.assertEqual(list(Path(self.directory.name).rglob('*.webp')), [])
         Asset.objects.all().delete()
+        self.card.refresh_from_db()
+        content = dict(self.card.draft)
+        content.pop('headerAssetId')
+        save_card(self.user, self.card.pk, self.card.draft_version, content)
         with patch('cards.images.save_card', side_effect=Conflict('stale')), self.assertRaises(Conflict):
             self.upload()
         self.assertEqual(Asset.objects.count(), 0)
@@ -163,8 +168,9 @@ class ImageTests(TestCase):
     def test_unpaid_storage_quota(self):
         self.sub.status = 'pending'
         self.sub.save()
-        Asset.objects.create(workspace=self.workspace, object_key='unused.webp', bytes=10 * 1024 * 1024,
-                             width=1, height=1)
+        occupied = Asset.objects.create(workspace=self.workspace, object_key='occupied.webp', bytes=10 * 1024 * 1024,
+                                       width=1, height=1)
+        save_card(self.user, self.card.pk, self.card.draft_version, dict(self.card.draft, headerAssetId=str(occupied.pk)))
         with self.assertRaises(ValidationError):
             self.upload()
 

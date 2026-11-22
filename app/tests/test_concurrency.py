@@ -134,8 +134,10 @@ class ConcurrentRequestsTests(TransactionTestCase):
         from .test_images import photo
         cards = [create_card(self.user), create_card(self.user)]
         data, _, _ = normalize_image(photo())
-        Asset.objects.create(workspace=self.workspace, object_key='quota-test.webp',
+        occupied = Asset.objects.create(workspace=self.workspace, object_key='quota-test.webp',
             bytes=50 * 1024 * 1024 - len(data), width=1, height=1)
+        quota_card = create_card(self.user)
+        save_card(self.user, quota_card.pk, 1, dict(quota_card.draft, headerAssetId=str(occupied.pk)))
 
         def operation(user, index):
             try:
@@ -162,3 +164,36 @@ class ConcurrentRequestsTests(TransactionTestCase):
                 'new_password2': f'ParallelNewPassword-{index}-284!'}).status_code
         self.assertCountEqual(self.parallel(operation), [303, 400])
         self.assertEqual(PasswordResetToken.objects.filter(used_at__isnull=False).count(), 1)
+
+    def test_cleanup_and_attaching_legacy_asset_cannot_leave_a_broken_reference(self):
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        from django.test import override_settings
+        from cards.asset_cleanup import cleanup_unused_assets
+        from cards.images import upload_avatar, private_storage
+        from cards.models import Asset
+        from .test_images import photo
+        card = create_card(self.user)
+        with TemporaryDirectory() as directory, override_settings(PRIVATE_MEDIA_ROOT=Path(directory)):
+            asset = upload_avatar(self.user, card.pk, 1, photo())
+            card.refresh_from_db()
+            content = dict(card.draft)
+            content.pop('avatarAssetId')
+            Card.objects.filter(pk=card.pk).update(draft=content)
+
+            def operation(user, index):
+                if index == 0:
+                    cleanup_unused_assets(self.workspace.pk)
+                    return 'cleaned'
+                try:
+                    save_card(user, card.pk, card.draft_version, dict(content, avatarAssetId=str(asset.pk)))
+                    return 'attached'
+                except ValidationError:
+                    return 'gone'
+
+            result = self.parallel(operation)
+            card.refresh_from_db()
+            attached = 'attached' in result
+            self.assertEqual(card.draft.get('avatarAssetId'), str(asset.pk) if attached else None)
+            self.assertEqual(Asset.objects.filter(pk=asset.pk).exists(), attached)
+            self.assertEqual(private_storage().exists(asset.object_key), attached)

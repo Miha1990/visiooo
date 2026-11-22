@@ -14,7 +14,7 @@ from .forms import CardForm, AvatarUploadForm
 from .models import Card
 from .image_slots import IMAGE_FIELDS
 from .services import (workspace_for, own_card, active_subscription, create_card, save_card,
-                       publish_card, public_card, Conflict)
+                       publish_card, public_card, delete_card, unpublish_card, Conflict)
 from .vcard import render_vcard
 
 
@@ -121,8 +121,7 @@ def publish(request, pk):
 @login_required
 @require_POST
 def unpublish(request, pk):
-    card = own_card(request.user, pk)
-    Card.objects.filter(pk=card.pk).update(status='draft')
+    unpublish_card(request.user, pk)
     messages.success(request, 'Публичный доступ закрыт.')
     return redirect303(f'/app/cards/{pk}/edit')
 
@@ -130,10 +129,7 @@ def unpublish(request, pk):
 @login_required
 @require_POST
 def delete(request, pk):
-    card = own_card(request.user, pk)
-    # Tombstone retains the ID so old printed QR codes can never be reassigned.
-    Card.objects.filter(pk=card.pk).update(status='deleted', draft={}, published_revision=None)
-    card.revisions.all().delete()
+    delete_card(request.user, pk)
     messages.success(request, 'Визитка удалена.')
     return redirect303('/app/cards')
 

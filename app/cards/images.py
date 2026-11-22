@@ -13,6 +13,7 @@ from django.db.models import Sum
 from workspaces.models import Workspace
 from .models import Asset, Card
 from .image_slots import IMAGE_FIELDS
+from .asset_cleanup import referenced_asset_ids
 from .services import own_card, workspace_for, active_subscription, save_card, Conflict
 
 MAX_UPLOAD = 5 * 1024 * 1024
@@ -71,13 +72,15 @@ def upload_avatar(user, pk, version, upload, target='avatar'):
             if card.draft_version != version:
                 raise Conflict('Черновик изменился. Обновите страницу перед загрузкой фото.')
             limit = (50 if active_subscription(workspace) else 10) * 1024 * 1024
-            used = Asset.objects.filter(workspace=workspace).aggregate(total=Sum('bytes'))['total'] or 0
+            content = dict(card.draft)
+            content.pop(asset_field, None)
+            referenced = referenced_asset_ids(workspace.pk, replacement=(card.pk, content))
+            used = Asset.objects.filter(workspace=workspace, pk__in=referenced).aggregate(total=Sum('bytes'))['total'] or 0
             if used + len(data) > limit:
                 raise ValidationError('Недостаточно места для фото. Лимит: 10 МБ до оплаты и 50 МБ с Профи.')
             saved_key = storage.save(f'{workspace.pk}/{uuid.uuid4().hex}.webp', ContentFile(data))
             asset = Asset.objects.create(workspace=workspace, object_key=saved_key, bytes=len(data),
                                           width=width, height=height)
-            content = dict(card.draft)
             content[asset_field] = str(asset.pk)
             save_card(user, pk, version, content)
             return asset
@@ -91,6 +94,7 @@ def upload_avatar(user, pk, version, upload, target='avatar'):
 def remove_avatar(user, pk, version, target='avatar'):
     if target not in IMAGE_FIELDS:
         raise ValidationError('Некорректный тип фото.')
+    Workspace.objects.select_for_update().get(pk=workspace_for(user).pk)
     card = own_card(user, pk)
     content = dict(card.draft)
     content.pop(IMAGE_FIELDS[target], None)

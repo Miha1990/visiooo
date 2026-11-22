@@ -6,6 +6,7 @@ from billing.models import Subscription
 from workspaces.models import Workspace
 from .models import Card, CardRevision
 from .validation import validate_content
+from .asset_cleanup import schedule_cleanup
 
 
 class Conflict(Exception):
@@ -37,6 +38,7 @@ def create_card(user):
 
 @transaction.atomic
 def save_card(user, pk, version, content):
+    Workspace.objects.select_for_update().get(pk=workspace_for(user).pk)
     card = own_card(user, pk)
     validate_content(content, workspace=card.workspace)
     # Conditional UPDATE also protects against stale writes with SQLite.
@@ -44,6 +46,7 @@ def save_card(user, pk, version, content):
         draft=content, draft_version=version + 1, updated_at=timezone.now())
     if not changed:
         raise Conflict('Визитка изменена в другой вкладке. Скопируйте правки и обновите страницу.')
+    schedule_cleanup(card.workspace_id)
 
 
 @transaction.atomic
@@ -65,7 +68,25 @@ def publish_card(user, pk, version, publication_conditions=''):
     card.published_revision = revision
     card.status = 'published'
     card.save(update_fields=['published_revision', 'status', 'updated_at'])
+    schedule_cleanup(workspace.pk)
     return card
+
+
+@transaction.atomic
+def delete_card(user, pk):
+    workspace = Workspace.objects.select_for_update().get(pk=workspace_for(user).pk)
+    card = own_card(user, pk)
+    # Keep the identifier reserved for existing printed QR codes.
+    Card.objects.filter(pk=card.pk).update(status='deleted', draft={}, published_revision=None)
+    card.revisions.all().delete()
+    schedule_cleanup(workspace.pk)
+
+
+@transaction.atomic
+def unpublish_card(user, pk):
+    Workspace.objects.select_for_update().get(pk=workspace_for(user).pk)
+    card = own_card(user, pk)
+    Card.objects.filter(pk=card.pk).update(status='draft')
 
 
 def public_card(public_id, workspace=None):

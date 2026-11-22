@@ -19,5 +19,6 @@ test -s "$backup"
 "${dc[@]}" run --rm --no-deps web python manage.py check --deploy --fail-level WARNING
 "${dc[@]}" run --rm --no-deps web python manage.py migrate --noinput
 "${dc[@]}" up -d --wait --wait-timeout 120 web
+"${dc[@]}" exec -T web python manage.py cleanup_unused_assets
 "${dc[@]}" ps
 echo "Обновление завершено. Резервная копия базы: $backup"
