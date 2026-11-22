@@ -137,6 +137,10 @@
 .m-plan-details tbody th { font-weight: 400; }
 .m-plan-details td:last-child { color: #1f4dbd; font-weight: 600; }
 .m-plan-details .m-fine { font-size: 11px; margin-top: 20px; }
+.m-service-access { margin: 0 0 30px; padding: 24px; border: 1px solid var(--m-border); border-radius: 16px; background: #ffffff80; }
+.m-service-access h3 { font-size: 20px; margin: 0 0 14px; }
+.m-service-access p { font-size: 13px; line-height: 1.8; color: #4f6068; }
+.m-service-access a { color: #2457db; text-decoration: underline; text-underline-offset: 3px; }
 .m-faq { display: grid; grid-template-columns: .9fr 1.1fr; gap: 70px; }
 .m-faq details { border-bottom: 1px solid var(--m-border); }
 .m-faq summary { cursor: pointer; font-size: 14px; font-weight: 600; padding: 21px 22px 21px 0; line-height: 1.5; }

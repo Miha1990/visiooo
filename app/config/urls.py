@@ -15,6 +15,7 @@ from . import legal_views
 urlpatterns = [
     path('', views.home, name='home'),
     path('pricing', TemplateView.as_view(template_name='pricing.html'), name='pricing'),
+    path('contacts', TemplateView.as_view(template_name='contacts.html'), name='contacts'),
     path('legal/<slug:slug>', legal_views.document, name='legal_document'),
     path('examples/<slug:slug>', examples.detail, name='example'),
     path('examples/<slug:slug>/qr.png', examples.qr, name='example_qr'),
