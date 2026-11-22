@@ -6,7 +6,8 @@ test -f /etc/letsencrypt/live/mail.visiooo.ru/fullchain.pem || { echo 'Issue the
 dc=(docker compose --env-file ops/mail/.env -f compose.mail.yaml)
 "${dc[@]}" config --quiet
 "${dc[@]}" pull
-"${dc[@]}" up -d --wait --wait-timeout 300 mailserver webmail_db
+"${dc[@]}" up -d --wait webmail_db
+"${dc[@]}" up -d --no-deps --force-recreate --wait --wait-timeout 300 mailserver
 "${dc[@]}" up -d webmail
 "${dc[@]}" ps
 echo 'Generate DKIM once if not done, publish DNS, then test incoming and outgoing delivery. See ops/MAIL.md.'

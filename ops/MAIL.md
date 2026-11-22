@@ -71,7 +71,7 @@ cat mail-data/config/opendkim/keys/visiooo.ru/mail.txt
 Опубликовать только публичную TXT-запись из `mail.txt` в `mail._domainkey`. Склеить строки значения `p=` без внутренних кавычек и скобок, если REG.RU запрашивает одно текстовое значение. Файлы `mail.private` и пароли никуда не отправлять. Ключ генерировать один раз; повторная генерация меняет подпись и требует обновления DNS.
 
 ```bash
-docker compose --env-file ops/mail/.env -f compose.mail.yaml restart mailserver
+docker compose --env-file ops/mail/.env -f compose.mail.yaml up -d --no-deps --force-recreate --wait --wait-timeout 300 mailserver
 cp ops/mail/https.conf.example /etc/nginx/conf.d/visiooo-mail.conf
 nginx -t && systemctl reload nginx
 curl --fail --noproxy '*' -I https://mail.visiooo.ru/
@@ -99,7 +99,7 @@ install -m 0755 ops/mail/renew.sh /etc/letsencrypt/renewal-hooks/deploy/visiooo-
 certbot renew --dry-run
 ```
 
-Проверить расписание Certbot и фактическую перезагрузку сертификатов в DMS после первого продления. По мере обновления кода повторно устанавливать обновлённый hook. Обновления почтовых образов выполнять осознанно после просмотра выпусков и резервирования.
+Проверить расписание Certbot и фактическую перезагрузку сертификатов в DMS после первого продления. По мере обновления кода повторно устанавливать обновлённый hook. После генерации DKIM или изменения конфигурации пересоздавать только `mailserver` через `up --force-recreate`: обычный `restart` может пропустить необходимые этапы настройки. Тома с почтой, очередью и ключами сохраняются. Обновления почтовых образов выполнять осознанно после просмотра выпусков и резервирования.
 
 ```bash
 docker compose --env-file ops/mail/.env -f compose.mail.yaml ps
