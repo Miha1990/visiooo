@@ -63,7 +63,13 @@ def get_example(slug):
 
 @require_GET
 def detail(request, slug):
-    return render(request, 'cards/example.html', {'example': get_example(slug)})
+    from config.seo import metadata
+    from django.templatetags.static import static
+    example = get_example(slug)
+    seo = metadata(request, title=f'{example["content"]["name"]} — пример визитки',
+                   description=example['content']['title'] + '. Демонстрационный пример оформления электронной визитки.',
+                   image=settings.PUBLIC_BASE_URL + static(example['assets']['header']))
+    return render(request, 'cards/example.html', {'example': example, 'seo': seo})
 
 
 @require_GET

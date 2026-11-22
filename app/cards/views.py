@@ -151,8 +151,10 @@ def public_qr(request, public_id):
 @never_cache
 @require_GET
 def public(request, public_id):
+    from config.seo import card_metadata
     card = public_card(public_id, workspace=getattr(request, 'domain_workspace', None))
     response = render(request, 'cards/public.html', {'card': card, 'content': card.published_revision.content,
+                      'seo': card_metadata(request, card),
                       'publication_conditions': card.published_revision.publication_conditions})
     response['X-Robots-Tag'] = 'noindex, nofollow'
     return response

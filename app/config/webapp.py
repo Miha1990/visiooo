@@ -1,4 +1,5 @@
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse, HttpResponseRedirect, FileResponse
+from django.contrib.staticfiles import finders
 from django.templatetags.static import static
 from django.views.decorators.http import require_safe
 
@@ -22,7 +23,7 @@ def manifest(request):
 
 @require_safe
 def favicon(request):
-    response = HttpResponseRedirect(static('brand/favicon.ico'))
+    response = FileResponse(open(finders.find('brand/favicon.ico'), 'rb'), content_type='image/x-icon')
     response['Cache-Control'] = 'public, max-age=86400'
     return response
 

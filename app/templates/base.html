@@ -2,6 +2,7 @@
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light"><title>{% block title %}Визитка — ваши контакты в одном касании{% endblock %}</title>
 {% include 'brand/webapp.html' %}
+{% include 'brand/metadata.html' %}
 <link rel="stylesheet" href="{% static 'app.css' %}"><script src="{% static 'app.js' %}" defer></script><script src="{% static 'card-interactions.js' %}" defer></script>{% block extra_head %}{% endblock %}</head>
 <body><a class="skip" href="#main">К содержимому</a>
 <header class="header"><a class="brand" href="/" aria-label="Визитка — главная"><img class="brand-mark" src="{% static 'brand/logo-mark-96.png' %}" width="37" height="37" alt="">визитка</a>

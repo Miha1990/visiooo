@@ -1,6 +1,7 @@
 from django.urls import path
 from cards import views, asset_views, physical_views
 from config import webapp
+from config import seo
 
 
 def root(request):
@@ -8,6 +9,8 @@ def root(request):
 
 
 urlpatterns = [
+    path('robots.txt', seo.robots),
+    path('sitemap.xml', seo.sitemap),
     path('favicon.ico', webapp.favicon),
     path('apple-touch-icon.png', webapp.apple_touch_icon),
     path('apple-touch-icon-precomposed.png', webapp.apple_touch_icon),

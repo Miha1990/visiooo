@@ -13,8 +13,11 @@ from domains import views as domain_views
 from billing import views as billing
 from . import legal_views
 from . import webapp
+from . import seo
 
 urlpatterns = [
+    path('robots.txt', seo.robots, name='robots'),
+    path('sitemap.xml', seo.sitemap, name='sitemap'),
     path('favicon.ico', webapp.favicon, name='favicon'),
     path('apple-touch-icon.png', webapp.apple_touch_icon, name='apple_touch_icon'),
     path('apple-touch-icon-precomposed.png', webapp.apple_touch_icon),
