@@ -45,7 +45,7 @@ class ClientDashboardTests(TestCase):
             self.assertContains(response, value)
         response = self.client.get('/app/analytics')
         self.assertEqual(response.context['card_count'], 1)
-        self.assertContains(response, 'пока не собирается')
+        self.assertContains(response, 'Просмотры визиток')
 
     def test_empty_dashboard_still_allows_card_creation(self):
         self.card.status = 'deleted'; self.card.save()

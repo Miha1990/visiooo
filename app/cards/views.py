@@ -69,9 +69,20 @@ def client_menu(request):
 @never_cache
 @require_GET
 def client_analytics(request):
+    from .analytics import report
+    from django.shortcuts import get_object_or_404
+    from django.http import Http404
     workspace = workspace_for(request.user)
     cards = Card.objects.filter(workspace=workspace).exclude(status='deleted')
+    selected = None
+    if request.GET.get('card'):
+        try:
+            selected = get_object_or_404(cards, pk=request.GET['card'])
+        except (ValueError, ValidationError):
+            raise Http404
+    counted = cards.filter(pk=selected.pk) if selected else cards
     return render(request, 'cards/client_analytics.html', {
+        **report(counted, request.GET.get('period', 'day')), 'cards': cards, 'selected_card': selected,
         'card_count': cards.count(), 'published_count': cards.filter(status='published', blocked=False).count(),
         'draft_count': cards.filter(status='draft').count(), 'active_pro': active_subscription(workspace)})
 
@@ -187,6 +198,8 @@ def public(request, public_id):
     response = render(request, 'cards/public.html', {'card': card, 'content': card.published_revision.content,
                       'seo': card_metadata(request, card),
                       'publication_conditions': card.published_revision.publication_conditions})
+    from .analytics import record_view
+    record_view(request, card)
     response['X-Robots-Tag'] = 'noindex, nofollow'
     return response
 

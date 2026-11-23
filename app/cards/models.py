@@ -91,6 +91,17 @@ class Card(models.Model):
         return self.draft.get('name', 'Визитка')
 
 
+class CardDailyViews(models.Model):
+    card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name='daily_views', verbose_name='Визитка')
+    day = models.DateField('День по московскому времени')
+    views = models.PositiveBigIntegerField('Просмотры', default=0)
+
+    class Meta:
+        verbose_name = 'просмотры визитки за день'
+        verbose_name_plural = 'Просмотры визиток по дням'
+        constraints = [models.UniqueConstraint(fields=['card', 'day'], name='unique_card_views_day')]
+
+
 class CardRevision(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, verbose_name='Идентификатор')
     card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name='revisions', verbose_name='Визитка')

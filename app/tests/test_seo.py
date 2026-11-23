@@ -44,7 +44,7 @@ class DiscoveryTests(SimpleTestCase):
                    'accent': '#2457db', 'avatarAssetId': '277f8751-c7b2-4872-830f-6d41df004f83'}
         card = SimpleNamespace(public_id='owner', draft={'name': 'SECRET DRAFT', 'avatarAssetId': 'private-photo'},
                                published_revision=SimpleNamespace(content=content, publication_conditions=''))
-        with patch('cards.views.public_card', return_value=card):
+        with patch('cards.views.public_card', return_value=card), patch('cards.analytics.record_view'):
             response = self.client.get('/c/owner', secure=True)
         self.assertContains(response, 'property="og:title" content="Анна &lt;script&gt; — визитка"')
         self.assertContains(response, 'property="og:image" content="https://testserver/c/owner/assets/277f8751-c7b2-4872-830f-6d41df004f83"')

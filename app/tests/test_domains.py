@@ -167,6 +167,15 @@ class DomainTests(TestCase):
         for path in ('/accounts/login', '/accounts/register', '/app/cards', '/app/domains', '/app/menu', '/app/analytics', '/admin/', '/health/ready'):
             self.assertEqual(self.client.get(path, HTTP_HOST=binding.hostname).status_code, 404)
 
+    def test_custom_domain_counts_each_public_opening_once(self):
+        from cards.models import CardDailyViews
+        binding = self.binding(live=True)
+        visitor = Client()
+        self.assertEqual(visitor.get('/', HTTP_HOST=binding.hostname).status_code, 200)
+        self.assertEqual(CardDailyViews.objects.get(card=self.card).views, 1)
+        visitor.get(f'/c/{self.card.public_id}', HTTP_HOST=binding.hostname)
+        self.assertEqual(CardDailyViews.objects.get(card=self.card).views, 2)
+
     def test_physical_carriers_are_scoped_to_domain_workspace(self):
         binding = self.binding(live=True)
         own = create_physical(self.user, 'Own', self.card)
