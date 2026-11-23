@@ -5,6 +5,16 @@ register = template.Library()
 register.filter('social_links', social_links)
 
 
+@register.simple_tag
+def customer_blocks(content, visual_editor=False):
+    blocks = list(content['design']['blocks'])
+    if not visual_editor and 'save' in blocks:
+        blocks.remove('save')
+        profile = [index for index, key in enumerate(blocks) if key in ('identity','bio')]
+        blocks.insert(max(profile)+1 if profile else 0, 'save')
+    return blocks
+
+
 @register.simple_tag(takes_context=True)
 def card_buttons(context):
     from django.templatetags.static import static

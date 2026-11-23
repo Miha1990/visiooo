@@ -1,0 +1,9 @@
+{% load card_tags %}
+<div class="contact-save-group">
+{% if example_assets %}<a class="button contact-save{% if designed %} design-action{% endif %}" href="{{ example_vcard_url }}" data-save-contact>
+{% elif preview %}<span class="button contact-save{% if designed %} design-action{% endif %}">
+{% else %}<a class="button contact-save{% if designed %} design-action{% endif %}" href="{% url 'vcard' card.public_id %}" data-save-contact>{% endif %}
+{% if designed %}<img class="design-contact-icon" data-design-icon="save" src="{% design_icon content.design 'save' %}" width="24" height="24" alt=""><span data-design-label="saveLabel">{{ content.design.saveLabel }}</span>{% else %}Сохранить контакт{% endif %}
+{% if preview and not example_assets %}</span>{% else %}</a>{% endif %}
+{% if not preview or example_assets %}<div class="contact-save-help" data-contact-help role="status" hidden><p data-contact-instructions></p><a href="{% if example_assets %}{{ example_vcard_url }}{% else %}{% url 'vcard' card.public_id %}{% endif %}?download=1" download>Скачать файл контакта</a></div>{% endif %}
+</div>

@@ -234,7 +234,8 @@ def vcard(request, public_id):
     card = public_card(public_id, workspace=getattr(request, 'domain_workspace', None))
     response = HttpResponse(render_vcard(card.published_revision.content, public_url(card)),
                             content_type='text/vcard; charset=utf-8')
-    response['Content-Disposition'] = 'attachment; filename="contact.vcf"'
+    disposition = 'attachment' if request.GET.get('download') == '1' else 'inline'
+    response['Content-Disposition'] = f'{disposition}; filename="contact.vcf"'
     response['X-Robots-Tag'] = 'noindex, nofollow'
     return response
 

@@ -23,9 +23,15 @@ def render_vcard(content, public_url):
                       ('email', 'EMAIL;TYPE=INTERNET'), ('website', 'URL')]:
         if content.get(key):
             lines.append(prop + ':' + escape(content[key]))
+    phones = {content.get('phone')}; emails = {content.get('email')}
     for button in content.get('buttons', []):
-        if button['kind'] in ('phone','other_phone') and button['value'] != content.get('phone'):
-            lines.append('TEL;TYPE=VOICE:' + escape(button['value']))
+        if button['kind'] in ('phone','other_phone') and button['value'] not in phones:
+            prop = 'TEL;TYPE=CELL' if button['kind'] == 'phone' else 'TEL;TYPE=VOICE'
+            lines.append(prop + ':' + escape(button['value'])); phones.add(button['value'])
+        elif button['kind'] == 'email' and button['value'] not in emails:
+            lines.append('EMAIL;TYPE=INTERNET:' + escape(button['value'])); emails.add(button['value'])
+    address = content.get('map', {}).get('address')
+    if address: lines.append('ADR;TYPE=WORK:;;' + escape(address) + ';;;;')
     notes = [content['bio']] if content.get('bio') else []
     for button in content.get('buttons', []):
         if button['kind'] in ('phone','other_phone') and button.get('extension'):

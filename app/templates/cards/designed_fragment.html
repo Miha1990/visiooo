@@ -3,7 +3,7 @@
 {% if visual_editor %}{% card_image 'background' as background_url %}<img class="card-background" data-image-slot="background" alt="" aria-hidden="true" {% if background_url %}src="{{ background_url }}"{% else %}hidden{% endif %}>{% endif %}
 <div class="contact-body design-body">
 
-{% for block in content.design.blocks %}{% block_visible content block as has_data %}{% if preview or has_data or not card or example_assets %}{% design_block content.design block as block_style %}<div data-design-block="{{ block }}" data-block-align="{{ block_style.align }}" data-block-icons="{{ block_style.effectiveIconPosition }}" data-block-button="{{ block_style.buttonShape }}" data-template-hidden="{% if block in content.design.hidden %}true{% else %}false{% endif %}" style="--design-icon:{{ block_style.iconSize }}px;{% if block_style.buttonCorners %}--design-button-radius:{{ block_style.buttonCorners|corner_style }};{% endif %}{% frame_style content.design block %}" {% if block in content.design.hidden %}hidden{% elif preview and not visual_editor and not has_data %}hidden{% endif %}>
+{% customer_blocks content visual_editor as ordered_blocks %}{% for block in ordered_blocks %}{% block_visible content block as has_data %}{% if preview or has_data or not card or example_assets %}{% design_block content.design block as block_style %}<div data-design-block="{{ block }}" data-block-align="{{ block_style.align }}" data-block-icons="{{ block_style.effectiveIconPosition }}" data-block-button="{{ block_style.buttonShape }}" data-template-hidden="{% if block in content.design.hidden %}true{% else %}false{% endif %}" style="--design-icon:{{ block_style.iconSize }}px;{% if block_style.buttonCorners %}--design-button-radius:{{ block_style.buttonCorners|corner_style }};{% endif %}{% frame_style content.design block %}" {% if block in content.design.hidden %}hidden{% elif preview and not visual_editor and not has_data %}hidden{% endif %}>
 <img class="design-block-icon" data-block-icon="{{ block }}" {% if block_style.icon %}src="{% url 'template_icon' block_style.icon %}"{% else %}hidden{% endif %} width="24" height="24" alt="">
 {% if block == 'cover' %}
   <div class="contact-cover">
@@ -25,9 +25,7 @@
     {% if preview or content.company %}<p class="contact-company" data-preview="company" {% if not content.company %}hidden{% endif %}>{{ content.company }}</p>{% endif %}
 {% elif block == 'bio' %}
 {% if preview or content.bio %}<p class="contact-bio" data-preview="bio" {% if not content.bio %}hidden{% endif %}>{{ content.bio }}</p>{% endif %}{% elif block == 'save' %}
-    {% if example_assets %}<a class="button contact-save design-action" href="{{ example_vcard_url }}"><img class="design-contact-icon" data-design-icon="save" src="{% design_icon content.design 'save' %}" width="24" height="24" alt=""><span data-design-label="saveLabel">{{ content.design.saveLabel }}</span></a>
-    {% elif preview %}<span class="button contact-save design-action"><img class="design-contact-icon" data-design-icon="save" src="{% design_icon content.design 'save' %}" width="24" height="24" alt=""><span data-design-label="saveLabel">{{ content.design.saveLabel }}</span></span>
-    {% else %}<a class="button contact-save design-action" href="{% url 'vcard' card.public_id %}"><img class="design-contact-icon" data-design-icon="save" src="{% design_icon content.design 'save' %}" width="24" height="24" alt=""><span data-design-label="saveLabel">{{ content.design.saveLabel }}</span></a>{% endif %}
+    {% include 'cards/save_contact.html' with designed=True %}
 {% elif block == 'contacts' %}
     {% if content.buttonLayout == 'tiles' %}{% include 'cards/button_tiles.html' %}{% else %}
     <div class="contact-actions">

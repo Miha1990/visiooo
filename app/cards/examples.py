@@ -94,5 +94,6 @@ def vcard(request, slug):
     example = get_example(slug)
     response = HttpResponse(render_vcard(example['content'], f'{settings.PUBLIC_BASE_URL}/examples/{slug}'),
                             content_type='text/vcard; charset=utf-8')
-    response['Content-Disposition'] = 'attachment; filename="example-contact.vcf"'
+    disposition = 'attachment' if request.GET.get('download') == '1' else 'inline'
+    response['Content-Disposition'] = f'{disposition}; filename="example-contact.vcf"'
     return response
