@@ -23,6 +23,7 @@
 .card-carousel{min-width:0;--slides-visible:1;--slide-height:220px}.carousel-track{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:thin;border-radius:var(--frame-radius,12px);overscroll-behavior-x:contain}
 .carousel-slide{margin:0;flex:0 0 calc((100% - (var(--slides-visible) - 1) * 10px) / var(--slides-visible));height:calc(var(--slide-height) * var(--canvas-scale,1));scroll-snap-align:start;min-width:0;overflow:hidden;border-radius:inherit}
 .carousel-slide img{width:100%;height:100%;object-fit:cover;display:block}.carousel-controls{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:8px;font:12px system-ui}
+.card-carousel[data-peek=true] .carousel-slide{flex-basis:calc((100% - 20px)/2.5);height:auto;aspect-ratio:1}
 .carousel-controls button{border:1px solid currentColor;background:var(--design-bg,white);color:var(--design-text,#17272d);border-radius:8px;padding:7px 10px;cursor:pointer}.carousel-empty{border:1px dashed #a7b5c8;border-radius:10px;padding:30px 12px;text-align:center;font-size:13px}
 .designed-card .is-radial{height:280px;max-width:100%;position:relative}.designed-card .is-radial .social-links{display:block;margin:0}
 .designed-card .is-radial .sun-toggle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:82px;height:82px;border-radius:50%;border:1px solid var(--accent);background:var(--accent);color:white;font-family:inherit;font-size:13px;font-weight:600;z-index:2;cursor:pointer}

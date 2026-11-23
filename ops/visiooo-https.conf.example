@@ -18,7 +18,7 @@ server {
     ssl_certificate /etc/letsencrypt/live/visiooo.ru/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/visiooo.ru/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
-    client_max_body_size 12m;
+    client_max_body_size 60m;
 
     # Загруженные изображения выдаются только через проверяющие доступ маршруты Django.
     # Не публиковать private-media и не добавлять для него alias/root.

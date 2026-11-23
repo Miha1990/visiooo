@@ -15,8 +15,9 @@
   </div>
   <form method="post" enctype="multipart/form-data" action="{% url 'card_content_media' card.pk %}" class="stack">{% csrf_token %}
     <input type="hidden" name="draft_version" value="{{ card.draft_version }}"><input type="hidden" name="operation" value="gallery">
-    <label for="gallery-file">Фотография JPEG, PNG или WebP, до 5 МБ</label><input type="file" id="gallery-file" name="file" accept="image/jpeg,image/png,image/webp" required>
-    <button class="button">Добавить фотографию</button>
+    <label for="gallery-file">Фотографии JPEG, PNG или WebP, до 5 МБ каждая</label><input type="file" id="gallery-file" name="file" accept="image/jpeg,image/png,image/webp" multiple required>
+    <p class="helptext">Можно выбрать сразу несколько фотографий. Они добавятся в карусель в порядке выбора. Всего доступно до {{ gallery_limit }} фотографий.</p>
+    <button class="button">Добавить фотографии</button>
   </form>
 </section>
 {% endif %}

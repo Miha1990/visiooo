@@ -17,11 +17,11 @@
     const track=el.querySelector('.carousel-track'),status=el.querySelector('[data-carousel-status]');
     const prev=el.querySelector('[data-carousel-prev]'),next=el.querySelector('[data-carousel-next]'),pause=el.querySelector('[data-carousel-pause]');
     let timer=null,paused=false,hover=false;
-    const visible=()=>Math.min(Math.max(1,Number(el.dataset.visible)||1),el.clientWidth?Math.max(1,Math.floor(el.clientWidth/170)):10);
+    const visible=()=>el.dataset.peek==='true'?2.5:Math.min(Math.max(1,Number(el.dataset.visible)||1),el.clientWidth?Math.max(1,Math.floor(el.clientWidth/170)):10);
     const slides=()=>[...track.querySelectorAll('.carousel-slide')];
     const step=()=>slides()[0]?.getBoundingClientRect().width+10 || 1;
-    const index=()=>Math.round(track.scrollLeft/step());
-    const maximum=()=>Math.max(0,slides().length-visible());
+    const index=()=>{const end=track.scrollWidth-track.clientWidth;return end>0&&track.scrollLeft>=end-1?maximum():Math.round(track.scrollLeft/step());};
+    const maximum=()=>Math.max(0,Math.ceil(slides().length-visible()));
     const move=delta=>{
       let target=index()+delta;if(target>maximum())target=0;if(target<0)target=maximum();
       track.scrollTo({left:target*step(),behavior:reduced()?'auto':'smooth'});

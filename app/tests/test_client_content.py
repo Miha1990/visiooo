@@ -74,6 +74,33 @@ class ClientContentTests(TestCase):
         self.assertContains(response,'data-design-block="carousel"');self.assertContains(response,'data-design-block="document"')
         self.post_media('remove_pdf');self.card.refresh_from_db();self.assertNotIn('assetId',self.card.draft['document'])
 
+    def test_multiple_gallery_photos_save_together_and_respect_admin_limit(self):
+        from cards.models import CardBlockSettings, Asset
+        self.layout();self.customer()
+        version=self.card.draft_version
+        response=self.post_media('gallery',file=[photo(),photo(),photo()])
+        self.assertEqual(response.status_code,302)
+        self.card.refresh_from_db()
+        ids=self.card.draft['galleryAssetIds']
+        self.assertEqual(len(ids),3);self.assertEqual(len(set(ids)),3)
+        self.assertEqual(self.card.draft_version,version+1)
+        CardBlockSettings.objects.update_or_create(pk=1,defaults={'carousel_limit':4})
+        self.post_media('gallery',file=[photo(),photo()]);self.card.refresh_from_db()
+        self.assertEqual(self.card.draft['galleryAssetIds'],ids)
+        self.assertEqual(Asset.objects.filter(workspace=self.space).count(),3)
+
+    def test_bad_file_rolls_back_the_entire_gallery_batch(self):
+        from pathlib import Path
+        from django.conf import settings
+        from cards.models import Asset
+        self.layout();self.customer()
+        version=self.card.draft_version
+        self.post_media('gallery',file=[photo(),SimpleUploadedFile('broken.jpg',b'not an image',content_type='image/jpeg')])
+        self.card.refresh_from_db()
+        self.assertFalse(self.card.draft.get('galleryAssetIds'))
+        self.assertEqual(self.card.draft_version,version)
+        self.assertFalse(Asset.objects.filter(workspace=self.space).exists())
+        self.assertEqual(list(Path(settings.PRIVATE_MEDIA_ROOT).rglob('*.webp')),[])
     def test_templates_control_available_content_blocks(self):
         design=self.layout();design['hidden']=['video','map','document','carousel']
         save_card(self.user,self.card.pk,self.card.draft_version,{**self.card.draft,'design':design})

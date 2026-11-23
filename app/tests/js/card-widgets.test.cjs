@@ -7,10 +7,10 @@ function node(){return {dataset:{},style:{values:{},setProperty(key,value){this.
  addEventListener(name,fn){this.events[name]=fn;},removeEventListener(name,fn){if(this.events[name]===fn)delete this.events[name];},
  setAttribute(key,value){this.attrs[key]=value;},removeAttribute(key){delete this.attrs[key];},focus(){this.focused=true;},contains(target){return target===this;},
  classList:{values:new Set(),toggle(key,value){if(value)this.values.add(key);else this.values.delete(key);}}};}
-function setup({autoplay=true,reduced=false,radial=false}={}){
+function setup({autoplay=true,reduced=false,radial=false,peek=false}={}){
  const card=node();card.clientWidth=360;card.dataset={socialMode:radial?'radial':'both',canvasHeight:'1200'};
  const gallery=node(),track=node(),prev=node(),next=node(),pause=node(),status=node(),empty=node(),controls=node();
- gallery.dataset={visible:'2',autoplay:String(autoplay),interval:'5'};track.scrollLeft=0;
+ gallery.dataset={visible:'2',peek:String(peek),autoplay:String(autoplay),interval:'5'};track.scrollLeft=0;
  const slides=Array.from({length:5},()=>({getBoundingClientRect:()=>({width:90})}));
  track.querySelectorAll=()=>slides;track.scrollTo=({left})=>{track.scrollLeft=left;track.events.scroll?.();};
  gallery.querySelector=selector=>({'.carousel-track':track,'[data-carousel-status]':status,'[data-carousel-prev]':prev,'[data-carousel-next]':next,'[data-carousel-pause]':pause,'.carousel-empty':empty,'.carousel-controls':controls})[selector];
@@ -38,6 +38,13 @@ test('external embeds load immediately, preserve an existing player and reject o
  hidden=false;box.dataset.embedUrl='https://evil.test/embed/anything';window.CardWidgets.refresh();assert.equal(frames.length,0);
  box.dataset.embedUrl='https://yandex.ru/map-widget/v1/?text=test';window.CardWidgets.refresh();assert.equal(frames.length,1);
 });
+test('fractional carousel preserves the next-photo cue and wraps from its partial final position',()=>{
+ const {gallery,track,next}=setup({peek:true});
+ assert.equal(gallery.style.values['--slides-visible'],'2.5');
+ track.clientWidth=300;track.scrollWidth=545;track.scrollLeft=245;
+ next.onclick();assert.equal(track.scrollLeft,0);
+});
+
 test('carousel advances manually, wraps and pauses its automatic timer',()=>{
  const {next,prev,track,pause,timers,status}=setup();
  assert.equal(timers.size,1);assert.equal([...timers.values()][0].ms,5000);

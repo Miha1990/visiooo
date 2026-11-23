@@ -48,8 +48,8 @@ def media(request, pk):
             upload = request.FILES.get('file')
             if not upload: raise ValidationError('Выберите файл.')
             if operation == 'gallery':
-                from .visual_views import upload_gallery
-                upload_gallery(request.user, pk, version, upload)
+                from .visual_views import upload_gallery_many
+                upload_gallery_many(request.user, pk, version, request.FILES.getlist('file'))
             else:
                 from .blocks import upload_pdf
                 upload_pdf(request.user, pk, version, upload)

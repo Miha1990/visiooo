@@ -82,9 +82,12 @@ def edit(request, pk):
 
 
 def upload_gallery(user, pk, version, upload):
+    return upload_gallery_many(user, pk, version, [upload])[0]
+
+
+def upload_gallery_many(user, pk, version, uploads):
     own_card(user, pk)
-    data, width, height = normalize_image(upload)
-    storage = private_storage(); key = None
+    storage = private_storage(); keys = []
     try:
         with transaction.atomic():
             workspace = Workspace.objects.select_for_update().get(pk=workspace_for(user).pk)
@@ -95,19 +98,23 @@ def upload_gallery(user, pk, version, upload):
             photos = content.setdefault('galleryAssetIds',[])
             from .blocks import carousel_limit
             limit = carousel_limit()
-            if len(photos) >= limit:
+            if not uploads or len(photos) + len(uploads) > limit:
                 raise ValidationError(f'В карусели может быть не больше {limit} фотографий. Удалите лишнюю и сохраните черновик.')
             refs = referenced_asset_ids(workspace.pk)
             used = Asset.objects.filter(workspace=workspace,pk__in=refs).aggregate(total=Sum('bytes'))['total'] or 0
-            if used+len(data) > (50 if active_subscription(workspace) else 10)*1024*1024:
-                raise ValidationError('Недостаточно места для фотографий.')
-            key = storage.save(f'{workspace.pk}/{uuid.uuid4().hex}.webp',ContentFile(data))
-            asset = Asset.objects.create(workspace=workspace,object_key=key,bytes=len(data),width=width,height=height)
-            photos.append(str(asset.pk))
+            assets = []
+            for upload in uploads:
+                data, width, height = normalize_image(upload)
+                if used+len(data) > (50 if active_subscription(workspace) else 10)*1024*1024:
+                    raise ValidationError('Недостаточно места для фотографий.')
+                key = storage.save(f'{workspace.pk}/{uuid.uuid4().hex}.webp',ContentFile(data))
+                keys.append(key)
+                asset = Asset.objects.create(workspace=workspace,object_key=key,bytes=len(data),width=width,height=height)
+                photos.append(str(asset.pk)); assets.append(asset); used += len(data)
             save_card(user,pk,version,content)
-            return asset
+            return assets
     except Exception:
-        if key: storage.delete(key)
+        for key in keys: storage.delete(key)
         raise
 
 
