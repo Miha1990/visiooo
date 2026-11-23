@@ -31,7 +31,7 @@
       clearInterval(timer);timer=null;
       if(el.dataset.autoplay==='true' && slides().length>visible() && !paused && !hover && !document.hidden && !reduced()) timer=setInterval(()=>move(1),Math.max(2,Math.min(120,Number(el.dataset.interval)||5))*1000);
     };
-    prev.onclick=()=>move(-1);next.onclick=()=>move(1);
+    if(prev)prev.onclick=()=>move(-1);if(next)next.onclick=()=>move(1);
     pause.hidden=el.dataset.autoplay!=='true';
     pause.onclick=()=>{paused=!paused;pause.textContent=paused?'Продолжить':'Пауза';schedule();};
     const enter=()=>{hover=true;schedule();},leave=()=>{hover=false;schedule();};

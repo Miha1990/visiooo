@@ -45,7 +45,7 @@
 .carousel-track,.editor-section-nav{overscroll-behavior-x:contain}
 .carousel-track::-webkit-scrollbar{display:none}
 .carousel-slide{height:clamp(180px,62cqi,var(--slide-height))}
-.carousel-controls{display:grid;grid-template-columns:minmax(64px,1fr) auto minmax(64px,1fr);gap:8px;font-size:13px}
+.carousel-controls{display:flex;justify-content:center;align-items:center;gap:8px;font-size:13px}
 .carousel-controls button{min-height:44px;padding:10px 12px;border-color:color-mix(in srgb,var(--design-text,#17272d) 20%,transparent);font:500 13px 'Segoe UI',system-ui,sans-serif}
 .carousel-controls [data-carousel-pause]{grid-column:1/-1;justify-self:center;min-width:120px}
 .card-embed{position:relative;min-height:190px;gap:12px}
