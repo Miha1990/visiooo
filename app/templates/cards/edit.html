@@ -73,7 +73,7 @@
         </form>
         {% if card.status == 'published' %}<form method="post" action="{% url 'unpublish' card.pk %}">{% csrf_token %}<button class="text-button">Снять с публикации</button></form>{% endif %}
       </div>
-      <details class="danger-zone"><summary>Удалить визитку</summary><p>Публичный доступ закроется. Вернуть эту визитку будет нельзя.</p><form method="post" action="{% url 'delete' card.pk %}">{% csrf_token %}<button class="button danger-button">Удалить навсегда</button></form></details>
+      <div class="danger-zone"><a href="{% url 'delete' card.pk %}">Удалить визитку</a></div>
     </div>
     <aside class="preview-column"><div class="preview-sticky">
       <div class="preview-label"><span class="tiny-dot"></span> ПРЕДПРОСМОТР <span>360 пикс.</span></div>

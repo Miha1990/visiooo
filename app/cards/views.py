@@ -193,8 +193,12 @@ def unpublish(request, pk):
 
 
 @login_required
-@require_POST
+@never_cache
+@require_http_methods(['GET', 'POST'])
 def delete(request, pk):
+    card = own_card(request.user, pk)
+    if request.method == 'GET':
+        return render(request, 'cards/delete.html', {'card': card})
     delete_card(request.user, pk)
     messages.success(request, 'Визитка удалена.')
     return redirect303('/app/cards')

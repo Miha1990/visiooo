@@ -52,3 +52,42 @@ class ClientDashboardTests(TestCase):
         self.assertContains(self.client.get('/app/cards'), 'Ваша первая визитка')
         response = self.client.post('/app/cards')
         self.assertEqual(response.status_code, 303)
+
+    def test_delete_confirmation_and_removal_keep_other_cards(self):
+        other_card = create_card(self.user)
+        publish_card(self.user, self.card.pk, self.card.draft_version)
+        url = f'/app/cards/{self.card.pk}/delete'
+        self.assertContains(self.client.get('/app/cards'), url)
+        response = self.client.get(url)
+        self.assertContains(response, 'Отмена, оставить визитку')
+        self.assertContains(response, 'csrfmiddlewaretoken')
+        self.card.refresh_from_db()
+        self.assertEqual(self.card.status, 'published')
+        self.assertEqual(self.client.post(url).status_code, 303)
+        self.card.refresh_from_db()
+        self.assertEqual(self.card.status, 'deleted')
+        self.assertFalse(self.card.revisions.exists())
+        self.assertFalse(self.card.draft)
+        self.assertTrue(self.card.reserved_addresses.exists())
+        self.assertEqual(self.client.get(f'/c/{self.card.public_id}').status_code, 404)
+        self.assertNotContains(self.client.get('/app/cards'), url)
+        other_card.refresh_from_db()
+        self.assertEqual(other_card.status, 'draft')
+        self.sub.refresh_from_db()
+        self.assertEqual(self.sub.status, 'active')
+
+    def test_delete_is_private_and_requires_csrf(self):
+        url = f'/app/cards/{self.card.pk}/delete'
+        stranger = User.objects.create_user('delete-other@example.test', 'Another-password-39!')
+        space = Workspace.objects.create(owner=stranger)
+        Membership.objects.create(workspace=space, user=stranger)
+        foreign_client = Client()
+        foreign_client.force_login(stranger)
+        for method in ('get', 'post'):
+            self.assertEqual(getattr(foreign_client, method)(url).status_code, 404)
+            self.assertEqual(getattr(Client(), method)(url).status_code, 302)
+        protected = Client(enforce_csrf_checks=True)
+        protected.force_login(self.user)
+        self.assertEqual(protected.post(url).status_code, 403)
+        protected.get(url)
+        self.assertEqual(protected.post(url, {'csrfmiddlewaretoken': protected.cookies['csrftoken'].value}).status_code, 303)

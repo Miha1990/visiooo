@@ -243,7 +243,7 @@ class VerticalTests(TestCase):
         browser = Client(enforce_csrf_checks=True)
         browser.force_login(self.user)
         self.assertEqual(browser.post(f'/app/cards/{self.card.pk}/delete').status_code, 403)
-        self.assertEqual(browser.get(f'/app/cards/{self.card.pk}/delete').status_code, 405)
+        self.assertEqual(browser.get(f'/app/cards/{self.card.pk}/delete').status_code, 200)
         self.assertEqual(browser.get('/accounts/logout').status_code, 405)
 
     def test_demo_command_disabled_in_production(self):

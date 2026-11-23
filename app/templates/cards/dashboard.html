@@ -22,6 +22,7 @@
 </nav><p class="client-share-status" data-client-share-status role="status" aria-live="polite"></p>
 {% if card.status != 'published' or not active_pro or card.blocked %}<p class="client-hint">QR-код и ссылка станут доступны посетителям после публикации с активной подпиской.</p>{% endif %}
 <p class="client-hint"><a href="{% url 'qr' card.pk %}" download="vizitka-qr.png">Скачать QR-код</a></p>
+<p class="client-hint"><a href="{% url 'delete' card.pk %}">Удалить визитку</a></p>
 <dialog class="client-dialog" data-share-dialog aria-labelledby="share-dialog-title"><form method="dialog"><button class="client-dialog-close" aria-label="Закрыть">Закрыть</button></form><h2 id="share-dialog-title">Отправить визитку</h2><p>Скопируйте ссылку и отправьте её получателю.</p><label for="client-share-url">Ссылка на визитку</label><input id="client-share-url" value="{{ public_url }}" readonly></dialog>
 {% else %}<div class="client-welcome"><svg aria-hidden="true"><use href="#client-cards"/></svg><h1>Ваша первая визитка</h1><p>Выберите шаблон, добавьте фото и контакты — всё будет под рукой.</p><form method="post">{% csrf_token %}<button class="button">Создать визитку</button></form></div>{% endif %}
 </section>{% endblock %}

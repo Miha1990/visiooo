@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Удаление визитки{% endblock %}
+{% block content %}
+<section class="panel stack" aria-labelledby="delete-title">
+  <h1 id="delete-title">Удалить визитку?</h1>
+  <p>Визитка «{{ card.draft.name|default:'Без имени' }}» будет удалена. Восстановить её будет нельзя.</p>
+  <p>Публичная ссылка, QR-код и привязанные NFC-метки перестанут открывать эту визитку. Другие ваши визитки и подписка сохранятся.</p>
+  <form method="post" action="{% url 'delete' card.pk %}">
+    {% csrf_token %}<button type="submit" class="button danger-button">Удалить визитку</button>
+  </form>
+  <a href="{% url 'dashboard' %}?card={{ card.pk }}">Отмена, оставить визитку</a>
+</section>
+{% endblock %}
