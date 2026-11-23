@@ -119,11 +119,19 @@ class PhysicalCardTests(TestCase):
         self.assertEqual(self.client.get(url).status_code, 404)
 
     def test_photo_toggle_is_on_public_card_and_owner_preview(self):
-        for url in (reverse('public', args=[self.first.public_id]), reverse('edit', args=[self.first.pk])):
-            response = self.client.get(url)
-            self.assertContains(response, 'data-avatar-toggle')
-            self.assertContains(response, 'aria-pressed="false"')
-            self.assertContains(response, 'card-interactions.js')
+        from tempfile import TemporaryDirectory
+        from cards.images import upload_avatar
+        from tests.test_images import photo
+        with TemporaryDirectory() as directory, override_settings(PRIVATE_MEDIA_ROOT=directory):
+            # A photo is required now: empty photo blocks are hidden publicly.
+            upload_avatar(self.user, self.first.pk, 1, photo(), target='avatar')
+            self.first.refresh_from_db()
+            publish_card(self.user, self.first.pk, self.first.draft_version)
+            for url in (reverse('public', args=[self.first.public_id]), reverse('edit', args=[self.first.pk])):
+                response = self.client.get(url)
+                self.assertContains(response, 'data-avatar-toggle')
+                self.assertContains(response, 'aria-pressed="false"')
+                self.assertContains(response, 'card-interactions.js')
 
     def test_qr_uses_canonical_physical_url_and_ui_warns_for_local_only(self):
         with patch('cards.views.qrcode.make') as make:

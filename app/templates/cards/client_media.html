@@ -1,0 +1,37 @@
+{% if 'carousel' in content_blocks %}
+<section class="panel" aria-label="Карусель товаров и фотографий">
+  <h2>Карусель товаров и фотографий</h2>
+  <p class="micro muted">Загрузите фотографии товаров, работ или услуг. Лимит: {{ gallery_limit }}. Пустая карусель не показывается посетителям.</p>
+  <div class="client-gallery">
+  {% for id in gallery_ids %}<figure>
+    <img src="{% url 'preview_asset' card.pk id %}" alt="Фотография {{ forloop.counter }}" loading="lazy">
+    <form method="post" action="{% url 'card_content_media' card.pk %}">{% csrf_token %}
+      <input type="hidden" name="draft_version" value="{{ card.draft_version }}"><input type="hidden" name="asset_id" value="{{ id }}">
+      <button class="text-button" name="operation" value="earlier" {% if forloop.first %}disabled{% endif %}>Раньше</button>
+      <button class="text-button" name="operation" value="later" {% if forloop.last %}disabled{% endif %}>Позже</button>
+      <button class="text-button" name="operation" value="remove_photo">Удалить</button>
+    </form>
+  </figure>{% endfor %}
+  </div>
+  <form method="post" enctype="multipart/form-data" action="{% url 'card_content_media' card.pk %}" class="stack">{% csrf_token %}
+    <input type="hidden" name="draft_version" value="{{ card.draft_version }}"><input type="hidden" name="operation" value="gallery">
+    <label for="gallery-file">Фотография JPEG, PNG или WebP, до 5 МБ</label><input type="file" id="gallery-file" name="file" accept="image/jpeg,image/png,image/webp" required>
+    <button class="button">Добавить фотографию</button>
+  </form>
+</section>
+{% endif %}
+{% if 'document' in content_blocks %}
+<section class="panel" aria-label="PDF-файл">
+  <h2>Прайс-лист или документ PDF</h2>
+  <p class="micro muted">Один PDF до 10 МБ. Посетители смогут скачать его после публикации. Пока файл не загружен, блока на визитке нет.</p>
+  {% if card.draft.document.assetId %}
+  <p><a href="{% url 'preview_asset' card.pk card.draft.document.assetId %}" download>Скачать текущий PDF</a></p>
+  <form method="post" action="{% url 'card_content_media' card.pk %}">{% csrf_token %}<input type="hidden" name="draft_version" value="{{ card.draft_version }}"><button class="text-button" name="operation" value="remove_pdf">Удалить файл из черновика</button></form>
+  {% endif %}
+  <form method="post" enctype="multipart/form-data" action="{% url 'card_content_media' card.pk %}" class="stack">{% csrf_token %}
+    <input type="hidden" name="draft_version" value="{{ card.draft_version }}"><input type="hidden" name="operation" value="pdf">
+    <label for="pdf-file">Файл PDF</label><input type="file" id="pdf-file" name="file" accept="application/pdf,.pdf" required>
+    <button class="button">{% if card.draft.document.assetId %}Заменить PDF{% else %}Загрузить PDF{% endif %}</button>
+  </form>
+</section>
+{% endif %}

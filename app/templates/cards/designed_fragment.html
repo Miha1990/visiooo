@@ -3,7 +3,7 @@
 {% card_image 'background' as background_url %}<img class="card-background" data-image-slot="background" alt="" aria-hidden="true" {% if background_url %}src="{{ background_url }}"{% else %}hidden{% endif %}>
 <div class="contact-body design-body">
 
-{% for block in content.design.blocks %}{% design_block content.design block as block_style %}<div data-design-block="{{ block }}" data-block-align="{{ block_style.align }}" data-block-icons="{{ block_style.effectiveIconPosition }}" data-block-button="{{ block_style.buttonShape }}" style="--design-icon:{{ block_style.iconSize }}px;{% if block_style.buttonCorners %}--design-button-radius:{{ block_style.buttonCorners|corner_style }};{% endif %}{% frame_style content.design block %}" {% if block in content.design.hidden %}hidden{% endif %}>
+{% for block in content.design.blocks %}{% block_visible content block as has_data %}{% if preview or has_data or not card %}{% design_block content.design block as block_style %}<div data-design-block="{{ block }}" data-block-align="{{ block_style.align }}" data-block-icons="{{ block_style.effectiveIconPosition }}" data-block-button="{{ block_style.buttonShape }}" style="--design-icon:{{ block_style.iconSize }}px;{% if block_style.buttonCorners %}--design-button-radius:{{ block_style.buttonCorners|corner_style }};{% endif %}{% frame_style content.design block %}" {% if block in content.design.hidden %}hidden{% endif %}>
 <img class="design-block-icon" data-block-icon="{{ block }}" {% if block_style.icon %}src="{% url 'template_icon' block_style.icon %}"{% else %}hidden{% endif %} width="24" height="24" alt="">
 {% if block == 'cover' %}
   <div class="contact-cover">
@@ -20,10 +20,10 @@
   <p class="avatar-toggle-hint">Нажмите на фото, чтобы показать QR</p>
 {% elif block == 'identity' %}
     <{{ name_heading|default:"h1" }} data-preview="name">{{ content.name }}</{{ name_heading|default:"h1" }}>
-    <p class="contact-role" data-preview="title">{{ content.title }}</p>
-    <p class="contact-company" data-preview="company">{{ content.company }}</p>
+    {% if preview or content.title %}<p class="contact-role" data-preview="title">{{ content.title }}</p>{% endif %}
+    {% if preview or content.company %}<p class="contact-company" data-preview="company">{{ content.company }}</p>{% endif %}
 {% elif block == 'bio' %}
-<p class="contact-bio" data-preview="bio">{{ content.bio }}</p>{% elif block == 'save' %}
+{% if preview or content.bio %}<p class="contact-bio" data-preview="bio">{{ content.bio }}</p>{% endif %}{% elif block == 'save' %}
     {% if example_assets %}<a class="button contact-save design-action" href="{{ example_vcard_url }}"><img class="design-contact-icon" data-design-icon="save" src="{% design_icon content.design 'save' %}" width="24" height="24" alt=""><span data-design-label="saveLabel">{{ content.design.saveLabel }}</span></a>
     {% elif preview %}<span class="button contact-save design-action"><img class="design-contact-icon" data-design-icon="save" src="{% design_icon content.design 'save' %}" width="24" height="24" alt=""><span data-design-label="saveLabel">{{ content.design.saveLabel }}</span></span>
     {% else %}<a class="button contact-save design-action" href="{% url 'vcard' card.public_id %}"><img class="design-contact-icon" data-design-icon="save" src="{% design_icon content.design 'save' %}" width="24" height="24" alt=""><span data-design-label="saveLabel">{{ content.design.saveLabel }}</span></a>{% endif %}
@@ -43,4 +43,4 @@
       {% endfor %}
       </div></div>
     </section>
-    {% endwith %}{% elif block == 'carousel' %}{% include 'cards/carousel.html' %}{% elif block == 'video' or block == 'document' or block == 'map' %}{% include 'cards/media_blocks.html' %}{% endif %}</div>{% endfor %}</div>{% if publication_conditions %}<aside class="publication-conditions"><strong>Условия обработки опубликованных данных</strong><p>{{ publication_conditions|linebreaksbr }}</p></aside>{% endif %}</article>
+    {% endwith %}{% elif block == 'carousel' %}{% include 'cards/carousel.html' %}{% elif block == 'video' or block == 'document' or block == 'map' %}{% include 'cards/media_blocks.html' %}{% endif %}</div>{% endif %}{% endfor %}</div>{% if publication_conditions %}<aside class="publication-conditions"><strong>Условия обработки опубликованных данных</strong><p>{{ publication_conditions|linebreaksbr }}</p></aside>{% endif %}</article>

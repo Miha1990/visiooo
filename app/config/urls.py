@@ -11,6 +11,7 @@ from cards import physical_views
 from cards import examples
 from cards import studio_views as studio
 from cards import visual_views as visual
+from cards import client_content
 from domains import views as domain_views
 from billing import views as billing
 from . import legal_views
@@ -19,6 +20,7 @@ from . import seo
 from . import analytics
 
 urlpatterns = [
+    path('app/cards/<uuid:pk>/content-media', client_content.media, name='card_content_media'),
     path('app/cards/<uuid:pk>/design', visual.edit, name='visual_card'),
     path('app/cards/<uuid:pk>/design/media', visual.media, name='visual_card_media'),
     path('control/template-media', visual.media, name='visual_media'),

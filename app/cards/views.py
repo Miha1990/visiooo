@@ -16,6 +16,7 @@ from .image_slots import IMAGE_FIELDS
 from .services import (workspace_for, own_card, active_subscription, create_card, save_card,
                        publish_card, public_card, delete_card, unpublish_card, Conflict)
 from .vcard import render_vcard
+from .blocks import carousel_limit
 
 
 def public_url(card):
@@ -79,13 +80,17 @@ def edit(request, pk):
         'header': ('Шапка', 'Отдельная фотография в верхней части визитки.'),
     }
     for target, field in IMAGE_FIELDS.items():
+        if target != 'background' and ('avatar' if target == 'avatar' else 'cover') not in form.blocks:
+            continue
         label, description = descriptions[target]
         image_panels.append({'target': target, 'label': label, 'description': description,
             'asset_id': card.draft.get(field),
             'form': AvatarUploadForm(auto_id=f'{target}_%s', initial={
                 'card_id': card.pk, 'draft_version': card.draft_version, 'target': target})})
     return render(request, 'cards/edit.html', {'card': card, 'form': form, 'content': card.draft,
-        'image_panels': image_panels,
+        'image_panels': image_panels, 'content_blocks':form.blocks,
+        'gallery_ids':card.draft.get('galleryAssetIds', []),
+        'gallery_limit':carousel_limit(),
         'public_url': public_url(card), 'active_pro': active_subscription(card.workspace)}, status=status)
 
 

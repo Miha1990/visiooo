@@ -4,6 +4,12 @@ from cards.socials import social_links
 register = template.Library()
 register.filter('social_links', social_links)
 
+
+@register.simple_tag
+def block_visible(content, key):
+    from cards.client_content import block_has_content
+    return block_has_content(content, key)
+
 @register.filter
 def design_style(value):
     from cards.designs import css

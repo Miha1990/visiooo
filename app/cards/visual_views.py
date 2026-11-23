@@ -42,6 +42,8 @@ def editor_context(content, user, *, template=False, card=None):
 @require_http_methods(['GET','POST'])
 def edit(request, pk):
     card = own_card(request.user, pk)
+    if not request.user.is_staff or not request.user.has_perm('cards.change_cardtemplate'):
+        raise PermissionDenied
     content = deepcopy(card.draft)
     status = 200
     if request.method == 'POST':
@@ -122,6 +124,8 @@ def media(request, pk=None):
     kind = request.POST.get('kind')
     try:
         if kind == 'icon':
+            if not request.user.is_staff or not request.user.has_perm('cards.change_cardtemplate'):
+                raise PermissionDenied
             shared = pk is None
             if shared and not request.user.has_perm('cards.add_templateicon'):
                 raise PermissionDenied

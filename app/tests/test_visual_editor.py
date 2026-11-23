@@ -50,6 +50,9 @@ class VisualEditorTests(TestCase):
     def test_visual_editor_and_layout_round_trip(self):
         response=self.client.get(self.url)
         self.assertContains(response,'data-visual-editor');self.assertContains(response,'data-resize="5"')
+        self.assertEqual(self.upload('avatar').status_code,200)
+        self.assertEqual(self.upload('gallery').status_code,200)
+        self.card.refresh_from_db()
         content={**self.card.draft,'design':layout(),'socials':{'telegram':'https://t.me/test'}}
         self.assertEqual(self.save(content).status_code,200)
         self.card.refresh_from_db();self.assertEqual(self.card.draft['design'],layout())

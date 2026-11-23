@@ -64,7 +64,8 @@ class StudioTests(TestCase):
         self.assertEqual(self.card.published_revision.content,chosen)
         self.assertEqual(self.client.post(f'{url}/archive',{'version':self.item.version}).status_code,303)
         self.assertEqual(self.client.post(f'/app/cards/{self.card.pk}/templates',{'template_id':self.item.pk,'draft_version':2}).status_code,404)
-        self.assertContains(self.client.get(f'/c/{self.card.public_id}'),DEFAULT['caption'])
+        # The stored caption is retained, but an empty header is omitted publicly.
+        self.assertNotContains(self.client.get(f'/c/{self.card.public_id}'),DEFAULT['caption'])
 
     def test_stale_and_invalid_design_not_saved(self):
         url=f'/control/templates/{self.item.pk}'
@@ -130,7 +131,9 @@ class StudioTests(TestCase):
         self.assertEqual(self.item.published['blockStyles']['contacts']['align'],'left')
         self.assertEqual(self.item.published['blockStyles']['socials']['iconSize'],32)
         self.client.post(f'/app/cards/{self.card.pk}/templates',{'template_id':self.item.pk,'draft_version':1})
-        self.card.refresh_from_db();publish_card(self.user,self.card.pk,self.card.draft_version)
+        self.card.refresh_from_db()
+        self.card.draft['phone']='+79991234567';self.card.save()
+        publish_card(self.user,self.card.pk,self.card.draft_version)
         response=self.client.get(f'/c/{self.card.public_id}')
         self.assertContains(response,'data-design-block="identity" data-block-align="center"')
         self.assertContains(response,'data-design-block="contacts" data-block-align="left" data-block-icons="none"')

@@ -14,12 +14,12 @@
   </div>
   <p><a class="button small" href="{% url 'template_catalog' card.pk %}">Выбрать шаблон из каталога</a></p>
 {% if user.is_staff and perms.cards.add_cardtemplate and perms.cards.change_cardtemplate %}<form method="post" action="{% url 'template_from_card' card.pk %}">{% csrf_token %}<p><button class="text-button">Сохранить оформление как шаблон</button></p><p class="micro muted">Сначала сохраните черновик. Личные фотографии и контакты не копируются.</p></form>{% endif %}
-<p><a class="button" href="{% url 'visual_card' card.pk %}">Визуальный редактор: двигать и оформлять блоки</a></p><div class="editor-grid">
+<div class="editor-grid">
     <div class="editor-form-column">
       <div class="panel">
         <div class="panel-heading"><h2>Расскажите о себе</h2><span class="muted micro">01 / СОДЕРЖИМОЕ</span></div>
         <form method="post" id="editor-form" class="stack">
-          {% csrf_token %}{{ form.non_field_errors }}{{ form.draft_version }}{{ form.draft_version.errors }}
+          {% csrf_token %}{{ form.non_field_errors }}{% for field in form.hidden_fields %}{{ field }}{{ field.errors }}{% endfor %}
           {% for field in form.details_fields %}<div>{{ field.label_tag }}{{ field }}{{ field.errors }}{% if field.help_text %}<div class="helptext">{{ field.help_text }}</div>{% endif %}</div>{% endfor %}
           <fieldset class="social-fields"><legend>Соцсети и сайт</legend>
             <p class="muted micro">Укажите полные ссылки. Посетитель увидит кнопку с названием соцсети и значком, без адреса ссылки. Пустые поля не отображаются на визитке.</p>
@@ -27,6 +27,12 @@
               <div class="social-field"><label for="{{ item.field.id_for_label }}"><img src="{% static 'icons/' %}{{ item.key }}.svg" width="23" height="23" alt="">{{ item.field.label }}</label>{{ item.field }}{{ item.field.errors }}</div>
             {% endfor %}
           </fieldset>
+          <div id="content-blocks">
+          {% for group in form.content_fields %}<fieldset><legend>{{ group.label }}</legend>
+          {% for field in group.fields %}<div>{{ field.label_tag }}{{ field }}{{ field.errors }}{% if field.help_text %}<div class="helptext">{{ field.help_text }}</div>{% endif %}</div>{% endfor %}
+          </fieldset>{% endfor %}
+          </div>
+          <p class="micro muted">Пустые поля и незаполненные блоки не отображаются в опубликованной визитке. Сохраните данные перед загрузкой файлов.</p>
           <button class="button">Сохранить черновик</button>
         </form>
       </div>
@@ -51,9 +57,10 @@
         </div>
         {% endfor %}
       </section>
+      {% include 'cards/client_media.html' %}
       <div class="panel publish-panel">
         <h2>Готовы к знакомству?</h2><p class="muted">Сначала сохраните правки, затем опубликуйте. Черновик виден только вам.</p>
-        {% if not active_pro %}<p class="notice">Для публикации нужен активный Профи. Реальная оплата в этой версии ещё не подключена.</p>{% endif %}
+        {% if not active_pro %}<p class="notice">Для публикации нужен активный Профи. Оплатить подписку можно в разделе «Подписка».</p>{% endif %}
         <form method="post" action="{% url 'publish' card.pk %}" class="stack">
           {% csrf_token %}<input type="hidden" name="draft_version" value="{{ card.draft_version }}">
           <p class="micro">Публикуются только заполненные вами поля и выбранные изображения. Удалите из черновика данные, которые не хотите открывать посетителям.</p>
