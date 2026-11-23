@@ -26,7 +26,7 @@
       let target=index()+delta;if(target>maximum())target=0;if(target<0)target=maximum();
       track.scrollTo({left:target*step(),behavior:reduced()?'auto':'smooth'});
     };
-    const update=()=>{status.textContent=`${Math.min(index()+1,slides().length)} / ${slides().length}`;};
+    const update=()=>{if(status)status.textContent=`${Math.min(index()+1,slides().length)} / ${slides().length}`;};
     const schedule=()=>{
       clearInterval(timer);timer=null;
       if(el.dataset.autoplay==='true' && slides().length>visible() && !paused && !hover && !document.hidden && !reduced()) timer=setInterval(()=>move(1),Math.max(2,Math.min(120,Number(el.dataset.interval)||5))*1000);
@@ -40,7 +40,7 @@
     el.addEventListener('focusin',enter);el.addEventListener('focusout',focusout);document.addEventListener('visibilitychange',schedule);
     const resize=()=>{el.style.setProperty('--slides-visible',String(visible()));update();schedule();};
     const observer=typeof ResizeObserver==='function'?new ResizeObserver(resize):null;observer?.observe(el);
-    el.querySelector('.carousel-empty').hidden=slides().length>0;el.querySelector('.carousel-controls').hidden=!slides().length;
+    el.querySelector('.carousel-empty').hidden=slides().length>0;el.querySelector('.carousel-controls').hidden=!slides().length||el.dataset.autoplay!=='true';
     update();schedule();
     resize();
     initialized.set(el,{destroy(){observer?.disconnect();clearInterval(timer);track.removeEventListener('scroll',update);el.removeEventListener('mouseenter',enter);el.removeEventListener('mouseleave',leave);el.removeEventListener('focusin',enter);el.removeEventListener('focusout',focusout);document.removeEventListener('visibilitychange',schedule);}});
