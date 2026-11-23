@@ -3,7 +3,7 @@ import logging
 
 from django.db import transaction
 from workspaces.models import Workspace
-from .image_slots import IMAGE_FIELDS
+from .image_slots import content_asset_ids
 from .models import Asset, Card
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ def referenced_asset_ids(workspace_id, replacement=None):
         if card.published_revision_id:
             contents.append(card.published_revision.content)
         for content in contents:
-            referenced.update(str(content[field]) for field in IMAGE_FIELDS.values() if content.get(field))
+            referenced.update(content_asset_ids(content))
     return referenced
 
 

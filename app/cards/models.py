@@ -40,6 +40,8 @@ class TemplateIcon(models.Model):
     name = models.CharField('Название', max_length=80)
     svg = models.TextField('Проверенный значок SVG', editable=False)
     created_at = models.DateTimeField('Добавлен', auto_now_add=True)
+    owner = models.ForeignKey('accounts.User', null=True, blank=True, on_delete=models.CASCADE,
+                              verbose_name='Владелец', related_name='card_icons')
 
     class Meta:
         verbose_name = 'значок шаблона'
@@ -48,6 +50,17 @@ class TemplateIcon(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class TemplatePhoto(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField('Название', max_length=100)
+    image = models.BinaryField('Изображение WebP', editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'фотография шаблона'
+        verbose_name_plural = 'Фотографии шаблонов'
 
 
 class Card(models.Model):

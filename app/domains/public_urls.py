@@ -3,6 +3,7 @@ from cards import views, asset_views, physical_views
 from config import webapp
 from config import seo
 from cards.studio_views import icon
+from cards.visual_views import photo
 
 
 def root(request):
@@ -10,6 +11,7 @@ def root(request):
 
 
 urlpatterns = [
+    path('template-photos/<uuid:pk>.webp', photo, name='template_photo'),
     path('template-icons/<uuid:pk>.svg', icon, name='template_icon'),
     path('robots.txt', seo.robots),
     path('sitemap.xml', seo.sitemap),

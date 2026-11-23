@@ -4,7 +4,7 @@ from urllib.parse import urlsplit
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator, validate_email
 from jsonschema import Draft202012Validator, FormatChecker
-from .image_slots import IMAGE_FIELDS
+from .image_slots import IMAGE_FIELDS, content_asset_ids
 
 SCHEMA = json.loads((Path(__file__).resolve().parents[2] / 'card.schema.json').read_text(encoding='utf-8'))
 VALIDATOR = Draft202012Validator(SCHEMA, format_checker=FormatChecker())
@@ -21,10 +21,9 @@ def validate_content(content, workspace=None):
         if content['design']['buttonStyle'] == 'outline' and contrast(content['accent'], content['design']['background']) < 4.5:
             raise ValidationError('Цвет контурных кнопок должен хорошо отличаться от фона.')
     from .models import Asset
-    for asset_field in IMAGE_FIELDS.values():
-        if asset_field in content:
-            if workspace is None or not Asset.objects.filter(pk=content[asset_field], workspace=workspace).exists():
-                raise ValidationError('Фото недоступно. Загрузите изображение в своём аккаунте.')
+    for asset_id in content_asset_ids(content):
+        if workspace is None or not Asset.objects.filter(pk=asset_id, workspace=workspace).exists():
+            raise ValidationError('Фото недоступно. Загрузите изображение в своём аккаунте.')
     if content.get('email'):
         validate_email(content['email'])
     urls = [link['url'] for link in content['links']]

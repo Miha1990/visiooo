@@ -5,13 +5,13 @@ from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_POST, require_safe
 from accounts.views import redirect303
 from .models import CardTemplate, TemplateIcon
-from .designs import BLOCKS, DEFAULT, from_content, validate_design
+from .designs import BLOCKS, DEFAULT, from_content, validate_design, validate_resources, icon_ids
 from .studio_forms import TemplateForm, IconForm
 from .examples import get_example
 from .services import own_card, save_card, Conflict
@@ -55,6 +55,11 @@ def edit(request, pk):
     if request.method == 'POST':
         status = 422
         if form.is_valid():
+            try:
+                validate_resources(form.design, request.user)
+            except ValidationError as error:
+                form.add_error(None,error)
+        if not form.errors:
             with transaction.atomic():
                 locked = CardTemplate.objects.select_for_update().get(pk=pk)
                 if locked.version != form.cleaned_data['version']:
@@ -66,15 +71,31 @@ def edit(request, pk):
                     locked.draft = form.design
                     locked.version += 1
                     if request.POST.get('operation') == 'publish':
+                        # Explicit publication promotes the author's own icons to
+                        # immutable shared copies; customer-private icons stay private.
+                        for custom in TemplateIcon.objects.filter(pk__in=icon_ids(form.design),owner=request.user):
+                            shared=TemplateIcon.objects.create(name=custom.name,svg=custom.svg)
+                            for role, value in locked.draft.get('icons',{}).items():
+                                if value == str(custom.pk): locked.draft['icons'][role]=str(shared.pk)
+                            for settings in locked.draft.get('blockStyles',{}).values():
+                                if settings.get('icon') == str(custom.pk): settings['icon']=str(shared.pk)
                         locked.published = deepcopy(form.design)
                         locked.published_version += 1
                         locked.status = 'published'
                     locked.save()
+                    if request.headers.get('Accept') == 'application/json':
+                        return JsonResponse({'version':locked.version,'design':locked.draft,
+                            'published':request.POST.get('operation') == 'publish',
+                            'icons':[{'id':str(icon.pk),'name':icon.name} for icon in TemplateIcon.objects.filter(pk__in=icon_ids(locked.draft))]})
                     messages.success(request, 'Шаблон опубликован в каталоге.' if request.POST.get('operation') == 'publish' else 'Черновик шаблона сохранён.')
                     return redirect303(f'/control/templates/{pk}')
+        if request.headers.get('Accept') == 'application/json':
+            return JsonResponse({'error':' '.join(str(error) for errors in form.errors.values() for error in errors)},status=status)
     design = form.design if hasattr(form, 'design') else (item.draft or deepcopy(DEFAULT))
     context = {'item': item, 'form': form, **demo(design),
                'blocks': [{'key': key, 'label': dict(BLOCKS)[key]} for key in design['blocks']]}
+    from .visual_views import editor_context
+    context.update(editor_context(context['content'],request.user,template=True))
     return render(request, 'studio/edit.html', context, status=status)
 
 
@@ -127,9 +148,13 @@ def icons(request):
 @require_safe
 def icon(request, pk):
     item = get_object_or_404(TemplateIcon, pk=pk)
+    from .visual_views import can_read_icon
+    if not can_read_icon(request,item):
+        from django.http import Http404
+        raise Http404
     response = HttpResponse(item.svg, content_type='image/svg+xml')
     response['Content-Security-Policy'] = "default-src 'none'; sandbox"
-    response['Cache-Control'] = 'public, max-age=86400, immutable'
+    response['Cache-Control'] = 'private, no-store' if item.owner_id else 'public, max-age=86400, immutable'
     response['X-Content-Type-Options'] = 'nosniff'
     return response
 

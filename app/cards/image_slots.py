@@ -4,3 +4,7 @@ IMAGE_FIELDS = {
     'avatar': 'avatarAssetId',
     'header': 'headerAssetId',
 }
+
+
+def content_asset_ids(content):
+    return {str(content[field]) for field in IMAGE_FIELDS.values() if content.get(field)} | set(content.get('galleryAssetIds', []))

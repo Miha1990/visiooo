@@ -70,6 +70,8 @@ class CardForm(forms.Form):
             label, url = line.split('|', 1)
             links.append({'label': label.strip(), 'url': url.strip()})
         content = {'schemaVersion': 1, 'links': links}
+        if self.card and 'galleryAssetIds' in self.card.draft:
+            content['galleryAssetIds'] = list(self.card.draft['galleryAssetIds'])
         if data.get('template') == 'design' and self.design:
             content['design'] = deepcopy(self.design)
             data['template'] = self.card.draft['template']

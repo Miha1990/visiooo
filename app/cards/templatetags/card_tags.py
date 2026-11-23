@@ -26,3 +26,37 @@ def design_icons(design):
 def design_block(design, key):
     from cards.designs import block_settings
     return block_settings(design, key)
+
+
+@register.simple_tag
+def frame_style(design, key):
+    from cards.designs import frame_css
+    return frame_css(design,key)
+
+
+@register.filter
+def corner_style(corners):
+    return ' '.join(f'{int(v)}px' for v in corners) if corners else ''
+
+
+@register.simple_tag(takes_context=True)
+def card_image(context, slot):
+    from cards.image_slots import IMAGE_FIELDS
+    from django.urls import reverse
+    from django.templatetags.static import static
+    content=context['content']; examples=context.get('example_assets')
+    pk=content.get(IMAGE_FIELDS[slot]); card=context.get('card')
+    if pk and not examples and card:
+        return reverse('preview_asset',args=[card.pk,pk]) if context.get('preview') else reverse('public_asset',args=[card.public_id,pk])
+    shared=content.get('design',{}).get('images',{}).get(slot)
+    if shared:return reverse('template_photo',args=[shared])
+    return static(examples[slot]) if examples and examples.get(slot) else ''
+
+
+@register.simple_tag(takes_context=True)
+def gallery_images(context):
+    from django.urls import reverse
+    content=context['content']; card=context.get('card')
+    if 'galleryAssetIds' in content and card and not context.get('example_assets'):
+        return [{'id':pk,'url':reverse('preview_asset',args=[card.pk,pk]) if context.get('preview') else reverse('public_asset',args=[card.public_id,pk])} for pk in content['galleryAssetIds']]
+    return [{'id':pk,'url':reverse('template_photo',args=[pk])} for pk in content.get('design',{}).get('carousel',{}).get('photos',[])]

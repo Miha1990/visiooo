@@ -10,6 +10,7 @@ from cards import asset_views
 from cards import physical_views
 from cards import examples
 from cards import studio_views as studio
+from cards import visual_views as visual
 from domains import views as domain_views
 from billing import views as billing
 from . import legal_views
@@ -18,6 +19,10 @@ from . import seo
 from . import analytics
 
 urlpatterns = [
+    path('app/cards/<uuid:pk>/design', visual.edit, name='visual_card'),
+    path('app/cards/<uuid:pk>/design/media', visual.media, name='visual_card_media'),
+    path('control/template-media', visual.media, name='visual_media'),
+    path('template-photos/<uuid:pk>.webp', visual.photo, name='template_photo'),
     path('control/templates', studio.index, name='template_studio'),
     path('control/templates/<uuid:pk>', studio.edit, name='template_edit'),
     path('control/templates/<uuid:pk>/archive', studio.archive, name='template_archive'),

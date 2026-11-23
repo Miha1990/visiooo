@@ -7,6 +7,7 @@ from .template_icons import sanitize_svg
 
 class TemplateForm(forms.Form):
     version = forms.IntegerField(widget=forms.HiddenInput, min_value=1)
+    visual_design = forms.JSONField(required=False, widget=forms.HiddenInput)
     name = forms.CharField(label='Название шаблона', max_length=100)
     description = forms.CharField(label='Описание для клиентов', max_length=300, required=False)
     category = forms.CharField(label='Категория', max_length=60, required=False)
@@ -26,7 +27,7 @@ class TemplateForm(forms.Form):
     buttonColumns = forms.TypedChoiceField(label='Расположение кнопок', choices=[(1,'Одна колонка'),(2,'Две колонки')], coerce=int)
     iconPosition = forms.ChoiceField(label='Общее положение значков', choices=[('left','Слева'),('right','Справа'),('top','Сверху')])
     iconSize = forms.IntegerField(label='Общий размер значков', min_value=16, max_value=36)
-    socialMode = forms.ChoiceField(label='Кнопки соцсетей', choices=[('both','Значок и подпись'),('icons','Круглые значки')])
+    socialMode = forms.ChoiceField(label='Кнопки соцсетей', choices=[('both','Значок и подпись'),('icons','Круглые значки'),('radial','Контакты по кругу')])
     avatarShape = forms.ChoiceField(label='Форма фотографии', choices=[('circle','Круг'),('rounded','Скруглённый квадрат'),('square','Квадрат')])
     avatarSize = forms.IntegerField(label='Размер фотографии', min_value=64, max_value=144)
     coverHeight = forms.IntegerField(label='Высота шапки', min_value=60, max_value=240)
@@ -65,7 +66,7 @@ class TemplateForm(forms.Form):
 
     @property
     def settings_fields(self):
-        return [field for field in self if field.name not in ('version','block_order','hidden') and not field.name.startswith(('icon_', 'block_'))]
+        return [field for field in self if field.name not in ('version','visual_design','block_order','hidden') and not field.name.startswith(('icon_', 'block_'))]
 
     @property
     def block_fields(self):
@@ -93,6 +94,11 @@ class TemplateForm(forms.Form):
             if data[prefix+'icon']:
                 values['icon'] = str(data[prefix+'icon'].pk)
             design['blockStyles'][key] = values
+        if data.get('visual_design') is not None:
+            visual = data['visual_design']
+            validate_design(visual)
+            # The visual editor sends the full bounded definition, never HTML/CSS.
+            design = visual
         self.design = validate_design(design)
         return data
 

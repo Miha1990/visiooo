@@ -1,0 +1,4 @@
+{% extends 'base.html' %}{% load static %}
+{% block title %}Визуальное оформление — Визитка{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'visual-editor.css' %}"><script src="{% static 'design-geometry.js' %}" defer></script><script src="{% static 'design-editor.js' %}" defer></script>{% endblock %}
+{% block content %}<section class="visual-shell"><p><a href="{% url 'edit' card.pk %}">Контакты, фотографии и публикация визитки</a></p><p class="micro muted">Изменения сохраняются в черновике. Для посетителей они появятся после публикации визитки.</p>{% include 'visual/editor.html' %}</section>{% endblock %}

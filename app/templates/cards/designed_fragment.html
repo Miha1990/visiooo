@@ -1,25 +1,19 @@
 {% load static card_tags %}
-<article class="contact-card designed-card" data-icon-map="{{ content.design|design_icons }}" data-phone-label="{{ content.design.phoneLabel }}" data-email-label="{{ content.design.emailLabel }}" data-button-style="{{ content.design.buttonStyle }}" data-icon-position="{{ content.design.iconPosition }}" data-social-mode="{{ content.design.socialMode }}" style="--accent:{{ content.accent }};{{ content.design|design_style }}">
-  {% if content.backgroundAssetId %}
-    <img class="card-background" alt="" aria-hidden="true" src="{% if example_assets %}{% static example_assets.background %}{% elif preview %}{% url 'preview_asset' card.pk content.backgroundAssetId %}{% else %}{% url 'public_asset' card.public_id content.backgroundAssetId %}{% endif %}">
-  {% endif %}
+<article class="contact-card designed-card" data-canvas-enabled="{{ content.design.canvas.enabled|yesno:'true,false' }}" data-canvas-height="{{ content.design.canvas.height|default:1000 }}" data-icon-map="{{ content.design|design_icons }}" data-phone-label="{{ content.design.phoneLabel }}" data-email-label="{{ content.design.emailLabel }}" data-button-style="{{ content.design.buttonStyle }}" data-icon-position="{{ content.design.iconPosition }}" data-social-mode="{{ content.design.socialMode }}" style="--accent:{{ content.accent }};{{ content.design|design_style }}">
+{% card_image 'background' as background_url %}<img class="card-background" data-image-slot="background" alt="" aria-hidden="true" {% if background_url %}src="{{ background_url }}"{% else %}hidden{% endif %}>
 <div class="contact-body design-body">
-{% if publication_conditions %}<aside class="publication-conditions"><strong>Условия обработки опубликованных данных</strong><p>{{ publication_conditions|linebreaksbr }}</p></aside>{% endif %}
-{% for block in content.design.blocks %}{% design_block content.design block as block_style %}<div data-design-block="{{ block }}" data-block-align="{{ block_style.align }}" data-block-icons="{{ block_style.effectiveIconPosition }}" style="--design-icon:{{ block_style.iconSize }}px" {% if block in content.design.hidden %}hidden{% endif %}>
+
+{% for block in content.design.blocks %}{% design_block content.design block as block_style %}<div data-design-block="{{ block }}" data-block-align="{{ block_style.align }}" data-block-icons="{{ block_style.effectiveIconPosition }}" data-block-button="{{ block_style.buttonShape }}" style="--design-icon:{{ block_style.iconSize }}px;{% if block_style.buttonCorners %}--design-button-radius:{{ block_style.buttonCorners|corner_style }};{% endif %}{% frame_style content.design block %}" {% if block in content.design.hidden %}hidden{% endif %}>
 <img class="design-block-icon" data-block-icon="{{ block }}" {% if block_style.icon %}src="{% url 'template_icon' block_style.icon %}"{% else %}hidden{% endif %} width="24" height="24" alt="">
 {% if block == 'cover' %}
   <div class="contact-cover">
-    {% if content.headerAssetId %}
-      <img class="cover-photo" alt="" aria-hidden="true" src="{% if example_assets %}{% static example_assets.header %}{% elif preview %}{% url 'preview_asset' card.pk content.headerAssetId %}{% else %}{% url 'public_asset' card.public_id content.headerAssetId %}{% endif %}">
-    {% endif %}
+{% card_image 'header' as header_url %}<img class="cover-photo" data-image-slot="header" alt="" aria-hidden="true" {% if header_url %}src="{{ header_url }}"{% else %}hidden{% endif %}>
     <span data-design-label="caption">{{ content.design.caption }}</span>
   </div>
 {% elif block == 'avatar' %}
   <button type="button" class="contact-avatar avatar-toggle" data-avatar-toggle aria-pressed="false" aria-label="Показать QR-код визитки" title="Нажмите, чтобы показать QR">
     <span class="avatar-photo-face">
-      {% if content.avatarAssetId %}
-        <img class="contact-avatar avatar-photo" width="88" height="88" alt="Фото {{ content.name }}" src="{% if example_assets %}{% static example_assets.avatar %}{% elif preview %}{% url 'preview_asset' card.pk content.avatarAssetId %}{% else %}{% url 'public_asset' card.public_id content.avatarAssetId %}{% endif %}">
-      {% else %}<span data-preview="initial">{{ content.name|first }}</span>{% endif %}
+{% card_image 'avatar' as avatar_url %}<img class="contact-avatar avatar-photo" data-image-slot="avatar" alt="Фото {{ content.name }}" {% if avatar_url %}src="{{ avatar_url }}"{% else %}hidden{% endif %}><span data-preview="initial" {% if avatar_url %}hidden{% endif %}>{{ content.name|first }}</span>
 </span>
     <span class="avatar-qr-face" hidden><img width="180" height="180" alt="QR со ссылкой на визитку" data-avatar-qr="{% if example_assets %}{{ example_qr_url }}{% elif preview %}{% url 'qr' card.pk %}{% else %}{% url 'public_qr' card.public_id %}{% endif %}"></span>
 </button>
@@ -37,16 +31,16 @@
     <div class="contact-actions">
       {% if content.phone %}<a href="tel:{{ content.phone }}"><img class="design-contact-icon" data-design-icon="phone" src="{% design_icon content.design 'phone' %}" width="24" height="24" alt=""><span data-design-label="phoneLabel">{{ content.design.phoneLabel }}</span><span class="contact-detail">{{ content.phone }}</span></a>{% endif %}
       {% if content.email %}<a href="mailto:{{ content.email }}"><img class="design-contact-icon" data-design-icon="email" src="{% design_icon content.design 'email' %}" width="24" height="24" alt=""><span data-design-label="emailLabel">{{ content.design.emailLabel }}</span><span class="contact-detail">{{ content.email }}</span></a>{% endif %}
-      {% for link in content.links %}<a href="{{ link.url }}" target="_blank" rel="noopener noreferrer"><img class="design-contact-icon" data-design-icon="link" src="{% design_icon content.design 'link' %}" width="24" height="24" alt="">{{ link.label }}</a>{% endfor %}
+      {% for link in content.links %}<a href="{{ link.url }}" target="_blank" rel="noopener noreferrer"><img class="design-contact-icon" data-design-icon="link" src="{% design_icon content.design 'link' %}" width="24" height="24" alt=""><span>{{ link.label }}</span></a>{% endfor %}
     </div>
 {% elif block == 'socials' %}
     {% with networks=content|social_links %}
     <section class="social-section" aria-label="Соцсети и сайт" {% if not networks %}hidden{% endif %}>
       <h2 data-design-label="socialLabel">{{ content.design.socialLabel }}</h2>
-      <div class="social-links">
+      <div data-contact-sun><button type="button" class="sun-toggle" data-sun-toggle aria-expanded="false" hidden>Контакты</button><div class="social-links">
       {% for network in networks %}
         <a class="social-link social-{{ network.key }}" href="{{ network.url }}" target="_blank" rel="noopener noreferrer"><span class="social-icon"><img data-design-icon="{{ network.key }}" src="{% design_icon content.design network.key %}" width="24" height="24" alt=""></span><span>{{ network.label }}</span></a>
       {% endfor %}
-      </div>
+      </div></div>
     </section>
-    {% endwith %}{% endif %}</div>{% endfor %}</div></article>
+    {% endwith %}{% elif block == 'carousel' %}{% include 'cards/carousel.html' %}{% endif %}</div>{% endfor %}</div>{% if publication_conditions %}<aside class="publication-conditions"><strong>Условия обработки опубликованных данных</strong><p>{{ publication_conditions|linebreaksbr }}</p></aside>{% endif %}</article>

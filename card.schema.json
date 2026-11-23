@@ -126,6 +126,15 @@
     },
     "design": {
       "$ref": "#/$defs/design"
+    },
+    "galleryAssetIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "maxItems": 10,
+      "uniqueItems": true
     }
   },
   "$defs": {
@@ -212,7 +221,8 @@
         "socialMode": {
           "enum": [
             "both",
-            "icons"
+            "icons",
+            "radial"
           ]
         },
         "buttonColumns": {
@@ -305,12 +315,50 @@
               "bio",
               "save",
               "contacts",
-              "socials"
+              "socials",
+              "carousel"
             ]
           },
           "minItems": 7,
-          "maxItems": 7,
-          "uniqueItems": true
+          "maxItems": 8,
+          "uniqueItems": true,
+          "allOf": [
+            {
+              "contains": {
+                "const": "cover"
+              }
+            },
+            {
+              "contains": {
+                "const": "avatar"
+              }
+            },
+            {
+              "contains": {
+                "const": "identity"
+              }
+            },
+            {
+              "contains": {
+                "const": "bio"
+              }
+            },
+            {
+              "contains": {
+                "const": "save"
+              }
+            },
+            {
+              "contains": {
+                "const": "contacts"
+              }
+            },
+            {
+              "contains": {
+                "const": "socials"
+              }
+            }
+          ]
         },
         "hidden": {
           "type": "array",
@@ -320,10 +368,11 @@
               "avatar",
               "bio",
               "contacts",
-              "socials"
+              "socials",
+              "carousel"
             ]
           },
-          "maxItems": 5,
+          "maxItems": 6,
           "uniqueItems": true
         },
         "icons": {
@@ -397,257 +446,256 @@
           "additionalProperties": false,
           "properties": {
             "cover": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "align",
-                "iconPosition"
-              ],
-              "properties": {
-                "align": {
-                  "enum": [
-                    "inherit",
-                    "left",
-                    "center",
-                    "right"
-                  ]
-                },
-                "iconPosition": {
-                  "enum": [
-                    "inherit",
-                    "left",
-                    "right",
-                    "top",
-                    "none"
-                  ]
-                },
-                "iconSize": {
-                  "type": "integer",
-                  "minimum": 16,
-                  "maximum": 36
-                },
-                "icon": {
-                  "type": "string",
-                  "format": "uuid"
-                }
-              }
+              "$ref": "#/$defs/blockStyle"
             },
             "avatar": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "align",
-                "iconPosition"
-              ],
-              "properties": {
-                "align": {
-                  "enum": [
-                    "inherit",
-                    "left",
-                    "center",
-                    "right"
-                  ]
-                },
-                "iconPosition": {
-                  "enum": [
-                    "inherit",
-                    "left",
-                    "right",
-                    "top",
-                    "none"
-                  ]
-                },
-                "iconSize": {
-                  "type": "integer",
-                  "minimum": 16,
-                  "maximum": 36
-                },
-                "icon": {
-                  "type": "string",
-                  "format": "uuid"
-                }
-              }
+              "$ref": "#/$defs/blockStyle"
             },
             "identity": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "align",
-                "iconPosition"
-              ],
-              "properties": {
-                "align": {
-                  "enum": [
-                    "inherit",
-                    "left",
-                    "center",
-                    "right"
-                  ]
-                },
-                "iconPosition": {
-                  "enum": [
-                    "inherit",
-                    "left",
-                    "right",
-                    "top",
-                    "none"
-                  ]
-                },
-                "iconSize": {
-                  "type": "integer",
-                  "minimum": 16,
-                  "maximum": 36
-                },
-                "icon": {
-                  "type": "string",
-                  "format": "uuid"
-                }
-              }
+              "$ref": "#/$defs/blockStyle"
             },
             "bio": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "align",
-                "iconPosition"
-              ],
-              "properties": {
-                "align": {
-                  "enum": [
-                    "inherit",
-                    "left",
-                    "center",
-                    "right"
-                  ]
-                },
-                "iconPosition": {
-                  "enum": [
-                    "inherit",
-                    "left",
-                    "right",
-                    "top",
-                    "none"
-                  ]
-                },
-                "iconSize": {
-                  "type": "integer",
-                  "minimum": 16,
-                  "maximum": 36
-                },
-                "icon": {
-                  "type": "string",
-                  "format": "uuid"
-                }
-              }
+              "$ref": "#/$defs/blockStyle"
             },
             "save": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "align",
-                "iconPosition"
-              ],
-              "properties": {
-                "align": {
-                  "enum": [
-                    "inherit",
-                    "left",
-                    "center",
-                    "right"
-                  ]
-                },
-                "iconPosition": {
-                  "enum": [
-                    "inherit",
-                    "left",
-                    "right",
-                    "top",
-                    "none"
-                  ]
-                },
-                "iconSize": {
-                  "type": "integer",
-                  "minimum": 16,
-                  "maximum": 36
-                },
-                "icon": {
-                  "type": "string",
-                  "format": "uuid"
-                }
-              }
+              "$ref": "#/$defs/blockStyle"
             },
             "contacts": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "align",
-                "iconPosition"
-              ],
-              "properties": {
-                "align": {
-                  "enum": [
-                    "inherit",
-                    "left",
-                    "center",
-                    "right"
-                  ]
-                },
-                "iconPosition": {
-                  "enum": [
-                    "inherit",
-                    "left",
-                    "right",
-                    "top",
-                    "none"
-                  ]
-                },
-                "iconSize": {
-                  "type": "integer",
-                  "minimum": 16,
-                  "maximum": 36
-                },
-                "icon": {
-                  "type": "string",
-                  "format": "uuid"
-                }
-              }
+              "$ref": "#/$defs/blockStyle"
             },
             "socials": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "align",
-                "iconPosition"
-              ],
-              "properties": {
-                "align": {
-                  "enum": [
-                    "inherit",
-                    "left",
-                    "center",
-                    "right"
-                  ]
-                },
-                "iconPosition": {
-                  "enum": [
-                    "inherit",
-                    "left",
-                    "right",
-                    "top",
-                    "none"
-                  ]
-                },
-                "iconSize": {
-                  "type": "integer",
-                  "minimum": 16,
-                  "maximum": 36
-                },
-                "icon": {
-                  "type": "string",
-                  "format": "uuid"
-                }
-              }
+              "$ref": "#/$defs/blockStyle"
+            },
+            "carousel": {
+              "$ref": "#/$defs/blockStyle"
             }
+          }
+        },
+        "buttonCorners": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200
+          }
+        },
+        "canvas": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "enabled",
+            "height"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 240,
+              "maximum": 4000
+            }
+          }
+        },
+        "frames": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cover": {
+              "$ref": "#/$defs/frame"
+            },
+            "avatar": {
+              "$ref": "#/$defs/frame"
+            },
+            "identity": {
+              "$ref": "#/$defs/frame"
+            },
+            "bio": {
+              "$ref": "#/$defs/frame"
+            },
+            "save": {
+              "$ref": "#/$defs/frame"
+            },
+            "contacts": {
+              "$ref": "#/$defs/frame"
+            },
+            "socials": {
+              "$ref": "#/$defs/frame"
+            },
+            "carousel": {
+              "$ref": "#/$defs/frame"
+            }
+          }
+        },
+        "carousel": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "photos",
+            "visible",
+            "height",
+            "autoplay",
+            "interval"
+          ],
+          "properties": {
+            "photos": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "maxItems": 10,
+              "uniqueItems": true
+            },
+            "visible": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 80,
+              "maximum": 600
+            },
+            "autoplay": {
+              "type": "boolean"
+            },
+            "interval": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 120
+            }
+          }
+        },
+        "images": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "avatar": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "header": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "background": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      }
+    },
+    "blockStyle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "align",
+        "iconPosition"
+      ],
+      "properties": {
+        "align": {
+          "enum": [
+            "inherit",
+            "left",
+            "center",
+            "right"
+          ]
+        },
+        "iconPosition": {
+          "enum": [
+            "inherit",
+            "left",
+            "right",
+            "top",
+            "none"
+          ]
+        },
+        "iconSize": {
+          "type": "integer",
+          "minimum": 16,
+          "maximum": 36
+        },
+        "icon": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "buttonShape": {
+          "enum": [
+            "inherit",
+            "rect",
+            "rounded",
+            "pill",
+            "circle"
+          ]
+        },
+        "buttonCorners": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200
+          }
+        }
+      }
+    },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y",
+        "width",
+        "unit",
+        "height",
+        "z",
+        "corners"
+      ],
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 4000
+        },
+        "width": {
+          "type": "number",
+          "minimum": 8,
+          "maximum": 720
+        },
+        "unit": {
+          "enum": [
+            "%",
+            "px"
+          ]
+        },
+        "height": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2000
+        },
+        "z": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "corners": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 200
           }
         }
       }

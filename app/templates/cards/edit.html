@@ -14,7 +14,7 @@
   </div>
   <p><a class="button small" href="{% url 'template_catalog' card.pk %}">Выбрать шаблон из каталога</a></p>
 {% if user.is_staff and perms.cards.add_cardtemplate and perms.cards.change_cardtemplate %}<form method="post" action="{% url 'template_from_card' card.pk %}">{% csrf_token %}<p><button class="text-button">Сохранить оформление как шаблон</button></p><p class="micro muted">Сначала сохраните черновик. Личные фотографии и контакты не копируются.</p></form>{% endif %}
-<div class="editor-grid">
+<p><a class="button" href="{% url 'visual_card' card.pk %}">Визуальный редактор: двигать и оформлять блоки</a></p><div class="editor-grid">
     <div class="editor-form-column">
       <div class="panel">
         <div class="panel-heading"><h2>Расскажите о себе</h2><span class="muted micro">01 / СОДЕРЖИМОЕ</span></div>

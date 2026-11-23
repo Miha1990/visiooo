@@ -10,7 +10,7 @@ from accounts.views import redirect303
 from .forms import AvatarUploadForm
 from .images import private_storage, upload_avatar, remove_avatar
 from .models import Asset
-from .image_slots import IMAGE_FIELDS
+from .image_slots import IMAGE_FIELDS, content_asset_ids
 from .services import own_card, public_card, Conflict
 
 
@@ -69,7 +69,7 @@ def remove(request, pk):
 @require_GET
 def preview(request, pk, asset_id):
     card = own_card(request.user, pk)
-    if str(asset_id) not in (card.draft.get(field) for field in IMAGE_FIELDS.values()):
+    if str(asset_id) not in content_asset_ids(card.draft):
         raise Http404
     asset = get_object_or_404(Asset, pk=asset_id, workspace=card.workspace)
     return image_response(asset)
@@ -80,7 +80,7 @@ def preview(request, pk, asset_id):
 def public(request, public_id, asset_id):
     card = public_card(public_id, workspace=getattr(request, 'domain_workspace', None))
     content = card.published_revision.content
-    if str(asset_id) not in (content.get(field) for field in IMAGE_FIELDS.values()):
+    if str(asset_id) not in content_asset_ids(content):
         raise Http404
     asset = get_object_or_404(Asset, pk=asset_id, workspace=card.workspace)
     return image_response(asset)
