@@ -16,6 +16,8 @@ def validate_content(content, workspace=None):
     if errors:
         raise ValidationError('Проверьте содержимое: ' + '; '.join(
             f'{" / ".join(map(str, error.path))}: {error.message}' for error in errors))
+    from .card_features import validate_features
+    validate_features(content)
     if content.get('design'):
         from .designs import validate_design, contrast
         validate_design(content['design'])

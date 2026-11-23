@@ -1,0 +1,3 @@
+{% load card_tags %}{% if not visual_editor %}<span hidden data-card-motion="{% if content.motion == False %}false{% else %}true{% endif %}"></span>{% if preview or content.primaryAction %}{% primary_action_href content as action_url %}
+<div class="card-primary-action" data-primary-action {% if not action_url %}hidden{% endif %}><a href="{{ action_url }}" {% if content.primaryAction.kind != 'phone' %}target="_blank" rel="noopener noreferrer"{% endif %}>{{ content.primaryAction.label }}</a></div>
+{% endif %}{% endif %}

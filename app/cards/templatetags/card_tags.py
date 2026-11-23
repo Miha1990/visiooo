@@ -6,6 +6,18 @@ register.filter('social_links', social_links)
 
 
 @register.simple_tag
+def business_info(content):
+    from cards.card_features import business_display
+    return business_display(content.get('business', {}))
+
+
+@register.simple_tag
+def primary_action_href(content):
+    from cards.card_features import action_href
+    return action_href(content.get('primaryAction'))
+
+
+@register.simple_tag
 def customer_blocks(content, visual_editor=False):
     blocks = list(content['design']['blocks'])
     if not visual_editor and 'save' in blocks:

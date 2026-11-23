@@ -36,6 +36,11 @@
   const saveTemplate=editor.querySelector('form[action*="/templates/from-card/"]');if(saveTemplate)settings.append(saveTemplate);
   const publish=dialog('Публикация визитки');const publishPanel=editor.querySelector('#publish-card');if(publishPanel)publish.append(publishPanel);
   const danger=editor.querySelector('.danger-zone');if(danger)settings.append(danger);
+  const featureFields=sourceBox.querySelector('[data-card-feature-fields]'),features=dialog('График, главная кнопка и анимация',form);
+  if(featureFields){featureFields.open=true;features.append(featureFields,button('Готово',()=>{if(features.querySelector(':invalid'))features.querySelector(':invalid').reportValidity();else features.close();},'button'));}
+  const actionKind=field('action_kind'),actionTarget=field('action_target');
+  const actionHint=()=>{const phone=actionKind.value==='phone';actionTarget.type=phone?'tel':'text';actionTarget.inputMode=phone?'tel':'url';actionTarget.placeholder=phone?'+7 (928) 909-18-17':'t.me/username или example.com/booking';};
+  actionKind?.addEventListener('change',actionHint);if(actionKind&&actionTarget)actionHint();
   const sources=new Map();
   for(const key of ['video','map','document']){
     const fields=sourceBox.querySelector(`fieldset:has([name="${({video:'video_url',map:'map_address',document:'pdf_label'})[key]}"])`);
@@ -178,7 +183,7 @@
   const toolbar=node('div',{class:'builder-toolbar'}),addField=button('+ Добавить поле',()=>choose(),'builder-add-row'),preview=button('Предпросмотр',()=>setView(editor.dataset.view==='preview'?'edit':'preview'));
   toolbar.append(addField);editor.append(toolbar);
   function setView(view){editor.dataset.view=view;preview.textContent=view==='preview'?'Редактировать':'Предпросмотр';}
-  const more=node('div',{class:'builder-more'});more.append(preview,button('Оформление и шаблон',()=>settings.showModal()),button('Опубликовать',()=>publish.showModal()));form.append(more);
+  const more=node('div',{class:'builder-more'});more.append(preview,button('График и главное действие',()=>features.showModal()),button('Оформление и шаблон',()=>settings.showModal()),button('Опубликовать',()=>publish.showModal()));form.append(more);
   const returnToEdit=button('Вернуться к редактированию',()=>setView('edit'),'builder-preview-back');editor.querySelector('.preview-column')?.prepend(returnToEdit);
   for(const child of [...editor.children])if(![topbar,built,toolbar].includes(child)&&child.tagName!=='DIALOG'&&!child.classList.contains('editor-grid'))child.hidden=true;
   const oldColumn=editor.querySelector('.editor-form-column');if(oldColumn)oldColumn.hidden=true;

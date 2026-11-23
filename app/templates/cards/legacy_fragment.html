@@ -22,6 +22,7 @@
     {% if preview or content.title %}<p class="contact-role" data-preview="title" {% if not content.title %}hidden{% endif %}>{{ content.title }}</p>{% endif %}
     {% if preview or content.company %}<p class="contact-company" data-preview="company" {% if not content.company %}hidden{% endif %}>{{ content.company }}</p>{% endif %}
     {% if preview or content.bio %}<p class="contact-bio" data-preview="bio" {% if not content.bio %}hidden{% endif %}>{{ content.bio }}</p>{% endif %}
+    {% include 'cards/business.html' %}
     {% include 'cards/save_contact.html' %}
     {% if content.buttonLayout == 'tiles' %}{% include 'cards/button_tiles.html' %}{% else %}
     {% if preview or content.phone or content.email or content.links %}<div class="contact-actions" data-content-block="contacts" {% if not content.phone and not content.email and not content.links %}hidden{% endif %}>
@@ -44,4 +45,4 @@
     {% if content.buttonLayout != 'tiles' %}{% if preview or content.document.assetId %}<div data-content-block="document" {% if not content.document.assetId %}hidden{% endif %}>{% include 'cards/media_blocks.html' with block='document' %}</div>{% endif %}{% endif %}
     {% if preview or content.map.address %}<div data-content-block="map" {% if not content.map.address %}hidden{% endif %}>{% include 'cards/media_blocks.html' with block='map' %}</div>{% endif %}
   </div>
-</article>
+{% include 'cards/primary_action.html' %}</article>

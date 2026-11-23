@@ -23,6 +23,7 @@
     <{{ name_heading|default:"h1" }} data-preview="name">{{ content.name }}</{{ name_heading|default:"h1" }}>
     {% if preview or content.title %}<p class="contact-role" data-preview="title" {% if not content.title %}hidden{% endif %}>{{ content.title }}</p>{% endif %}
     {% if preview or content.company %}<p class="contact-company" data-preview="company" {% if not content.company %}hidden{% endif %}>{{ content.company }}</p>{% endif %}
+    {% if not content.design.canvas.enabled %}{% include 'cards/business.html' %}{% endif %}
 {% elif block == 'bio' %}
 {% if preview or content.bio %}<p class="contact-bio" data-preview="bio" {% if not content.bio %}hidden{% endif %}>{{ content.bio }}</p>{% endif %}{% elif block == 'save' %}
     {% include 'cards/save_contact.html' with designed=True %}
@@ -44,4 +45,4 @@
       {% endfor %}
       </div></div>
     </section>
-    {% endwith %}{% elif block == 'carousel' %}{% include 'cards/carousel.html' %}{% elif block == 'video' or block == 'document' or block == 'map' %}{% include 'cards/media_blocks.html' %}{% endif %}</div>{% endif %}{% endfor %}</div>{% if publication_conditions %}<aside class="publication-conditions"><strong>Условия обработки опубликованных данных</strong><p>{{ publication_conditions|linebreaksbr }}</p></aside>{% endif %}</article>
+    {% endwith %}{% elif block == 'carousel' %}{% include 'cards/carousel.html' %}{% elif block == 'video' or block == 'document' or block == 'map' %}{% include 'cards/media_blocks.html' %}{% endif %}</div>{% endif %}{% endfor %}</div>{% if content.design.canvas.enabled %}<div class="canvas-business">{% include 'cards/business.html' %}</div>{% endif %}{% if publication_conditions %}<aside class="publication-conditions"><strong>Условия обработки опубликованных данных</strong><p>{{ publication_conditions|linebreaksbr }}</p></aside>{% endif %}{% include 'cards/primary_action.html' %}</article>

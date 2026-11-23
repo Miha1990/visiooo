@@ -8,6 +8,7 @@ from .validation import validate_content
 from .socials import SOCIAL_NETWORKS
 from .image_slots import IMAGE_FIELDS
 from .widgets import LinkButtonsWidget
+from .card_features import ZONES
 
 
 class WebLinkField(forms.URLField):
@@ -27,6 +28,19 @@ class WebLinkField(forms.URLField):
 
 
 class CardForm(forms.Form):
+    work_status = forms.CharField(label='Статус вручную', required=False, max_length=120,
+        widget=forms.TextInput(attrs={'placeholder':'Принимаю заказы / Ближайшая запись — 28 ноября'}),
+        help_text='Если заполнить, этот текст заменит автоматический статус по графику.')
+    work_timezone = forms.ChoiceField(label='Часовой пояс графика', choices=ZONES, required=False)
+    action_kind = forms.ChoiceField(label='Главное действие', required=False,
+        choices=[('', 'Без закреплённой кнопки'), ('phone', 'Позвонить'), ('booking', 'Записаться'), ('message', 'Написать')])
+    action_label = forms.CharField(label='Надпись на кнопке', required=False, max_length=60,
+        help_text='Можно оставить пустым — используем название действия.')
+    action_target = forms.CharField(label='Номер телефона или ссылка', required=False, max_length=2048,
+        widget=forms.TextInput(attrs={'placeholder':'+7 (928) 909-18-17 или t.me/username'}),
+        help_text='Для звонка — номер с кодом страны. Для записи и сообщения — ссылка на сервис или мессенджер.')
+    motion = forms.BooleanField(label='Плавное появление блоков и отклик кнопок', required=False,
+        help_text='При включённом на устройстве уменьшении движения анимация отключается автоматически.')
     card_address = forms.CharField(label='Назначить ссылку', required=False, max_length=40,
         widget=forms.TextInput(attrs={'autocapitalize':'none','spellcheck':'false','autocomplete':'off'}))
     address_confirmed = forms.BooleanField(required=False, widget=forms.HiddenInput)
@@ -66,6 +80,11 @@ class CardForm(forms.Form):
     def __init__(self, *args, card=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.card = card
+        from .card_features import DAYS
+        for day, label in enumerate(DAYS):
+            for suffix, caption in [('open', 'Открытие'), ('close', 'Закрытие')]:
+                self.fields[f'work_{day}_{suffix}'] = forms.TimeField(label=caption, required=False,
+                    input_formats=['%H:%M'], widget=forms.TimeInput(format='%H:%M', attrs={'type':'time','step':60}))
         self.design = deepcopy(card.draft.get('design')) if card else None
         from .client_content import available_blocks
         self.blocks = available_blocks(card.draft if card else {})
@@ -92,6 +111,20 @@ class CardForm(forms.Form):
                     'placeholder': placeholder, 'data-social': key, 'data-label': label}))
         self.fields['website'].widget.attrs.update({'data-social': 'website', 'data-label': 'Сайт',
                                                    'placeholder': 'google.com'})
+
+    @property
+    def work_fields(self):
+        return [self[key] for key in ('work_status','work_timezone')]
+
+    @property
+    def action_fields(self):
+        return [self[key] for key in ('action_kind','action_label','action_target')]
+
+    @property
+    def work_days(self):
+        from .card_features import DAYS
+        return [{'label':label, 'open':self[f'work_{day}_open'], 'close':self[f'work_{day}_close']}
+                for day, label in enumerate(DAYS)]
 
     @property
     def block_field_names(self):
@@ -150,6 +183,40 @@ class CardForm(forms.Form):
                 return data
             links.append({'label': label.strip(), 'url': url})
         content = {'schemaVersion': 1, 'links': links}
+        # Older integrations may omit these optional fields: preserve their saved values.
+        for key in ('business', 'primaryAction', 'motion'):
+            if self.card and key in self.card.draft:
+                content[key] = deepcopy(self.card.draft[key])
+        if 'work_status' in self.data:
+            hours = []
+            for day in range(7):
+                opening, closing = data.get(f'work_{day}_open'), data.get(f'work_{day}_close')
+                if bool(opening) != bool(closing):
+                    self.add_error(f'work_{day}_close', 'Укажите оба времени или оставьте оба поля пустыми для выходного.')
+                elif opening and opening == closing:
+                    self.add_error(f'work_{day}_close', 'Время открытия и закрытия должно различаться.')
+                elif opening:
+                    hours.append({'day':day, 'open':opening.strftime('%H:%M'), 'close':closing.strftime('%H:%M')})
+            content.pop('business', None)
+            if data.get('work_status') or hours:
+                content['business'] = {'status':data.get('work_status',''),
+                    'timezone':data.get('work_timezone') or 'Europe/Moscow', 'hours':hours}
+        if 'action_kind' in self.data:
+            content.pop('primaryAction', None)
+            if data.get('action_kind'):
+                from .card_features import action_href
+                action = {'kind':data['action_kind'], 'label':data.get('action_label') or
+                    dict(self.fields['action_kind'].choices)[data['action_kind']], 'target':data.get('action_target','')}
+                try:
+                    href = action_href(action)
+                    action['target'] = href[4:] if action['kind'] == 'phone' else href
+                    content['primaryAction'] = action
+                except ValidationError as error:
+                    self.add_error('action_target', error)
+        if 'work_status' in self.data:
+            content['motion'] = bool(data.get('motion'))
+        if self.errors:
+            return data
         for key in ('galleryAssetIds','video','document','map','buttons','buttonLayout'):
             if self.card and key in self.card.draft:
                 content[key] = deepcopy(self.card.draft[key])
@@ -198,6 +265,14 @@ class CardForm(forms.Form):
     def for_card(cls, card, data=None):
         initial = dict(card.draft, draft_version=card.draft_version)
         initial['card_address'] = card.public_id
+        business = card.draft.get('business', {})
+        initial.update(work_status=business.get('status',''), work_timezone=business.get('timezone','Europe/Moscow'),
+                       motion=card.draft.get('motion', True))
+        for hours in business.get('hours', []):
+            for suffix in ('open', 'close'):
+                initial[f'work_{hours["day"]}_{suffix}'] = hours[suffix]
+        action = card.draft.get('primaryAction', {})
+        initial.update(action_kind=action.get('kind',''), action_label=action.get('label',''), action_target=action.get('target',''))
         from .button_builder import initial_buttons
         initial['button_items'] = json.dumps(initial_buttons(card.draft), ensure_ascii=False)
         for key, fallback in [('phone', 'Позвонить'), ('email', 'Написать')]:

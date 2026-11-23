@@ -12,6 +12,15 @@
     const empty=node.querySelector('[data-embed-empty]');if(empty)empty.hidden=Boolean(url);
   }
   function update(){
+    if(window.CardFeatures&&field('work_status')){
+      const business={status:value('work_status'),timezone:value('work_timezone')||'Europe/Moscow',hours:[]};
+      for(let day=0;day<7;day++){const open=value(`work_${day}_open`),close=value(`work_${day}_close`);if(open&&close&&open!==close)business.hours.push({day,open,close});}
+      window.CardFeatures.renderBusiness(card,business);
+      card.dataset.motion=field('motion')?.checked?'true':'false';
+      const primary=card.querySelector('[data-primary-action]'),kind=value('action_kind');
+      const href=kind?window.CardButtons.href({kind:kind==='phone'?'phone':'link',value:value('action_target')}):'';
+      if(primary){primary.hidden=!href;const link=primary.querySelector('a');link.href=href||'#';link.textContent=value('action_label')||({phone:'Позвонить',booking:'Записаться',message:'Написать'})[kind]||'';if(kind==='phone')link.removeAttribute('target');else link.target='_blank';}
+    }
     for(const key of ['phone','email']){
       const example=document.querySelector(`[data-button-example="${key}"]`);
       if(example)example.textContent=value(key+'_label')||card.dataset[key+'Label']||(key==='phone'?'Позвонить':'Написать');

@@ -12,6 +12,13 @@
     "links"
   ],
   "properties": {
+    "motion": {"type":"boolean"},
+    "business": {"type":"object","additionalProperties":false,"required":["status","timezone","hours"],"properties":{
+      "status":{"type":"string","maxLength":120},
+      "timezone":{"enum":["Europe/Kaliningrad","Europe/Moscow","Europe/Samara","Asia/Yekaterinburg","Asia/Omsk","Asia/Krasnoyarsk","Asia/Irkutsk","Asia/Yakutsk","Asia/Vladivostok","Asia/Magadan","Asia/Kamchatka"]},
+      "hours":{"type":"array","maxItems":7,"items":{"type":"object","additionalProperties":false,"required":["day","open","close"],"properties":{"day":{"type":"integer","minimum":0,"maximum":6},"open":{"type":"string","pattern":"^([01][0-9]|2[0-3]):[0-5][0-9]$"},"close":{"type":"string","pattern":"^([01][0-9]|2[0-3]):[0-5][0-9]$"}}}}
+    }},
+    "primaryAction":{"type":"object","additionalProperties":false,"required":["kind","label","target"],"properties":{"kind":{"enum":["phone","booking","message"]},"label":{"type":"string","minLength":1,"maxLength":60},"target":{"type":"string","minLength":1,"maxLength":2048}}},
     "schemaVersion": {
       "const": 1
     },

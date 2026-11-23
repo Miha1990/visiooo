@@ -31,6 +31,15 @@
             {% endfor %}
           </fieldset></details>
           <div id="content-blocks">
+          <details class="client-section" data-card-feature-fields {% if form.errors %}open{% endif %}>
+            <summary>График, главная кнопка и анимация<span>Необязательно</span></summary>
+            {% for field in form.work_fields %}<div>{{ field.label_tag }}{{ field }}{{ field.errors }}{% if field.help_text %}<p class="helptext">{{ field.help_text }}</p>{% endif %}</div>{% endfor %}
+            <h3>График по дням недели</h3><p class="helptext">Оба поля пустые — выходной. Закрытие раньше открытия означает работу до следующего дня. Время указано в выбранном часовом поясе.</p>
+            {% for day in form.work_days %}<fieldset class="work-day-fields"><legend>{{ day.label }}</legend><div>{{ day.open.label_tag }}{{ day.open }}{{ day.open.errors }}</div><div>{{ day.close.label_tag }}{{ day.close }}{{ day.close.errors }}</div></fieldset>{% endfor %}
+            <h3>Закреплённая кнопка внизу</h3>
+            {% for field in form.action_fields %}<div>{{ field.label_tag }}{{ field }}{{ field.errors }}{% if field.help_text %}<p class="helptext">{{ field.help_text }}</p>{% endif %}</div>{% endfor %}
+            <h3>Анимация</h3><div>{{ form.motion }}{{ form.motion.label_tag }}{{ form.motion.errors }}<p class="helptext">{{ form.motion.help_text }}</p></div>
+          </details>
           {% for group in form.content_fields %}<details class="client-section" {% if form.errors %}open{% endif %}><summary>{{ group.label }}<span>Необязательно</span></summary><fieldset><legend class="sr-only">{{ group.label }}</legend>
           {% for field in group.fields %}<div>{{ field.label_tag }}{{ field }}{{ field.errors }}{% if field.help_text %}<div class="helptext">{{ field.help_text }}</div>{% endif %}</div>{% endfor %}
           </fieldset></details>{% endfor %}
