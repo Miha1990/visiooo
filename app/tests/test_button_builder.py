@@ -71,6 +71,16 @@ class ButtonBuilderTests(TestCase):
         data.update(name='',draft_version=self.card.draft_version)
         self.assertEqual(self.client.post(f'/app/cards/{self.card.pk}/edit',data).status_code,422)
 
+    def test_phone_extension_and_social_usernames_save_and_publish(self):
+        data=self.payload([{'kind':'phone','label':'Офис','value':'+7 (928) 909-18-17','extension':'123'},
+                           {'kind':'whatsapp','label':'WhatsApp','value':'89289091817'},
+                           {'kind':'telegram','label':'Telegram','value':'@person'}])
+        self.assertEqual(self.client.post(f'/app/cards/{self.card.pk}/edit',data).status_code,303)
+        self.card.refresh_from_db();publish_card(self.user,self.card.pk,self.card.draft_version)
+        response=Client().get(f'/c/{self.card.public_id}')
+        for url in ['tel:+79289091817;ext=123','https://wa.me/79289091817','https://t.me/person']:
+            self.assertContains(response,f'href="{url}"')
+
     def test_logo_is_independent_and_uses_owned_asset_routes(self):
         response=self.client.post('/app/assets',{'card_id':str(self.card.pk),'draft_version':1,'target':'logo','image':photo()})
         self.assertEqual(response.status_code,303)

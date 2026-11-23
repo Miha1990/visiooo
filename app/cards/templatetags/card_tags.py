@@ -12,7 +12,7 @@ def card_buttons(context):
     result = []
     for item in context['content'].get('buttons', []):
         kind = item['kind']; value = item['value']; external = kind not in ('phone','other_phone','email')
-        if kind in ('phone','other_phone'): href = 'tel:' + value
+        if kind in ('phone','other_phone'): href = 'tel:' + value + (';ext='+item['extension'] if item.get('extension') else '')
         elif kind == 'email': href = 'mailto:' + value
         elif kind == 'file' and not value: href = document_url(context); external = False
         else: href = value

@@ -58,21 +58,36 @@
   }
   const chooser=dialog('Добавить блок'),search=node('input',{type:'search',placeholder:'Поиск по реквизитам','aria-label':'Поиск по реквизитам',class:'builder-search'}),choices=node('div');chooser.append(search,choices);
   const edit=dialog('Настройка кнопки',form),caption=node('input',{type:'text',maxlength:80,id:'builder-button-caption'}),target=node('input',{type:'text',maxlength:2048,id:'builder-button-target'}),targetLabel=node('label',{for:target.id},'URL'),error=node('p',{class:'builder-error',role:'alert'});
-  edit.append(node('label',{for:caption.id},'Название кнопки'),caption,targetLabel,target,error);
+  const prefix=node('span',{class:'builder-target-prefix'}),targetRow=node('div',{class:'builder-target-row'}),targetHint=node('p',{class:'builder-target-hint'}),extension=node('input',{type:'text',inputmode:'numeric',maxlength:8,pattern:'[0-9]{0,8}',placeholder:'Добавочный номер',id:'builder-button-extension'}),extensionBox=node('div');
+  targetRow.append(prefix,target);extensionBox.append(node('label',{for:extension.id},'Добавочный номер'),extension);
+  edit.append(node('label',{for:caption.id},'Название кнопки'),caption,targetLabel,targetRow,targetHint,extensionBox,error);
   let editing=-1,kind='link';
+  const isPhone=()=>['phone','other_phone','whatsapp'].includes(kind);
+  function formatPhone(raw){if(raw.startsWith('+')&&!raw.startsWith('+7'))return raw;let digits=raw.replace(/\D/g,'');if(raw.startsWith('+7')||digits.length>10&&/^[78]/.test(digits))digits=digits.slice(1);digits=digits.slice(0,10);if(!digits)return '';return '+7 ('+digits.slice(0,3)+(digits.length>=3?') ':'')+digits.slice(3,6)+(digits.length>6?'-':'')+digits.slice(6,8)+(digits.length>8?'-':'')+digits.slice(8,10);}
+  function inputHint(){const rules=window.CardButtons.inputs[kind],full=/^(?:https?:\/\/|www\.)/i.test(target.value)||rules?.hosts.some(host=>target.value.toLowerCase().startsWith(host+'/'));prefix.textContent=rules?.prefix&&!full?rules.prefix:'';prefix.hidden=!prefix.textContent;
+    const normalized=kind==='email'?'':window.CardButtons.normalize(kind,target.value);targetHint.textContent=kind==='whatsapp'&&normalized?'Ссылка: '+normalized:rules?.prefix&&normalized?'Ссылка: '+normalized:rules?'Укажите имя пользователя или вставьте ссылку на профиль этой соцсети.':'';
+  }
+  target.addEventListener('input',()=>{if(isPhone()){target.value=formatPhone(target.value);}else if(window.CardButtons.inputs[kind]?.prefix){target.value=target.value.replace(/\s/g,'').replace(/^@/,'');}error.textContent='';inputHint();});
+  target.addEventListener('beforeinput',event=>{const cursor=target.selectionStart;if(!isPhone()||event.inputType!=='deleteContentBackward'||cursor!==target.selectionEnd||!cursor||/[0-9]/.test(target.value[cursor-1]))return;const digits=target.value.replace(/\D/g,''),index=target.value.slice(0,cursor).replace(/\D/g,'').length-1;event.preventDefault();target.value=index<1?'':formatPhone('+'+digits.slice(0,index)+digits.slice(index+1));target.dispatchEvent(new Event('input',{bubbles:true}));});
+  target.addEventListener('paste',event=>{if(!isPhone())return;const pasted=event.clipboardData?.getData('text');if(!pasted)return;event.preventDefault();let raw=pasted.trim();if(kind==='whatsapp'){const url=window.CardButtons.normalize(kind,raw);if(url)raw='+'+new URL(url).pathname.slice(1);}target.value=formatPhone(raw);inputHint();});
+  extension.addEventListener('input',()=>extension.value=extension.value.replace(/[^0-9]/g,''));
   const persist=()=>{source.value=JSON.stringify(items);source.dispatchEvent(new Event('input',{bubbles:true}));draw();};
   function commit(){
     let value=target.value.trim(),label=caption.value.trim()||types.get(kind).label;
     if(!caption.reportValidity())return false;
-    const item={kind,label,value},href=window.CardButtons.href(item);
+    if(kind!=='email'&&(kind!=='file'||value))value=window.CardButtons.normalize(kind,value);
+    if(kind==='file'&&target.value.trim()&&!value){error.textContent='Укажите корректный URL файла или загрузите PDF с устройства.';target.focus();return false;}
+    const item={kind,label,value};if(!extension.disabled&&extension.value)item.extension=extension.value;
+    const href=window.CardButtons.href(item);
     if(kind!=='file'||value){
-      if(!href){error.textContent=kind==='phone'||kind==='other_phone'?'Укажите номер, например 89289091817.':kind==='email'?'Укажите адрес электронной почты.':'Укажите ссылку, например google.com.';target.focus();return false;}
-      if(href.startsWith('tel:'))value=href.slice(4);
+      if(!href){error.textContent=isPhone()?'Укажите полный номер: +7 (___) ___-__-__.':kind==='email'?'Укажите адрес электронной почты.':window.CardButtons.inputs[kind]?'Проверьте имя пользователя или ссылку на выбранную соцсеть.':'Укажите ссылку, например google.com.';target.focus();return false;}
+      if(href.startsWith('tel:'))value=item.value;
       else if(href.startsWith('mailto:'))value=href.slice(7);
       else{const host=new URL(href).hostname;if(!host.includes('.')&&host!=='localhost'&&!host.includes(':')){error.textContent='Укажите полный адрес сайта, например google.com.';return false;}value=href;}
     }
-    if(editing<0){if(items.length>=30){error.textContent='Можно добавить до 30 кнопок.';return false;}items.push({kind,label,value});editing=items.length-1;}
-    else items[editing]={kind,label,value};
+    item.value=value;
+    if(editing<0){if(items.length>=30){error.textContent='Можно добавить до 30 кнопок.';return false;}items.push(item);editing=items.length-1;}
+    else items[editing]=item;
     persist();return true;
   }
   const fileUpload=button('Загрузить PDF с устройства',()=>{if(commit()){edit.close();openMedia('document');}},'builder-file-upload');edit.append(fileUpload);
@@ -82,9 +97,13 @@
   function editButton(index,newKind){
     editing=index;kind=newKind||items[index]?.kind;const item=items[index],sameKind=item?.kind===kind;
     caption.value=sameKind?item.label:types.get(kind).label;target.value=sameKind?item.value:'';error.textContent='';remove.hidden=index<0;
-    targetLabel.textContent=kind==='phone'||kind==='other_phone'?'Номер телефона':kind==='email'?'Электронная почта':kind==='file'?'URL файла (или загрузите PDF ниже)':'URL';
-    target.inputMode=kind==='phone'||kind==='other_phone'?'tel':kind==='email'?'email':'url';
-    target.placeholder=kind==='phone'||kind==='other_phone'?'89289091817':kind==='email'?'mail@example.ru':'google.com';
+    targetLabel.textContent=isPhone()?'Номер телефона':kind==='email'?'Электронная почта':window.CardButtons.inputs[kind]?.prefix?'Имя пользователя':kind==='file'?'URL файла (или загрузите PDF ниже)':'URL';
+    target.type=isPhone()?'tel':'text';target.inputMode=isPhone()?'numeric':kind==='email'?'email':window.CardButtons.inputs[kind]?.prefix?'text':'url';target.autocapitalize='none';target.spellcheck=false;
+    target.placeholder=isPhone()?'+7 (___) ___-__-__':kind==='email'?'mail@example.ru':window.CardButtons.inputs[kind]?.prefix?'username':'URL';
+    extensionBox.hidden=!['phone','other_phone'].includes(kind);extension.disabled=extensionBox.hidden;extension.value=sameKind?item.extension||'':'';
+    const rules=window.CardButtons.inputs[kind];if(sameKind&&isPhone()){const number=kind==='whatsapp'?window.CardButtons.normalize(kind,item.value):item.value;if(number){const raw=kind==='whatsapp'?'+'+new URL(number).pathname.slice(1):number;target.value=raw.startsWith('+7')?formatPhone(raw):raw;}}
+    else if(sameKind&&rules?.prefix&&target.value.startsWith(rules.prefix)){const tail=target.value.slice(rules.prefix.length).replace(/\/$/,'');if(rules.pattern.test(tail))target.value=tail;}
+    inputHint();
     fileUpload.hidden=kind!=='file'||!media.has('document');edit.showModal();
   }
   let choiceGroup='all',choiceIndex=-1;

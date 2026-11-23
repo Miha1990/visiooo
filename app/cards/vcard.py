@@ -20,11 +20,16 @@ def render_vcard(content, public_url):
     lines = ['BEGIN:VCARD', 'VERSION:3.0', 'FN:' + escape(content['name']),
              'N:;' + escape(content['name']) + ';;;']
     for key, prop in [('title', 'TITLE'), ('company', 'ORG'), ('phone', 'TEL;TYPE=CELL'),
-                      ('email', 'EMAIL;TYPE=INTERNET'), ('bio', 'NOTE'), ('website', 'URL')]:
+                      ('email', 'EMAIL;TYPE=INTERNET'), ('website', 'URL')]:
         if content.get(key):
             lines.append(prop + ':' + escape(content[key]))
     for button in content.get('buttons', []):
         if button['kind'] in ('phone','other_phone') and button['value'] != content.get('phone'):
             lines.append('TEL;TYPE=VOICE:' + escape(button['value']))
+    notes = [content['bio']] if content.get('bio') else []
+    for button in content.get('buttons', []):
+        if button['kind'] in ('phone','other_phone') and button.get('extension'):
+            notes.append(f"{button['label']}: {button['value']}, добавочный {button['extension']}")
+    if notes: lines.append('NOTE:' + escape('\n'.join(notes)))
     lines += ['URL:' + escape(public_url), 'END:VCARD']
     return ('\r\n'.join(fold(line) for line in lines) + '\r\n').encode('utf-8')
