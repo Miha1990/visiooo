@@ -39,3 +39,10 @@ test('unchanged content uploads directly, while unsaved navigation is guarded',a
  const f=setup(()=>{throw Error('No save needed');});await f.submit().promise;assert.equal(f.calls,0);
  const g=setup(()=>{});g.name.value='Изменено';let blocked=false;g.windowEvents.beforeunload({preventDefault(){blocked=true;}});assert.equal(blocked,true);
 });
+
+test('canceling an address change prevents autosave and the pending upload',async()=>{
+ const f=setup(()=>{throw Error('Canceled address must not be saved');});f.name.value='Изменено';
+ let confirmations=0;f.form.confirmAddress=()=>{confirmations++;return false;};
+ const action=f.submit();await action.promise;
+ assert.equal(action.prevented,true);assert.equal(confirmations,1);assert.equal(f.calls,0);assert.equal(f.submissions,0);assert.equal(f.form.inert,false);
+});

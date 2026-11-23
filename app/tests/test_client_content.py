@@ -46,7 +46,7 @@ class ClientContentTests(TestCase):
         self.assertEqual(response.status_code,303)
         self.card.refresh_from_db()
         self.assertEqual(self.card.draft['design'],design)
-        self.assertEqual(self.card.draft['accent'],design['accent'])
+        self.assertEqual(self.card.draft['accent'],'#000000')
         self.assertEqual(self.card.draft['video']['title'],'Моя работа')
         self.assertEqual(self.card.draft['map']['address'],'Ростов-на-Дону, Зорге 27')
         self.assertEqual(self.card.draft['document']['label'],'Скачать прайс')

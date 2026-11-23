@@ -9,7 +9,6 @@
   <div class="contact-cover">
 {% include 'cards/logo.html' %}
 {% card_image 'header' as header_url %}<img class="cover-photo" data-image-slot="header" alt="" aria-hidden="true" {% if header_url %}src="{{ header_url }}"{% else %}hidden{% endif %}>
-    <span data-design-label="caption">{{ content.design.caption }}</span>
   </div>
 {% elif block == 'avatar' %}
   <button type="button" class="contact-avatar avatar-toggle" data-avatar-toggle aria-pressed="false" aria-label="Показать QR-код визитки" title="Нажмите, чтобы показать QR">

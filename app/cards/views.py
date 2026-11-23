@@ -99,13 +99,17 @@ def edit(request, pk):
         status = 422
         if form.is_valid():
             try:
-                save_card(request.user, pk, form.cleaned_data['draft_version'], form.content)
+                save_card(request.user, pk, form.cleaned_data['draft_version'], form.content,
+                          address=form.cleaned_data['card_address'], address_confirmed=form.cleaned_data['address_confirmed'])
             except Conflict as error:
                 form.add_error(None, str(error))
                 status = 409
+            except ValidationError as error:
+                form.add_error('card_address', error)
             else:
                 if request.headers.get('Accept') == 'application/json':
-                    return JsonResponse({'version':own_card(request.user,pk).draft_version})
+                    updated = own_card(request.user,pk)
+                    return JsonResponse({'version':updated.draft_version, 'address':updated.public_id, 'public_url':public_url(updated)})
                 messages.success(request, 'Черновик сохранён. Для обновления публичной страницы нажмите «Опубликовать».')
                 return redirect303(f'/app/cards/{pk}/edit')
         if request.headers.get('Accept') == 'application/json':
@@ -132,6 +136,19 @@ def edit(request, pk):
         'gallery_ids':card.draft.get('galleryAssetIds', []),
         'gallery_limit':carousel_limit(),
         'public_url': public_url(card), 'active_pro': active_subscription(card.workspace)}, status=status)
+
+
+@login_required
+@never_cache
+@require_http_methods(['GET'])
+def address_available(request, pk):
+    from .addresses import clean_address
+    card = own_card(request.user, pk)
+    try:
+        value = clean_address(request.GET.get('address', ''), card)
+    except ValidationError as error:
+        return JsonResponse({'available':False, 'message':' '.join(error.messages)})
+    return JsonResponse({'available':True, 'address':value, 'message':'Адрес доступен.' if value != card.public_id else 'Текущий адрес визитки.'})
 
 
 @login_required

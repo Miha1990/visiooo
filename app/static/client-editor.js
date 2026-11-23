@@ -18,7 +18,8 @@
       if(fingerprint()===saved&&!(form.dataset?.pendingBuilder==='true'&&target.action?.endsWith('/publish'))){leaving=true;return;}
       event.preventDefault();if(busy)return;
       if(!form.checkValidity()){reveal(form.querySelector(':invalid'));form.reportValidity();return;}
-      busy=true;const submitter=event.submitter,payload=new FormData(form),sent=fingerprint();
+      if(form.confirmAddress&&!form.confirmAddress())return;
+      busy=true;const submitter=event.submitter,payload=new FormData(form);
       form.inert=true;target.inert=true;if(submitter)submitter.disabled=true;
       try{
         const response=await fetch(form.action||location.href,{method:'POST',body:payload,headers:{Accept:'application/json'}});
@@ -30,7 +31,8 @@
           showError(Object.values(errors).flat().map(item=>item.message).join(' ')||result.error||'Не удалось сохранить правки.',first);
           return;
         }
-        saved=sent;if(form.dataset)delete form.dataset.pendingBuilder;editor.querySelectorAll('input[name="draft_version"]').forEach(input=>input.value=result.version);
+        if(result.address)form.dispatchEvent(new CustomEvent('card:saved',{detail:result}));
+        saved=fingerprint();if(form.dataset)delete form.dataset.pendingBuilder;editor.querySelectorAll('input[name="draft_version"]').forEach(input=>input.value=result.version);
         form.inert=false;target.inert=false;if(submitter)submitter.disabled=false;
         approved.add(target);target.requestSubmit(submitter||undefined);
       }catch{form.inert=false;showError('Не удалось сохранить данные. Проверьте соединение и повторите загрузку. Введённые данные остались в форме.');}

@@ -2,7 +2,7 @@
 {% block title %}Редактор — Визитка{% endblock %}
 {% block extra_head %}<link rel="stylesheet" href="{% static 'card-builder.css' %}"><script src="{% static 'card-embeds.js' %}" defer></script><script src="{% static 'card-builder.js' %}" defer></script><script src="{% static 'client-preview.js' %}" defer></script><script src="{% static 'client-editor.js' %}" defer></script>{% endblock %}
 {% block content %}
-<section class="shell editor" data-view="{{ initial_view|default:'edit' }}">
+<section class="shell editor" data-view="{{ initial_view|default:'edit' }}" data-current-address="{{ card.public_id }}" data-address-check="{% url 'card_address_available' card.pk %}">
   <a class="back-link" href="/app/cards">Мои визитки</a>
   <a class="back-link physical-link" href="{% url 'physical_index' %}?card={{ card.pk }}">Привязать физическую визитку QR / NFC</a>
   <a class="back-link physical-link" href="{% url 'domains' %}?card={{ card.pk }}">Свой домен</a>

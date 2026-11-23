@@ -91,6 +91,12 @@ class Card(models.Model):
         return self.draft.get('name', 'Визитка')
 
 
+class CardAddress(models.Model):
+    """Reserve old addresses against takeover of previously printed QR codes."""
+    address = models.CharField(max_length=40, unique=True)
+    card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name='reserved_addresses')
+
+
 class CardDailyViews(models.Model):
     card = models.ForeignKey(Card, on_delete=models.CASCADE, related_name='daily_views', verbose_name='Визитка')
     day = models.DateField('День по московскому времени')

@@ -76,6 +76,7 @@ urlpatterns = [
     path('app/physical-cards/<uuid:pk>/qr.png', physical_views.qr, name='physical_qr'),
     path('p/<str:public_id>', physical_views.resolve, name='physical_resolve'),
     path('app/cards/<uuid:pk>/edit', views.edit, name='edit'),
+    path('app/cards/<uuid:pk>/address', views.address_available, name='card_address_available'),
     path('app/cards/<uuid:pk>/publish', views.publish, name='publish'),
     path('app/cards/<uuid:pk>/unpublish', views.unpublish, name='unpublish'),
     path('app/cards/<uuid:pk>/delete', views.delete, name='delete'),

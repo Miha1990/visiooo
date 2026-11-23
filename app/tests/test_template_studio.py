@@ -88,14 +88,14 @@ class StudioTests(TestCase):
         other_card=create_card(other)
         self.assertEqual(self.client.post(f'/control/templates/from-card/{other_card.pk}').status_code,404)
 
-    def test_form_preserves_snapshot_and_locks_preferences(self):
+    def test_form_preserves_snapshot_and_allows_customer_accent(self):
         self.card.draft['design']={**deepcopy(DEFAULT),'allowAccent':False,'allowFont':True,'sourceName':'Свой'}
         self.card.save()
         payload={'name':'Новое имя','template':'design','accent':'#000000','draft_version':1,'links':'','design_font':'serif'}
         form=CardForm.for_card(self.card,payload)
         self.assertTrue(form.is_valid(),form.errors)
         self.assertEqual(form.content['design']['font'],'serif')
-        self.assertEqual(form.content['accent'],self.card.draft['accent'])
+        self.assertEqual(form.content['accent'],'#000000')
         payload.update(template='profile')
         form=CardForm.for_card(self.card,payload)
         self.assertTrue(form.is_valid(),form.errors);self.assertNotIn('design',form.content)

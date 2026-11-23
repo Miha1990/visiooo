@@ -1,10 +1,10 @@
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from billing.models import Subscription
 from workspaces.models import Workspace
-from .models import Card, CardRevision
+from .models import Card, CardRevision, CardAddress
 from .validation import validate_content
 from .asset_cleanup import schedule_cleanup
 
@@ -33,19 +33,38 @@ def create_card(user):
     limit = 3 if active_subscription(workspace) else 1
     if workspace.card_set.exclude(status='deleted').count() >= limit:
         raise ValidationError(f'Доступно визиток: {limit}. Для трёх визиток нужен активный Профи.')
-    return Card.objects.create(workspace=workspace)
+    card = Card.objects.create(workspace=workspace)
+    CardAddress.objects.create(card=card, address=card.public_id)
+    return card
 
 
 @transaction.atomic
-def save_card(user, pk, version, content):
+def save_card(user, pk, version, content, address=None, address_confirmed=False):
     Workspace.objects.select_for_update().get(pk=workspace_for(user).pk)
     card = own_card(user, pk)
+    if card.draft_version != version:
+        raise Conflict('Визитка изменена в другой вкладке. Обновите страницу.')
+    changes = {}
+    if address is not None and address != card.public_id:
+        from .addresses import clean_address
+        address = clean_address(address, card)
+        if not address_confirmed:
+            raise ValidationError('Подтвердите смену ссылки: QR-код изменится, старая ссылка перестанет открывать визитку.')
+        try:
+            with transaction.atomic():
+                CardAddress.objects.get_or_create(address=card.public_id, defaults={'card':card})
+                reservation, _ = CardAddress.objects.get_or_create(address=address, defaults={'card':card})
+                if reservation.card_id != card.pk:
+                    raise ValidationError('Этот адрес уже занят. Выберите другой.')
+        except IntegrityError:
+            raise ValidationError('Этот адрес уже занят. Выберите другой.')
+        changes['public_id'] = address
     validate_content(content, workspace=card.workspace)
     from .blocks import validate_gallery_limit
     validate_gallery_limit(content, card.draft)
     # Conditional UPDATE also protects against stale writes with SQLite.
     changed = Card.objects.filter(pk=card.pk, draft_version=version, status__in=['draft', 'published']).update(
-        draft=content, draft_version=version + 1, updated_at=timezone.now())
+        draft=content, draft_version=version + 1, updated_at=timezone.now(), **changes)
     if not changed:
         raise Conflict('Визитка изменена в другой вкладке. Скопируйте правки и обновите страницу.')
     schedule_cleanup(card.workspace_id)

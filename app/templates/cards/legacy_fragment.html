@@ -8,7 +8,6 @@
     {% if content.headerAssetId %}
       <img class="cover-photo" alt="" aria-hidden="true" src="{% if example_assets %}{% static example_assets.header %}{% elif preview %}{% url 'preview_asset' card.pk content.headerAssetId %}{% else %}{% url 'public_asset' card.public_id content.headerAssetId %}{% endif %}">
     {% endif %}
-    <span>ПРИЯТНО ПОЗНАКОМИТЬСЯ</span>
   </div>
   {% endif %}{% if preview or content.avatarAssetId %}<button type="button" class="contact-avatar avatar-toggle" data-content-block="avatar" {% if not content.avatarAssetId %}hidden{% endif %} data-avatar-toggle aria-pressed="false" aria-label="Показать QR-код визитки" title="Нажмите, чтобы показать QR">
     <span class="avatar-photo-face">

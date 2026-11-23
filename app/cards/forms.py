@@ -27,6 +27,9 @@ class WebLinkField(forms.URLField):
 
 
 class CardForm(forms.Form):
+    card_address = forms.CharField(label='Назначить ссылку', required=False, max_length=40,
+        widget=forms.TextInput(attrs={'autocapitalize':'none','spellcheck':'false','autocomplete':'off'}))
+    address_confirmed = forms.BooleanField(required=False, widget=forms.HiddenInput)
     button_items = forms.CharField(required=False, max_length=70000, widget=forms.HiddenInput)
     draft_version = forms.IntegerField(min_value=1, widget=forms.HiddenInput)
     name = forms.CharField(label='Имя и фамилия', max_length=100)
@@ -75,15 +78,11 @@ class CardForm(forms.Form):
             self.fields['template'].choices = [('design', 'Из каталога: ' + self.design.get('sourceName', 'Мой шаблон'))] + list(self.fields['template'].choices)
             self.initial['template'] = 'design'
             self.fields['template'].help_text = 'После смены основы сохраните черновик, чтобы увидеть новый вид.'
-            if not self.design['allowAccent'] and (not self.is_bound or self.data.get('template') == 'design'):
-                self.fields['accent'].disabled = True
             if self.design['allowFont']:
                 from .designs import FONTS
                 self.fields['design_font'] = forms.ChoiceField(label='Шрифт шаблона', choices=FONTS, initial=self.design['font'])
-        # The customer supplies content; visual style belongs to the template.
+        # Layout and typography belong to the template; customers can choose the accent.
         if card and not card.workspace.owner.is_staff:
-            self.fields['accent'].disabled = True
-            self.fields['accent'].widget = forms.HiddenInput()
             if 'design_font' in self.fields:
                 self.fields['design_font'].disabled = True
                 self.fields['design_font'].widget = forms.HiddenInput()
@@ -107,7 +106,7 @@ class CardForm(forms.Form):
 
     @property
     def details_fields(self):
-        keys = ['name', 'title', 'company', 'bio', 'template', 'accent', 'links']
+        keys = ['name', 'title', 'company', 'bio', 'template', 'accent', 'card_address', 'links']
         if 'design_font' in self.fields:
             keys.append('design_font')
         return [self[key] for key in keys if not self.fields[key].widget.is_hidden]
@@ -120,6 +119,12 @@ class CardForm(forms.Form):
     def clean_phone(self):
         from .button_builder import phone_number
         return phone_number(self.cleaned_data.get('phone', ''))
+
+    def clean_card_address(self):
+        if not self.card:
+            return self.cleaned_data.get('card_address', '')
+        from .addresses import clean_address
+        return clean_address(self.cleaned_data.get('card_address') or self.card.public_id, self.card)
 
     @property
     def social_fields(self):
@@ -192,6 +197,7 @@ class CardForm(forms.Form):
     @classmethod
     def for_card(cls, card, data=None):
         initial = dict(card.draft, draft_version=card.draft_version)
+        initial['card_address'] = card.public_id
         from .button_builder import initial_buttons
         initial['button_items'] = json.dumps(initial_buttons(card.draft), ensure_ascii=False)
         for key, fallback in [('phone', 'Позвонить'), ('email', 'Написать')]:

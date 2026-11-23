@@ -97,6 +97,30 @@
     if(!choices.childElementCount)choices.append(node('p',{},'Ничего не найдено. Попробуйте другое название.'));
   }
   search.addEventListener('input',filter);
+  const palette=node('section',{class:'builder-palette','aria-label':'Цветовая гамма'}),accent=field('accent');
+  palette.append(node('h2',{},'Цветовая гамма'),node('p',{},'Выберите цвет кнопок визитки.'));
+  const swatches=node('div',{class:'builder-swatches'});
+  const colors=[['#315948','Лесной'],['#2457db','Синий'],['#683db0','Фиолетовый'],['#a02c49','Ягодный'],['#985222','Терракотовый'],['#263342','Графитовый']];
+  const paint=()=>{built.style.setProperty('--builder-accent',accent.value);swatches.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===accent.value.toLowerCase())));};
+  for(const [color,name]of colors){const b=button('',()=>{accent.value=color;accent.dispatchEvent(new Event('input',{bubbles:true}));},'builder-swatch');b.dataset.color=color;b.style.background=color;b.setAttribute('aria-label',name);swatches.append(b);}
+  palette.append(swatches);if(accent){const wrapper=accent.closest('div');wrapper.querySelector('label')?.replaceChildren(document.createTextNode('Свой цвет'));palette.append(wrapper);accent.addEventListener('input',paint);paint();}
+  const address=field('card_address'),addressSection=node('section',{class:'builder-address'}),availability=node('p',{'aria-live':'polite',class:'builder-address-status'});
+  let checkTimer,checkSerial=0;
+  addressSection.append(node('h2',{},'Назначить ссылку'));
+  if(address){const prefix=new URL(document.getElementById('public-url').value);prefix.pathname=prefix.pathname.slice(0,prefix.pathname.lastIndexOf('/')+1);
+    address.placeholder='ivan-petrov';
+    addressSection.append(node('label',{for:address.id},'Адрес визитки'),node('p',{class:'builder-address-prefix'},prefix.href),address,node('p',{},'Для нового адреса: 3–40 латинских букв, цифр или дефисов. Например, ivan-petrov.'),availability,
+      node('p',{class:'builder-address-warning'},'Ссылка постоянная: изменение контактов не меняет её и QR-код. При смене адреса QR-код изменится, старая ссылка перестанет работать. Сменить адрес опубликованной визитки можно только с подтверждением.'));
+    address.addEventListener('input',()=>{field('address_confirmed').value='';delete form.dataset.approvedAddress;clearTimeout(checkTimer);const serial=++checkSerial;availability.textContent='Проверяем адрес…';
+      checkTimer=setTimeout(async()=>{try{const url=new URL(editor.dataset.addressCheck,location.origin);url.searchParams.set('address',address.value.trim());const response=await fetch(url,{headers:{Accept:'application/json'}});if(!response.ok)throw Error();const result=await response.json();if(serial!==checkSerial)return;availability.textContent=result.message;availability.dataset.available=String(result.available);}catch{if(serial===checkSerial)availability.textContent='Проверим адрес при сохранении.';}},350);
+    });
+    form.confirmAddress=()=>{const value=address.value.trim(),current=editor.dataset.currentAddress;if(!value||value===current||form.dataset.approvedAddress===value)return true;
+      if(!window.confirm('Сохранить постоянную ссылку '+prefix.href+value+'?\n\nПри смене адреса QR-код изменится. Старая ссылка и QR-код с ней перестанут открывать визитку. Скачайте новый QR-код и обновите прямые ссылки в NFC-метках. Изменения адреса вступят в силу сразу после сохранения.'))return false;
+      field('address_confirmed').value='true';form.dataset.approvedAddress=value;return true;
+    };
+    form.addEventListener('card:saved',event=>{editor.dataset.currentAddress=event.detail.address;address.value=event.detail.address;field('address_confirmed').value='';delete form.dataset.approvedAddress;const publicInput=document.getElementById('public-url');publicInput.value=event.detail.public_url;editor.querySelectorAll('img[data-avatar-qr],.share-row img').forEach(img=>{if(img.hasAttribute('src'))img.src=img.src.split('?')[0]+'?v='+event.detail.version;});});
+  }
+  form.append(palette,addressSection);
   function draw(){
     identity.replaceChildren();
     for(const [key,label]of [['name','Имя'],['title','Должность'],['company','Компания'],['bio','О себе']]){
@@ -115,7 +139,7 @@
     }
   }
   form.addEventListener('input',draw);
-  form.addEventListener('submit',event=>{if(!form.checkValidity()){event.preventDefault();const invalid=form.querySelector(':invalid');const d=invalid?.closest('dialog');if(d&&!d.open)d.showModal();invalid?.reportValidity();}});
+  form.addEventListener('submit',event=>{if(!form.checkValidity()){event.preventDefault();const invalid=form.querySelector(':invalid');const d=invalid?.closest('dialog');if(d&&!d.open)d.showModal();invalid?.reportValidity();}else if(form.confirmAddress&&!form.confirmAddress())event.preventDefault();});
   const toolbar=node('div',{class:'builder-toolbar'}),save=node('button',{type:'submit',form:form.id,class:'button'},'Сохранить'),preview=button('Предпросмотр',()=>setView(editor.dataset.view==='preview'?'edit':'preview'));
   toolbar.append(save,preview,button('Опубликовать',()=>publish.showModal()));editor.append(toolbar);
   function setView(view){editor.dataset.view=view;preview.textContent=view==='preview'?'Редактировать':'Предпросмотр';}
