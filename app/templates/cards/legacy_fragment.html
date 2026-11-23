@@ -18,9 +18,9 @@
   {% else %}</div>{% endif %}
   {% endif %}<div class="contact-body">
     {% if publication_conditions %}<aside class="publication-conditions"><strong>Условия обработки опубликованных данных</strong><p>{{ publication_conditions|linebreaksbr }}</p></aside>{% endif %}
-    <{{ name_heading|default:"h1" }} data-preview="name">{{ content.name }}</{{ name_heading|default:"h1" }}>
+    <div data-layout-block="identity"><{{ name_heading|default:"h1" }} data-preview="name">{{ content.name }}</{{ name_heading|default:"h1" }}>
     {% if preview or content.title %}<p class="contact-role" data-preview="title" {% if not content.title %}hidden{% endif %}>{{ content.title }}</p>{% endif %}
-    {% if preview or content.company %}<p class="contact-company" data-preview="company" {% if not content.company %}hidden{% endif %}>{{ content.company }}</p>{% endif %}
+    {% if preview or content.company %}<p class="contact-company" data-preview="company" {% if not content.company %}hidden{% endif %}>{{ content.company }}</p>{% endif %}</div>
     {% if preview or content.bio %}<p class="contact-bio" data-preview="bio" {% if not content.bio %}hidden{% endif %}>{{ content.bio }}</p>{% endif %}
     {% include 'cards/business.html' %}
     {% include 'cards/save_contact.html' %}
@@ -44,5 +44,6 @@
     {% if preview or content.video.url %}<div data-content-block="video" {% if not content.video.url %}hidden{% endif %}>{% include 'cards/media_blocks.html' with block='video' %}</div>{% endif %}
     {% if content.buttonLayout != 'tiles' %}{% if preview or content.document.assetId %}<div data-content-block="document" {% if not content.document.assetId %}hidden{% endif %}>{% include 'cards/media_blocks.html' with block='document' %}</div>{% endif %}{% endif %}
     {% if preview or content.map.address %}<div data-content-block="map" {% if not content.map.address %}hidden{% endif %}>{% include 'cards/media_blocks.html' with block='map' %}</div>{% endif %}
+    {% include 'cards/daisy.html' %}
   </div>
-{% include 'cards/primary_action.html' %}</article>
+{% include 'cards/layout_data.html' %}{% include 'cards/primary_action.html' %}</article>

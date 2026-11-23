@@ -1,0 +1,5 @@
+{% load card_tags %}{% daisy_buttons as petals %}{% if preview or petals %}
+<section class="contact-daisy" data-daisy data-layout-block="daisy" aria-label="Контакты по кругу" {% if not petals %}hidden{% endif %}>
+  <button type="button" class="daisy-center" data-daisy-toggle aria-expanded="false">{{ content.daisy.label|default:'Контакты' }}</button>
+  <div class="daisy-petals">{% for button in petals %}<a class="daisy-petal" href="{{ button.href }}" {% if button.external %}target="_blank" rel="noopener noreferrer"{% endif %}{% if button.download %} download{% if not button.value %} data-local-file{% endif %}{% endif %} aria-label="{{ button.label }}" tabindex="-1" aria-hidden="true"><img src="{{ button.icon }}" width="24" height="24" alt=""><span>{{ button.label }}</span></a>{% endfor %}</div>
+</section>{% endif %}

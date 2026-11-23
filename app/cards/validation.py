@@ -18,6 +18,12 @@ def validate_content(content, workspace=None):
             f'{" / ".join(map(str, error.path))}: {error.message}' for error in errors))
     from .card_features import validate_features
     validate_features(content)
+    if content.get('daisy'):
+        from .button_builder import clean_buttons
+        if clean_buttons(content['daisy']['items']) != content['daisy']['items']:
+            raise ValidationError('Проверьте контакты в блоке «Ромашка».')
+        if any(ord(c) < 32 for c in content['daisy']['label']):
+            raise ValidationError('Название «Ромашки» должно быть одной строкой.')
     if content.get('design'):
         from .designs import validate_design, contrast
         validate_design(content['design'])

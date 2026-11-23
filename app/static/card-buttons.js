@@ -48,16 +48,17 @@
     if(local?.getAttribute('href'))card.dataset.localFileUrl=local.getAttribute('href');
     const base=new URL('icons/',scriptUrl||location.href).href;
     target.replaceChildren();target.classList.add('builder-contact-buttons');card.dataset.buttonLayout='tiles';
-    for(const item of items){
+    for(const [index,item] of items.entries()){
       const url=href(item,card.dataset.localFileUrl||'');if(!url)continue;
       const a=document.createElement('a'),img=document.createElement('img'),label=document.createElement('span');
-      a.className='builder-contact-button';a.href=url;img.src=base+icon(item.kind)+'.svg';img.width=28;img.height=28;img.alt='';label.textContent=item.label;
+      a.className='builder-contact-button';a.dataset.layoutButton=String(index);a.href=url;img.src=base+icon(item.kind)+'.svg';img.width=28;img.height=28;img.alt='';label.textContent=item.label;
       if(!url.startsWith('tel:')&&!url.startsWith('mailto:')){a.target='_blank';a.rel='noopener noreferrer';}
       if(item.kind==='file')a.download='';a.append(img,label);target.append(a);
     }
     target.hidden=!target.childElementCount;
     const wrapper=target.closest('[data-design-block="contacts"]');if(wrapper)wrapper.hidden=wrapper.dataset.templateHidden==='true'||!target.childElementCount;
     const social=card.querySelector('.social-section');if(social)social.hidden=true;
+    if(typeof window!=='undefined')window.CardLayout?.refresh(card);
   }
   return {href,icon,render,normalize,inputs};
 });

@@ -6,6 +6,8 @@
   const source=form.elements.namedItem('button_items');if(!source)return;
   if(editor.querySelector('.contact-card')?.dataset.buttonLayout!=='tiles')form.dataset.pendingBuilder='true';
   let items;try{items=JSON.parse(source.value||'[]');}catch{return;}
+  const daisySource=form.elements.namedItem('daisy_data');let daisy;try{daisy=JSON.parse(daisySource?.value||'{}');}catch{daisy={};}daisy={label:daisy.label||'Контакты',items:daisy.items||[]};let editingDaisy=false;
+  const activeItems=()=>editingDaisy?daisy.items:items;
   const node=(tag,attrs={},text)=>{const el=document.createElement(tag);for(const [key,value]of Object.entries(attrs))el.setAttribute(key,value);if(text!==undefined)el.textContent=text;return el;};
   const button=(text,fn,cls='')=>{const el=node('button',{type:'button',class:cls},text);if(fn)el.addEventListener('click',fn);return el;};
   const field=name=>form.elements.namedItem(name);
@@ -76,7 +78,7 @@
   target.addEventListener('beforeinput',event=>{const cursor=target.selectionStart;if(!isPhone()||event.inputType!=='deleteContentBackward'||cursor!==target.selectionEnd||!cursor||/[0-9]/.test(target.value[cursor-1]))return;const digits=target.value.replace(/\D/g,''),index=target.value.slice(0,cursor).replace(/\D/g,'').length-1;event.preventDefault();target.value=index<1?'':formatPhone('+'+digits.slice(0,index)+digits.slice(index+1));target.dispatchEvent(new Event('input',{bubbles:true}));});
   target.addEventListener('paste',event=>{if(!isPhone())return;const pasted=event.clipboardData?.getData('text');if(!pasted)return;event.preventDefault();let raw=pasted.trim();if(kind==='whatsapp'){const url=window.CardButtons.normalize(kind,raw);if(url)raw='+'+new URL(url).pathname.slice(1);}target.value=formatPhone(raw);inputHint();});
   extension.addEventListener('input',()=>extension.value=extension.value.replace(/[^0-9]/g,''));
-  const persist=()=>{source.value=JSON.stringify(items);source.dispatchEvent(new Event('input',{bubbles:true}));draw();};
+  const persist=()=>{source.value=JSON.stringify(items);if(daisySource){daisySource.value=JSON.stringify(daisy.items.length?daisy:{});daisySource.dispatchEvent(new Event('input',{bubbles:true}));}source.dispatchEvent(new Event('input',{bubbles:true}));draw();};
   function commit(){
     let value=target.value.trim(),label=caption.value.trim()||types.get(kind).label;
     if(!caption.reportValidity())return false;
@@ -91,16 +93,17 @@
       else{const host=new URL(href).hostname;if(!host.includes('.')&&host!=='localhost'&&!host.includes(':')){error.textContent='Укажите полный адрес сайта, например google.com.';return false;}value=href;}
     }
     item.value=value;
-    if(editing<0){if(items.length>=30){error.textContent='Можно добавить до 30 кнопок.';return false;}items.push(item);editing=items.length-1;}
-    else items[editing]=item;
+    const list=activeItems(),limit=editingDaisy?8:30;
+    if(editing<0){if(list.length>=limit){error.textContent='Можно добавить до '+limit+' кнопок.';return false;}list.push(item);editing=list.length-1;}
+    else list[editing]=item;
     persist();return true;
   }
   const fileUpload=button('Загрузить PDF с устройства',()=>{if(commit()){edit.close();openMedia('document');}},'builder-file-upload');edit.append(fileUpload);
   edit.append(button('Готово',()=>{if(commit())edit.close();},'button'));
   edit.addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.tagName==='INPUT'){event.preventDefault();if(commit())edit.close();}});
-  const remove=button('Удалить блок',()=>{items.splice(editing,1);persist();edit.close();},'builder-remove');edit.append(remove);
+  const remove=button('Удалить блок',()=>{if(!editingDaisy)window.CardLayout?.removeButton(form,editing);activeItems().splice(editing,1);persist();edit.close();},'builder-remove');edit.append(remove);
   function editButton(index,newKind){
-    editing=index;kind=newKind||items[index]?.kind;const item=items[index],sameKind=item?.kind===kind;
+    editing=index;kind=newKind||activeItems()[index]?.kind;const item=activeItems()[index],sameKind=item?.kind===kind;
     caption.value=sameKind?item.label:types.get(kind).label;target.value=sameKind?item.value:'';error.textContent='';remove.hidden=index<0;
     targetLabel.textContent=isPhone()?'Номер телефона':kind==='email'?'Электронная почта':window.CardButtons.inputs[kind]?.prefix?'Имя пользователя':kind==='file'?'URL файла (или загрузите PDF ниже)':'URL';
     target.type=isPhone()?'tel':'text';target.inputMode=isPhone()?'numeric':kind==='email'?'email':window.CardButtons.inputs[kind]?.prefix?'text':'url';target.autocapitalize='none';target.spellcheck=false;
@@ -112,10 +115,10 @@
     fileUpload.hidden=kind!=='file'||!media.has('document');edit.showModal();
   }
   let choiceGroup='all',choiceIndex=-1;
-  function choose(group='all',index=-1){choiceGroup=group;choiceIndex=index;search.value='';filter();chooser.showModal();search.focus();}
+  function choose(group='all',index=-1,inDaisy=false){editingDaisy=inDaisy;choiceGroup=group;choiceIndex=index;search.value='';filter();chooser.showModal();search.focus();}
   function filter(){
     const text=search.value.toLowerCase().trim();choices.replaceChildren();
-    if(choiceIndex>=0&&!text){const current=items[choiceIndex];choices.append(button('Редактировать «'+current.label+'»',()=>{chooser.close();editButton(choiceIndex);},'builder-choice builder-current-choice'),node('p',{class:'builder-replace-hint'},'Или выберите другой тип блока. Замена сохранится после нажатия «Готово».'));}
+    if(choiceIndex>=0&&!text){const current=activeItems()[choiceIndex];choices.append(button('Редактировать «'+current.label+'»',()=>{chooser.close();editButton(choiceIndex);},'builder-choice builder-current-choice'),node('p',{class:'builder-replace-hint'},'Или выберите другой тип блока. Замена сохранится после нажатия «Готово».'));}
     for(const group of ['Реквизиты','Дополнительный контент','Соцсети и мессенджеры']){
       if(choiceGroup==='social'&&group!=='Соцсети и мессенджеры')continue;
       if(choiceGroup==='primary'&&group==='Соцсети и мессенджеры')continue;
@@ -124,10 +127,15 @@
       for(const item of found){const b=button('',()=>{chooser.close();editButton(choiceIndex,item.kind);},'builder-choice');b.append(image(item.kind),node('span',{},item.label));grid.append(b);}
     }
     const extras=[['carousel','Карусель фотографий'],['video','Видео'],['map','Адрес на карте']].filter(([key,label])=>(media.has(key)||sources.has(key))&&label.toLowerCase().includes(text));
-    if(extras.length&&choiceGroup!=='social'&&choiceIndex<0){choices.append(node('h3',{},'Другие блоки'));for(const [key,label]of extras)choices.append(button(label,()=>{chooser.close();openMedia(key);},'builder-choice'));}
+    if(!editingDaisy&&choiceGroup!=='social'&&choiceIndex<0){choices.append(node('h3',{},'Другие блоки'));for(const [key,label]of extras)choices.append(button(label,()=>{chooser.close();openMedia(key);},'builder-choice'));choices.append(button('Ромашка — контакты по кругу',()=>{chooser.close();daisySettings.showModal();},'builder-choice'));}
     if(!choices.childElementCount)choices.append(node('p',{},'Ничего не найдено. Попробуйте другое название.'));
   }
   search.addEventListener('input',filter);
+  const daisySettings=dialog('Ромашка — контакты по кругу',form),daisyLabel=node('input',{type:'text',maxlength:40,id:'builder-daisy-label',value:daisy.label}),daisyGrid=node('div',{class:'builder-choice-socials'});
+  daisySettings.append(node('label',{for:daisyLabel.id},'Надпись в центре'),daisyLabel,node('p',{},'До 8 кнопок вокруг центра. Каждую можно настроить отдельно: телефон, почта, ссылка или соцсеть.'),daisyGrid,button('Добавить кнопку вокруг центра',()=>{daisySettings.close();choose('all',-1,true);},'builder-file-upload'),button('Готово',()=>daisySettings.close(),'button'));
+  daisyLabel.addEventListener('input',()=>{daisy.label=daisyLabel.value.trim()||'Контакты';persist();});
+  const daisySection=node('section',{class:'builder-palette'});daisySection.append(node('h2',{},'Ромашка'),button('Настроить контакты по кругу',()=>daisySettings.showModal(),'builder-content-row'));form.append(daisySection);
+  function drawDaisy(){daisyGrid.replaceChildren();daisy.items.forEach((item,index)=>{const b=button('',()=>{daisySettings.close();choose('all',index,true);},'builder-choice');b.append(image(item.kind),node('span',{},item.label));daisyGrid.append(b);});}
   const palette=node('section',{class:'builder-palette','aria-label':'Цветовая гамма'}),accent=field('accent');
   palette.append(node('h2',{},'Цветовая гамма'),node('p',{},'Выберите цвет кнопок визитки.'));
   const swatches=node('div',{class:'builder-swatches'});
@@ -153,6 +161,7 @@
   }
   form.append(palette,addressSection);
   function draw(){
+    drawDaisy();
     identity.replaceChildren();
     for(const [key,label]of [['name','Имя'],['title','Должность'],['company','Компания'],['bio','О себе']]){
       const value=field(key)?.value.trim();identity.append(node('span',{class:'builder-identity-'+key},value&&value!=='Новая визитка'?value:label));

@@ -96,6 +96,8 @@ if (form) {
   const socialFields = [...form.querySelectorAll('[data-social]')];
   const iconBase = new URL('icons/', document.currentScript.src).href;
   const updateSocials = () => {
+    if (!socialContainer || !socialSection) return;
+    if (card.dataset.buttonLayout === 'tiles') { socialSection.hidden = true; return; }
     socialContainer.replaceChildren();
     for (const input of socialFields) {
       const url = httpUrl(input.value);

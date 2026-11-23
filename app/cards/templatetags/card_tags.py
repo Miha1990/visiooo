@@ -29,17 +29,26 @@ def customer_blocks(content, visual_editor=False):
 
 @register.simple_tag(takes_context=True)
 def card_buttons(context):
+    return button_items(context, context['content'].get('buttons', []))
+
+
+@register.simple_tag(takes_context=True)
+def daisy_buttons(context):
+    return button_items(context, context['content'].get('daisy', {}).get('items', []))
+
+
+def button_items(context, items):
     from django.templatetags.static import static
     from cards.button_builder import TYPES
     result = []
-    for item in context['content'].get('buttons', []):
+    for index, item in enumerate(items):
         kind = item['kind']; value = item['value']; external = kind not in ('phone','other_phone','email')
         if kind in ('phone','other_phone'): href = 'tel:' + value + (';ext='+item['extension'] if item.get('extension') else '')
         elif kind == 'email': href = 'mailto:' + value
         elif kind == 'file' and not value: href = document_url(context); external = False
         else: href = value
         if href:
-            result.append({**item, 'href':href, 'icon':static('icons/'+TYPES[kind]['icon']+'.svg'),
+            result.append({**item, 'index':index, 'href':href, 'icon':static('icons/'+TYPES[kind]['icon']+'.svg'),
                            'external':external, 'download':kind == 'file'})
     return result
 

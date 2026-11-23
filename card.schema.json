@@ -12,6 +12,12 @@
     "links"
   ],
   "properties": {
+    "layout":{"type":"object","additionalProperties":false,"properties":{
+      "blocks":{"type":"object","additionalProperties":false,"properties":{"cover":{"$ref":"#/$defs/size"},"logo":{"$ref":"#/$defs/size"},"avatar":{"$ref":"#/$defs/size"},"identity":{"$ref":"#/$defs/size"},"bio":{"$ref":"#/$defs/size"},"save":{"$ref":"#/$defs/size"},"business":{"$ref":"#/$defs/size"},"contacts":{"$ref":"#/$defs/size"},"socials":{"$ref":"#/$defs/size"},"carousel":{"$ref":"#/$defs/size"},"video":{"$ref":"#/$defs/size"},"document":{"$ref":"#/$defs/size"},"map":{"$ref":"#/$defs/size"},"daisy":{"$ref":"#/$defs/size"}}},
+      "buttons":{"type":"object","maxProperties":30,"additionalProperties":false,"patternProperties":{"^(?:[0-9]|[12][0-9])$":{"$ref":"#/$defs/size"}}},
+      "carousel":{"type":"object","additionalProperties":false,"properties":{"visible":{"enum":[1,1.5,2,2.5,3,4]},"height":{"type":"integer","minimum":80,"maximum":640},"fit":{"enum":["cover","contain"]},"aspect":{"enum":["custom","landscape","square","portrait"]}}}
+    }},
+    "daisy":{"type":"object","additionalProperties":false,"required":["label","items"],"properties":{"label":{"type":"string","minLength":1,"maxLength":40},"items":{"type":"array","maxItems":8,"items":{"$ref":"#/properties/buttons/items"}}}},
     "motion": {"type":"boolean"},
     "business": {"type":"object","additionalProperties":false,"required":["status","timezone","hours"],"properties":{
       "status":{"type":"string","maxLength":120},
@@ -202,6 +208,7 @@
     }
   },
   "$defs": {
+    "size":{"type":"object","additionalProperties":false,"properties":{"width":{"enum":[25,33,50,66,75,100]},"height":{"type":"integer","minimum":0,"maximum":720},"radius":{"type":"integer","minimum":0,"maximum":180},"shape":{"enum":["auto","square","circle"]}}},
     "socialUrl": {
       "type": "string",
       "format": "uri",

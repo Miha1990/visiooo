@@ -28,6 +28,8 @@ class WebLinkField(forms.URLField):
 
 
 class CardForm(forms.Form):
+    layout_data = forms.CharField(required=False, max_length=12000, widget=forms.HiddenInput)
+    daisy_data = forms.CharField(required=False, max_length=20000, widget=forms.HiddenInput)
     work_status = forms.CharField(label='Статус вручную', required=False, max_length=120,
         widget=forms.TextInput(attrs={'placeholder':'Принимаю заказы / Ближайшая запись — 28 ноября'}),
         help_text='Если заполнить, этот текст заменит автоматический статус по графику.')
@@ -184,9 +186,24 @@ class CardForm(forms.Form):
             links.append({'label': label.strip(), 'url': url})
         content = {'schemaVersion': 1, 'links': links}
         # Older integrations may omit these optional fields: preserve their saved values.
-        for key in ('business', 'primaryAction', 'motion'):
+        for key in ('business', 'primaryAction', 'motion', 'layout', 'daisy'):
             if self.card and key in self.card.draft:
                 content[key] = deepcopy(self.card.draft[key])
+        for field_name, key in [('layout_data','layout'), ('daisy_data','daisy')]:
+            if field_name not in self.data:
+                continue
+            try:
+                value = json.loads(data.get(field_name) or '{}')
+                if not isinstance(value, dict):
+                    raise ValueError
+                if key == 'daisy' and value:
+                    from .button_builder import clean_buttons
+                    value['items'] = clean_buttons(value.get('items', []))
+                content.pop(key, None)
+                if value:
+                    content[key] = value
+            except (ValueError, TypeError, RecursionError, ValidationError) as error:
+                self.add_error(field_name, error if isinstance(error, ValidationError) else 'Не удалось прочитать настройки блока.')
         if 'work_status' in self.data:
             hours = []
             for day in range(7):
@@ -265,6 +282,8 @@ class CardForm(forms.Form):
     def for_card(cls, card, data=None):
         initial = dict(card.draft, draft_version=card.draft_version)
         initial['card_address'] = card.public_id
+        initial['layout_data'] = json.dumps(card.draft.get('layout', {}), ensure_ascii=False)
+        initial['daisy_data'] = json.dumps(card.draft.get('daisy', {}), ensure_ascii=False)
         business = card.draft.get('business', {})
         initial.update(work_status=business.get('status',''), work_timezone=business.get('timezone','Europe/Moscow'),
                        motion=card.draft.get('motion', True))

@@ -1,4 +1,4 @@
-"""Customer content controls never accept layout definitions."""
+"""Customer media controls preserve validated content and responsive sizes."""
 from copy import deepcopy
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
