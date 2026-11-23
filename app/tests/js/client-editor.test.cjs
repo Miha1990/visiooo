@@ -16,8 +16,13 @@ function setup(reply){
  const window={addEventListener:(key,fn)=>windowEvents[key]=fn};
  vm.runInNewContext(source,{document,window,FormData,WeakSet,location:{href:'/edit'},fetch:async()=>{calls++;return reply();}});
  const submit=()=>{let prevented=false;const promise=upload.submit({submitter:button,preventDefault(){prevented=true;}});return {promise,get prevented(){return prevented;}};};
- return {form,name,version,uploadVersion,button,group,submit,windowEvents,get calls(){return calls;},get submissions(){return submissions;},get notice(){return notice;}};
+ return {form,name,version,upload,uploadVersion,button,group,submit,windowEvents,get calls(){return calls;},get submissions(){return submissions;},get notice(){return notice;}};
 }
+test('publication saves a newly activated builder layout even without other field edits',async()=>{
+ const f=setup(()=>({ok:true,json:async()=>({version:2})}));f.form.dataset={pendingBuilder:'true'};f.upload.action='/publish';
+ const action=f.submit();assert.equal(action.prevented,true);await action.promise;
+ assert.equal(f.calls,1);assert.equal(f.version.value,2);assert.equal(f.form.dataset.pendingBuilder,undefined);assert.equal(f.submissions,1);
+});
 test('upload waits for text save and submits with the returned draft version',async()=>{
  let resolve;const f=setup(()=>new Promise(r=>resolve=r));f.name.value='Новый клиент';
  const action=f.submit();assert.equal(action.prevented,true);assert.equal(f.submissions,0);assert.equal(f.form.inert,true);

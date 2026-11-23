@@ -1,0 +1,1 @@
+{% load card_tags %}{% card_image 'logo' as logo_url %}{% if logo_url %}<img class="card-logo" data-image-slot="logo" src="{{ logo_url }}" alt="Логотип {{ content.name }}">{% endif %}

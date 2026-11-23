@@ -294,14 +294,14 @@ class ImageTests(TestCase):
             'draft_version': self.card.draft_version, 'target': '../../unsafe', 'image': photo()}).status_code, 422)
         self.assertEqual(Asset.objects.count(), 1)
 
-    def test_three_independent_images_survive_saving_and_render_in_all_templates(self):
+    def test_independent_images_survive_saving_and_render_in_all_templates(self):
         from cards.image_slots import IMAGE_FIELDS
         images = {}
         for target, field in IMAGE_FIELDS.items():
             self.card.refresh_from_db()
             images[field] = upload_avatar(self.user, self.card.pk, self.card.draft_version, photo(), target=target)
         self.card.refresh_from_db()
-        self.assertEqual(len({str(asset.pk) for asset in images.values()}), 3)
+        self.assertEqual(len({str(asset.pk) for asset in images.values()}), len(IMAGE_FIELDS))
         for template in ('classic', 'minimal', 'profile'):
             form = CardForm.for_card(self.card, {'name': 'Анна', 'template': template, 'accent': '#2457DB',
                 'draft_version': self.card.draft_version, 'links': ''})

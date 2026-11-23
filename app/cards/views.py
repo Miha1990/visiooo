@@ -17,6 +17,7 @@ from .services import (workspace_for, own_card, active_subscription, create_card
                        publish_card, public_card, delete_card, unpublish_card, Conflict)
 from .vcard import render_vcard
 from .blocks import carousel_limit
+from .button_builder import BUTTON_TYPES
 
 
 def public_url(card):
@@ -111,6 +112,7 @@ def edit(request, pk):
             return JsonResponse({'errors':form.errors.get_json_data(), 'error':'Проверьте поля визитки. Правки не сохранены.'},status=status)
     image_panels = []
     descriptions = {
+        'logo': ('Лого', 'Отдельный логотип в левой части обложки.'),
         'background': ('Фон', 'Фотография на фоне всей визитки. Текст останется на светлой подложке.'),
         'avatar': ('Фото', 'Ваш портрет или логотип в круглом блоке профиля.'),
         'header': ('Шапка', 'Отдельная фотография в верхней части визитки.'),
@@ -125,6 +127,7 @@ def edit(request, pk):
                 'card_id': card.pk, 'draft_version': card.draft_version, 'target': target})})
     return render(request, 'cards/edit.html', {'card': card, 'form': form, 'content': card.draft,
         'initial_view': 'preview' if request.GET.get('view') == 'preview' else 'edit',
+        'builder_options': BUTTON_TYPES,
         'image_panels': image_panels, 'content_blocks':form.blocks,
         'gallery_ids':card.draft.get('galleryAssetIds', []),
         'gallery_limit':carousel_limit(),

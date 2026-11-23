@@ -21,6 +21,10 @@ def validate_content(content, workspace=None):
         validate_design(content['design'])
         if content['design']['buttonStyle'] == 'outline' and contrast(content['accent'], content['design']['background']) < 4.5:
             raise ValidationError('Цвет контурных кнопок должен хорошо отличаться от фона.')
+    if 'buttons' in content:
+        from .button_builder import clean_buttons
+        if clean_buttons(content['buttons']) != content['buttons']:
+            raise ValidationError('Проверьте номера телефонов и ссылки в кнопках.')
     from .models import Asset
     from .blocks import video_embed
     video = content.get('video', {})

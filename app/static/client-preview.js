@@ -19,7 +19,7 @@
     for(const key of ['title','company','bio']){const node=card.querySelector(`[data-preview="${key}"]`);if(node)node.hidden=!node.textContent.trim();}
     visibility('bio',Boolean(value('bio')));
     visibility('contacts',Boolean(card.querySelector('.contact-actions')?.childElementCount));
-    visibility('socials',Boolean(card.querySelector('.social-links')?.childElementCount));
+    visibility('socials',card.dataset.buttonLayout!=='tiles'&&Boolean(card.querySelector('.social-links')?.childElementCount));
     visibility('carousel',Boolean(card.querySelector('.carousel-slide')));
     if(field('video_url')){
       const url=window.WebLinks.normalize(value('video_url')),player=window.CardEmbeds.video(url,window.WebLinks.normalize(value('video_player')));
@@ -35,7 +35,7 @@
       if(section){section.querySelector('[data-map-address]').textContent=address;embed(section.querySelector('[data-external-embed]'),window.CardEmbeds.map(location));}
     }
     const pdf=card.querySelector('[data-document-link]');
-    visibility('document',Boolean(pdf?.getAttribute('href')));
+    visibility('document',card.dataset.buttonLayout!=='tiles'&&Boolean(pdf?.getAttribute('href')));
     if(pdf&&field('pdf_label'))pdf.textContent=value('pdf_label')||'Скачать прайс-лист (PDF)';
     window.CardWidgets?.refresh(card);
   }

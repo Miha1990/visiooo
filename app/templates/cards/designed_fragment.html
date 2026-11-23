@@ -1,5 +1,5 @@
 {% load static card_tags %}
-<article class="contact-card designed-card" data-preset="{{ content.design.sourceId }}" data-canvas-enabled="{{ content.design.canvas.enabled|yesno:'true,false' }}" data-canvas-height="{{ content.design.canvas.height|default:1000 }}" data-icon-map="{{ content.design|design_icons }}" data-phone-label="{{ content.design.phoneLabel }}" data-email-label="{{ content.design.emailLabel }}" data-button-style="{{ content.design.buttonStyle }}" data-icon-position="{{ content.design.iconPosition }}" data-social-mode="{{ content.design.socialMode }}" style="--accent:{{ content.accent }};{{ content.design|design_style }}">
+<article class="contact-card designed-card" data-button-layout="{{ content.buttonLayout }}" data-preset="{{ content.design.sourceId }}" data-canvas-enabled="{{ content.design.canvas.enabled|yesno:'true,false' }}" data-canvas-height="{{ content.design.canvas.height|default:1000 }}" data-icon-map="{{ content.design|design_icons }}" data-phone-label="{{ content.design.phoneLabel }}" data-email-label="{{ content.design.emailLabel }}" data-button-style="{{ content.design.buttonStyle }}" data-icon-position="{{ content.design.iconPosition }}" data-social-mode="{{ content.design.socialMode }}" style="--accent:{{ content.accent }};{{ content.design|design_style }}">
 {% card_image 'background' as background_url %}<img class="card-background" data-image-slot="background" alt="" aria-hidden="true" {% if background_url %}src="{{ background_url }}"{% else %}hidden{% endif %}>
 <div class="contact-body design-body">
 
@@ -7,6 +7,7 @@
 <img class="design-block-icon" data-block-icon="{{ block }}" {% if block_style.icon %}src="{% url 'template_icon' block_style.icon %}"{% else %}hidden{% endif %} width="24" height="24" alt="">
 {% if block == 'cover' %}
   <div class="contact-cover">
+{% include 'cards/logo.html' %}
 {% card_image 'header' as header_url %}<img class="cover-photo" data-image-slot="header" alt="" aria-hidden="true" {% if header_url %}src="{{ header_url }}"{% else %}hidden{% endif %}>
     <span data-design-label="caption">{{ content.design.caption }}</span>
   </div>
@@ -28,11 +29,13 @@
     {% elif preview %}<span class="button contact-save design-action"><img class="design-contact-icon" data-design-icon="save" src="{% design_icon content.design 'save' %}" width="24" height="24" alt=""><span data-design-label="saveLabel">{{ content.design.saveLabel }}</span></span>
     {% else %}<a class="button contact-save design-action" href="{% url 'vcard' card.public_id %}"><img class="design-contact-icon" data-design-icon="save" src="{% design_icon content.design 'save' %}" width="24" height="24" alt=""><span data-design-label="saveLabel">{{ content.design.saveLabel }}</span></a>{% endif %}
 {% elif block == 'contacts' %}
+    {% if content.buttonLayout == 'tiles' %}{% include 'cards/button_tiles.html' %}{% else %}
     <div class="contact-actions">
       {% if content.phone %}<a href="tel:{{ content.phone }}"><img class="design-contact-icon" data-design-icon="phone" src="{% design_icon content.design 'phone' %}" width="24" height="24" alt=""><span data-design-label="phoneLabel">{{ content.phoneLabel|default:content.design.phoneLabel }}</span>{% if not content.phoneLabel %}<span class="contact-detail">{{ content.phone }}</span>{% endif %}</a>{% endif %}
       {% if content.email %}<a href="mailto:{{ content.email }}"><img class="design-contact-icon" data-design-icon="email" src="{% design_icon content.design 'email' %}" width="24" height="24" alt=""><span data-design-label="emailLabel">{{ content.emailLabel|default:content.design.emailLabel }}</span>{% if not content.emailLabel %}<span class="contact-detail">{{ content.email }}</span>{% endif %}</a>{% endif %}
       {% for link in content.links %}<a href="{{ link.url }}" target="_blank" rel="noopener noreferrer"><img class="design-contact-icon" data-design-icon="link" src="{% design_icon content.design 'link' %}" width="24" height="24" alt=""><span>{{ link.label }}</span></a>{% endfor %}
     </div>
+    {% endif %}
 {% elif block == 'socials' %}
     {% with networks=content|social_links %}
     <section class="social-section" aria-label="Соцсети и сайт" {% if not networks %}hidden{% endif %}>

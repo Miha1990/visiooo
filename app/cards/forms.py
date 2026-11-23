@@ -1,5 +1,6 @@
 from django import forms
 from copy import deepcopy
+import json
 import re
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
@@ -26,6 +27,7 @@ class WebLinkField(forms.URLField):
 
 
 class CardForm(forms.Form):
+    button_items = forms.CharField(required=False, max_length=70000, widget=forms.HiddenInput)
     draft_version = forms.IntegerField(min_value=1, widget=forms.HiddenInput)
     name = forms.CharField(label='Имя и фамилия', max_length=100)
     title = forms.CharField(label='Должность', max_length=120, required=False)
@@ -116,12 +118,8 @@ class CardForm(forms.Form):
                 for key, title in [('phone', 'Телефон'), ('email', 'Электронная почта')]]
 
     def clean_phone(self):
-        value = re.sub(r'[\s()\-]', '', self.cleaned_data.get('phone', ''))
-        if len(value) == 11 and value.isascii() and value.isdigit() and value[0] in ('7','8'):
-            value = '+7' + value[1:]
-        if value and not re.fullmatch(r'\+[1-9][0-9]{7,14}', value):
-            raise ValidationError('Укажите номер с кодом страны, например +79289091817, или российский номер 89289091817.')
-        return value
+        from .button_builder import phone_number
+        return phone_number(self.cleaned_data.get('phone', ''))
 
     @property
     def social_fields(self):
@@ -147,7 +145,7 @@ class CardForm(forms.Form):
                 return data
             links.append({'label': label.strip(), 'url': url})
         content = {'schemaVersion': 1, 'links': links}
-        for key in ('galleryAssetIds','video','document','map'):
+        for key in ('galleryAssetIds','video','document','map','buttons','buttonLayout'):
             if self.card and key in self.card.draft:
                 content[key] = deepcopy(self.card.draft[key])
         if 'video' in self.blocks:
@@ -183,6 +181,9 @@ class CardForm(forms.Form):
             if data.get(key) or data.get(key+'_label'):
                 content[key+'Label'] = data.get(key+'_label') or (self.design or {}).get(key+'Label') or fallback
         try:
+            if self.data.get('builder_mode') == 'tiles':
+                from .button_builder import clean_buttons, apply_buttons
+                content = apply_buttons(content, clean_buttons(data.get('button_items') or '[]'))
             self.content = validate_content(content, workspace=self.card.workspace if self.card else None)
         except ValidationError as error:
             self.add_error(None, error)
@@ -191,6 +192,8 @@ class CardForm(forms.Form):
     @classmethod
     def for_card(cls, card, data=None):
         initial = dict(card.draft, draft_version=card.draft_version)
+        from .button_builder import initial_buttons
+        initial['button_items'] = json.dumps(initial_buttons(card.draft), ensure_ascii=False)
         for key, fallback in [('phone', 'Позвонить'), ('email', 'Написать')]:
             initial[key+'_label'] = card.draft.get(key+'Label') or card.draft.get('design', {}).get(key+'Label') or fallback
         initial['links'] = '\n'.join(f'{link["label"]} | {link["url"]}' for link in card.draft['links'])
@@ -208,5 +211,5 @@ class AvatarUploadForm(forms.Form):
     image = forms.FileField(label='Фото', widget=forms.ClearableFileInput(attrs={
         'accept': 'image/jpeg,image/png,image/webp'}),
         help_text='JPEG, PNG или WebP. До 5 МБ и 20 мегапикселей. Метаданные удаляются.')
-    target = forms.ChoiceField(choices=[('avatar', 'Фото'), ('background', 'Фон'), ('header', 'Шапка')],
+    target = forms.ChoiceField(choices=[('logo', 'Лого'), ('avatar', 'Фото'), ('background', 'Фон'), ('header', 'Шапка')],
                               required=False, initial='avatar', widget=forms.HiddenInput)

@@ -23,5 +23,8 @@ def render_vcard(content, public_url):
                       ('email', 'EMAIL;TYPE=INTERNET'), ('bio', 'NOTE'), ('website', 'URL')]:
         if content.get(key):
             lines.append(prop + ':' + escape(content[key]))
+    for button in content.get('buttons', []):
+        if button['kind'] in ('phone','other_phone') and button['value'] != content.get('phone'):
+            lines.append('TEL;TYPE=VOICE:' + escape(button['value']))
     lines += ['URL:' + escape(public_url), 'END:VCARD']
     return ('\r\n'.join(fold(line) for line in lines) + '\r\n').encode('utf-8')

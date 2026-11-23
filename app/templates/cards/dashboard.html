@@ -5,6 +5,7 @@
 {% if card %}
 {% if cards|length > 1 %}<form method="get" class="client-card-picker"><label for="selected-card">Мои визитки</label><div><select id="selected-card" name="card">{% for item in cards %}<option value="{{ item.pk }}" {% if item.pk == card.pk %}selected{% endif %}>{{ item.draft.name }}</option>{% endfor %}</select><button type="submit">Выбрать</button></div></form>{% endif %}
 <article class="client-profile"><div class="client-cover">
+{% card_image 'logo' as logo_url %}{% if logo_url %}<img class="client-profile-logo" src="{{ logo_url }}" alt="Логотип {{ content.name }}">{% endif %}
 {% card_image 'header' as header_url %}{% if header_url %}<img class="client-cover-photo" src="{{ header_url }}" alt="">{% endif %}
 <div class="client-portrait">{% card_image 'avatar' as avatar_url %}{% if avatar_url %}<img src="{{ avatar_url }}" alt="Фото {{ content.name }}">{% else %}<span>{{ content.name|first }}</span>{% endif %}</div>
 <a class="client-qr-trigger" href="{% url 'qr' card.pk %}" data-open-qr aria-label="Показать QR-код визитки"><svg aria-hidden="true"><use href="#client-qr"/></svg></a>

@@ -4,6 +4,7 @@
 {% include 'brand/webapp.html' %}
 {% include 'brand/metadata.html' %}
 <script src="{% static 'web-links.js' %}" defer></script>
+<script src="{% static 'card-buttons.js' %}" defer></script>
 <link rel="stylesheet" href="{% static 'app.css' %}"><link rel="stylesheet" href="{% static 'designs.css' %}"><link rel="stylesheet" href="{% static 'card-widgets.css' %}"><script src="{% static 'card-widgets.js' %}" defer></script><script src="{% static 'app.js' %}" defer></script><script src="{% static 'card-interactions.js' %}" defer></script><link rel="stylesheet" href="{% static 'mobile.css' %}">
 {% if client_area %}<link rel="stylesheet" href="{% static 'client-shell.css' %}"><script src="{% static 'client-shell.js' %}" defer></script>{% endif %}
 {% block extra_head %}{% endblock %}</head>

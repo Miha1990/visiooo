@@ -17,15 +17,18 @@ def available_blocks(content):
 
 def block_has_content(content, key):
     images = content.get('design', {}).get('images', {})
-    if key == 'cover': return bool(content.get('headerAssetId') or images.get('header'))
+    if key == 'cover': return bool(content.get('headerAssetId') or content.get('logoAssetId') or images.get('header'))
     if key == 'avatar': return bool(content.get('avatarAssetId') or images.get('avatar'))
     if key == 'bio': return bool(content.get('bio', '').strip())
-    if key == 'contacts': return bool(content.get('phone') or content.get('email') or content.get('links'))
-    if key == 'socials': return bool(content.get('socials') or content.get('website'))
+    if key == 'contacts':
+        if content.get('buttonLayout') == 'tiles':
+            return any(item['kind'] != 'file' or item['value'] or content.get('document', {}).get('assetId') for item in content.get('buttons', []))
+        return bool(content.get('phone') or content.get('email') or content.get('links'))
+    if key == 'socials': return False if content.get('buttonLayout') == 'tiles' else bool(content.get('socials') or content.get('website'))
     if key == 'carousel':
         return bool(content['galleryAssetIds'] if 'galleryAssetIds' in content else content.get('design', {}).get('carousel', {}).get('photos'))
     if key == 'video': return bool(content.get('video', {}).get('url'))
-    if key == 'document': return bool(content.get('document', {}).get('assetId'))
+    if key == 'document': return content.get('buttonLayout') != 'tiles' and bool(content.get('document', {}).get('assetId'))
     if key == 'map': return bool(content.get('map', {}).get('address', '').strip())
     return True
 

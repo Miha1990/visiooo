@@ -31,6 +31,10 @@ if (form) {
 
   const httpUrl = value => window.WebLinks.normalize(value);
   const updateActions = () => {
+    if (form.elements.namedItem('builder_mode')?.value === 'tiles') {
+      try { window.CardButtons.render(card, JSON.parse(form.elements.namedItem('button_items').value || '[]')); } catch {}
+      return;
+    }
     const actions = card.querySelector('.contact-actions');
     actions.replaceChildren();
     const add = (label, href, detail, external = false, role = 'link') => {
@@ -66,7 +70,7 @@ if (form) {
       if (label && url) add(label, url, '', true);
     }
   };
-  for (const key of ['phone', 'email', 'phone_label', 'email_label', 'website', 'links']) form.elements.namedItem(key)?.addEventListener('input', updateActions);
+  for (const key of ['phone', 'email', 'phone_label', 'email_label', 'website', 'links', 'button_items']) form.elements.namedItem(key)?.addEventListener('input', updateActions);
   const linkRows = [...form.querySelectorAll('[data-link-row]')];
   linkRows.forEach(row => row.querySelectorAll('input').forEach(input => input.addEventListener('input', updateActions)));
   const addLink = form.querySelector('[data-add-link]');
