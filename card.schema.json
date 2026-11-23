@@ -4,49 +4,406 @@
   "title": "Содержимое электронной визитки",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "name", "template", "accent", "links"],
+  "required": [
+    "schemaVersion",
+    "name",
+    "template",
+    "accent",
+    "links"
+  ],
   "properties": {
-    "schemaVersion": {"const": 1},
-    "name": {"type": "string", "minLength": 1, "maxLength": 100, "pattern": "\\S"},
-    "title": {"type": "string", "maxLength": 120},
-    "company": {"type": "string", "maxLength": 160},
-    "bio": {"type": "string", "maxLength": 1000},
-    "phone": {"type": "string", "pattern": "^\\+[1-9][0-9]{7,14}$"},
-    "email": {"type": "string", "format": "email", "maxLength": 254},
-    "website": {"type": "string", "format": "uri", "pattern": "^https?://", "maxLength": 2048},
-    "avatarAssetId": {"type": "string", "format": "uuid"},
-    "backgroundAssetId": {"type": "string", "format": "uuid"},
-    "headerAssetId": {"type": "string", "format": "uuid"},
+    "schemaVersion": {
+      "const": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "\\S"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 120
+    },
+    "company": {
+      "type": "string",
+      "maxLength": 160
+    },
+    "bio": {
+      "type": "string",
+      "maxLength": 1000
+    },
+    "phone": {
+      "type": "string",
+      "pattern": "^\\+[1-9][0-9]{7,14}$"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "maxLength": 254
+    },
+    "website": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://",
+      "maxLength": 2048
+    },
+    "avatarAssetId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "backgroundAssetId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "headerAssetId": {
+      "type": "string",
+      "format": "uuid"
+    },
     "socials": {
-      "type": "object", "additionalProperties": false,
+      "type": "object",
+      "additionalProperties": false,
       "properties": {
-        "instagram": {"$ref": "#/$defs/socialUrl"},
-        "threads": {"$ref": "#/$defs/socialUrl"},
-        "telegram": {"$ref": "#/$defs/socialUrl"},
-        "vk": {"$ref": "#/$defs/socialUrl"},
-        "ok": {"$ref": "#/$defs/socialUrl"},
-        "max": {"$ref": "#/$defs/socialUrl"},
-        "avito": {"$ref": "#/$defs/socialUrl"}
+        "instagram": {
+          "$ref": "#/$defs/socialUrl"
+        },
+        "threads": {
+          "$ref": "#/$defs/socialUrl"
+        },
+        "telegram": {
+          "$ref": "#/$defs/socialUrl"
+        },
+        "vk": {
+          "$ref": "#/$defs/socialUrl"
+        },
+        "ok": {
+          "$ref": "#/$defs/socialUrl"
+        },
+        "max": {
+          "$ref": "#/$defs/socialUrl"
+        },
+        "avito": {
+          "$ref": "#/$defs/socialUrl"
+        }
       }
     },
-    "template": {"enum": ["classic", "minimal", "profile"]},
-    "accent": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+    "template": {
+      "enum": [
+        "classic",
+        "minimal",
+        "profile"
+      ]
+    },
+    "accent": {
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}$"
+    },
     "links": {
-      "type": "array", "maxItems": 10,
+      "type": "array",
+      "maxItems": 10,
       "items": {
-        "type": "object", "additionalProperties": false, "required": ["label", "url"],
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "label",
+          "url"
+        ],
         "properties": {
-          "label": {"type": "string", "minLength": 1, "maxLength": 60, "pattern": "\\S"},
-          "url": {"type": "string", "format": "uri", "pattern": "^https?://", "maxLength": 2048}
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60,
+            "pattern": "\\S"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https?://",
+            "maxLength": 2048
+          }
+        }
+      }
+    },
+    "design": {
+      "$ref": "#/$defs/design"
+    }
+  },
+  "$defs": {
+    "socialUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://",
+      "maxLength": 2048
+    },
+    "design": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "font",
+        "align",
+        "buttonShape",
+        "buttonStyle",
+        "iconPosition",
+        "avatarShape",
+        "socialMode",
+        "buttonColumns",
+        "iconSize",
+        "avatarSize",
+        "coverHeight",
+        "gap",
+        "radius",
+        "nameSize",
+        "accent",
+        "background",
+        "text",
+        "caption",
+        "saveLabel",
+        "phoneLabel",
+        "emailLabel",
+        "socialLabel",
+        "allowAccent",
+        "allowFont",
+        "weight",
+        "blocks",
+        "hidden",
+        "icons"
+      ],
+      "properties": {
+        "font": {
+          "enum": [
+            "ui",
+            "serif",
+            "rounded"
+          ]
+        },
+        "align": {
+          "enum": [
+            "left",
+            "center"
+          ]
+        },
+        "buttonShape": {
+          "enum": [
+            "rect",
+            "rounded",
+            "pill"
+          ]
+        },
+        "buttonStyle": {
+          "enum": [
+            "filled",
+            "outline"
+          ]
+        },
+        "iconPosition": {
+          "enum": [
+            "left",
+            "right",
+            "top"
+          ]
+        },
+        "avatarShape": {
+          "enum": [
+            "circle",
+            "rounded",
+            "square"
+          ]
+        },
+        "socialMode": {
+          "enum": [
+            "both",
+            "icons"
+          ]
+        },
+        "buttonColumns": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2
+        },
+        "iconSize": {
+          "type": "integer",
+          "minimum": 16,
+          "maximum": 36
+        },
+        "avatarSize": {
+          "type": "integer",
+          "minimum": 64,
+          "maximum": 144
+        },
+        "coverHeight": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 240
+        },
+        "gap": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 32
+        },
+        "radius": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 36
+        },
+        "nameSize": {
+          "type": "integer",
+          "minimum": 22,
+          "maximum": 40
+        },
+        "accent": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "background": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "text": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "caption": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "saveLabel": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "phoneLabel": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "emailLabel": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "socialLabel": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "allowAccent": {
+          "type": "boolean"
+        },
+        "allowFont": {
+          "type": "boolean"
+        },
+        "weight": {
+          "enum": [
+            400,
+            600,
+            700
+          ]
+        },
+        "blocks": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "cover",
+              "avatar",
+              "identity",
+              "bio",
+              "save",
+              "contacts",
+              "socials"
+            ]
+          },
+          "minItems": 7,
+          "maxItems": 7,
+          "uniqueItems": true
+        },
+        "hidden": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "cover",
+              "avatar",
+              "bio",
+              "contacts",
+              "socials"
+            ]
+          },
+          "maxItems": 5,
+          "uniqueItems": true
+        },
+        "icons": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "save": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "phone": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "email": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "link": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "telegram": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "vk": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "ok": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "max": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "instagram": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "threads": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "avito": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "website": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "sourceId": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "sourceVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sourceName": {
+          "type": "string",
+          "maxLength": 100
         }
       }
     }
   },
-  "$defs": {
-    "socialUrl": {"type": "string", "format": "uri", "pattern": "^https?://", "maxLength": 2048}
-  },
   "examples": [
-    {"schemaVersion": 1, "name": "Анна Иванова", "title": "Дизайнер", "template": "minimal", "accent": "#2457DB", "links": []}
+    {
+      "schemaVersion": 1,
+      "name": "Анна Иванова",
+      "title": "Дизайнер",
+      "template": "minimal",
+      "accent": "#2457DB",
+      "links": []
+    }
   ],
   "$comment": "Включать format validation явно. Пустые необязательные поля редактор удаляет. Владение изображением, лимиты, контраст цвета и нормализация проверяются сервером отдельно. Это содержимое, не полный объект Card."
 }

@@ -1,4 +1,5 @@
 from django import forms
+from copy import deepcopy
 from django.core.exceptions import ValidationError
 from .validation import validate_content
 from .socials import SOCIAL_NETWORKS
@@ -25,6 +26,16 @@ class CardForm(forms.Form):
     def __init__(self, *args, card=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.card = card
+        self.design = deepcopy(card.draft.get('design')) if card else None
+        if self.design:
+            self.fields['template'].choices = [('design', 'Из каталога: ' + self.design.get('sourceName', 'Мой шаблон'))] + list(self.fields['template'].choices)
+            self.initial['template'] = 'design'
+            self.fields['template'].help_text = 'После смены основы сохраните черновик, чтобы увидеть новый вид.'
+            if not self.design['allowAccent'] and (not self.is_bound or self.data.get('template') == 'design'):
+                self.fields['accent'].disabled = True
+            if self.design['allowFont']:
+                from .designs import FONTS
+                self.fields['design_font'] = forms.ChoiceField(label='Шрифт шаблона', choices=FONTS, initial=self.design['font'])
         for key, label, placeholder in SOCIAL_NETWORKS:
             self.fields[f'social_{key}'] = forms.URLField(label=label, required=False, max_length=2048,
                 assume_scheme='https', widget=forms.URLInput(attrs={
@@ -34,7 +45,10 @@ class CardForm(forms.Form):
 
     @property
     def details_fields(self):
-        return [self[key] for key in ('name', 'title', 'company', 'bio', 'phone', 'email', 'template', 'accent', 'links')]
+        keys = ['name', 'title', 'company', 'bio', 'phone', 'email', 'template', 'accent', 'links']
+        if 'design_font' in self.fields:
+            keys.append('design_font')
+        return [self[key] for key in keys]
 
     @property
     def social_fields(self):
@@ -55,6 +69,11 @@ class CardForm(forms.Form):
             label, url = line.split('|', 1)
             links.append({'label': label.strip(), 'url': url.strip()})
         content = {'schemaVersion': 1, 'links': links}
+        if data.get('template') == 'design' and self.design:
+            content['design'] = deepcopy(self.design)
+            data['template'] = self.card.draft['template']
+            if self.design['allowFont']:
+                content['design']['font'] = data['design_font']
         for asset_field in IMAGE_FIELDS.values():
             if self.card and self.card.draft.get(asset_field):
                 content[asset_field] = self.card.draft[asset_field]

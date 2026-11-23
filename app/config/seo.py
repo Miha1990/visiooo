@@ -51,7 +51,7 @@ def card_metadata(request, card):
 @require_safe
 def robots(request):
     lines = ['User-agent: *', 'Allow: /', 'Disallow: /admin/', 'Disallow: /accounts/',
-             'Disallow: /app/', 'Disallow: /payments/', 'Disallow: /health/', 'Disallow: /analytics/']
+             'Disallow: /app/', 'Disallow: /control/', 'Disallow: /payments/', 'Disallow: /health/', 'Disallow: /analytics/']
     if not hasattr(request, 'domain_binding'):
         lines += ['', f'Sitemap: {settings.PUBLIC_BASE_URL}/sitemap.xml']
     response = HttpResponse('\n'.join(lines) + '\n', content_type='text/plain; charset=utf-8')

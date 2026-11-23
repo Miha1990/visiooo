@@ -17,6 +17,10 @@ if (form) {
     document.querySelector('.contact-card').style.setProperty('--accent', event.target.value);
   });
   const card = document.querySelector('.contact-card');
+  const designed = card.classList.contains('designed-card');
+  const designIcons = designed ? JSON.parse(card.dataset.iconMap) : {};
+  const fontInput = form.elements.namedItem('design_font');
+  if (fontInput) fontInput.addEventListener('change', () => card.style.setProperty('--design-font', ({ui:"'Segoe UI',system-ui,sans-serif",serif:'Georgia,serif',rounded:"'Trebuchet MS',Arial,sans-serif"})[fontInput.value]));
   const template = form.elements.namedItem('template');
   const updateTemplate = () => {
     card.classList.remove('template-classic', 'template-minimal', 'template-profile');
@@ -34,9 +38,14 @@ if (form) {
   const updateActions = () => {
     const actions = card.querySelector('.contact-actions');
     actions.replaceChildren();
-    const add = (label, href, detail, external = false) => {
+    const add = (label, href, detail, external = false, role = 'link') => {
       const anchor = document.createElement('a');
       anchor.textContent = label;
+      if (designed) {
+        const img = document.createElement('img');
+        img.src = designIcons[role]; img.alt = ''; img.className = 'design-contact-icon'; img.width = 24; img.height = 24;
+        anchor.prepend(img);
+      }
       anchor.href = href;
       if (detail) {
         const span = document.createElement('span');
@@ -48,8 +57,8 @@ if (form) {
     };
     const phone = form.elements.namedItem('phone').value.trim();
     const email = form.elements.namedItem('email').value.trim();
-    if (/^\+[1-9][0-9]{7,14}$/.test(phone)) add('Позвонить', `tel:${phone}`, phone);
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) add('Написать', `mailto:${email}`, email);
+    if (/^\+[1-9][0-9]{7,14}$/.test(phone)) add(card.dataset.phoneLabel || 'Позвонить', `tel:${phone}`, phone, false, 'phone');
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) add(card.dataset.emailLabel || 'Написать', `mailto:${email}`, email, false, 'email');
     for (const line of form.elements.namedItem('links').value.split('\n').filter(line => line.trim()).slice(0, 10)) {
       const divider = line.indexOf('|');
       if (divider === -1) continue;
@@ -80,13 +89,14 @@ if (form) {
       const icon = document.createElement('span');
       icon.className = 'social-icon';
       const img = document.createElement('img');
-      img.src = `${iconBase}${key}.svg`;
+      img.src = designIcons[key] || `${iconBase}${key}.svg`;
       img.alt = '';
       img.width = 24;
       img.height = 24;
       icon.append(img);
       const label = document.createElement('span');
       label.textContent = input.dataset.label;
+      anchor.setAttribute('aria-label', input.dataset.label);
       anchor.append(icon, label);
       socialContainer.append(anchor);
     }

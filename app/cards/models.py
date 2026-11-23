@@ -12,6 +12,44 @@ def empty_content():
     return {'schemaVersion': 1, 'name': 'Новая визитка', 'template': 'classic', 'accent': '#2457DB', 'links': []}
 
 
+class CardTemplate(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField('Название', max_length=100)
+    description = models.CharField('Описание', max_length=300, blank=True)
+    category = models.CharField('Категория', max_length=60, blank=True)
+    draft = models.JSONField('Оформление черновика', default=dict)
+    version = models.PositiveIntegerField('Версия черновика', default=1)
+    published = models.JSONField('Опубликованное оформление', default=dict)
+    published_version = models.PositiveIntegerField('Редакция в каталоге', default=0)
+    status = models.CharField('Состояние', max_length=12, default='draft', choices=[
+        ('draft', 'Черновик'), ('published', 'В каталоге'), ('archived', 'В архиве')])
+    position = models.PositiveIntegerField('Порядок в каталоге', default=0)
+    updated_at = models.DateTimeField('Изменён', auto_now=True)
+
+    class Meta:
+        verbose_name = 'шаблон визитки'
+        verbose_name_plural = 'Шаблоны визиток'
+        ordering = ['position', 'name']
+
+    def __str__(self):
+        return self.name
+
+
+class TemplateIcon(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField('Название', max_length=80)
+    svg = models.TextField('Проверенный значок SVG', editable=False)
+    created_at = models.DateTimeField('Добавлен', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'значок шаблона'
+        verbose_name_plural = 'Значки шаблонов'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 class Card(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, verbose_name='Идентификатор')
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, verbose_name='Личный кабинет')

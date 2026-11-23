@@ -1,5 +1,46 @@
 from django.contrib import admin
 from .models import Card, CardRevision, PhysicalCard, PhysicalCardEvent
+from .models import CardTemplate, TemplateIcon
+from django.shortcuts import redirect
+
+
+@admin.register(CardTemplate)
+class TemplateAdmin(admin.ModelAdmin):
+    def changelist_view(self, request, extra_context=None):
+        if not self.has_change_permission(request):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied
+        return redirect('/control/templates')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        if not self.has_change_permission(request):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied
+        return redirect('/control/templates/' + object_id)
+
+
+@admin.register(TemplateIcon)
+class IconAdmin(admin.ModelAdmin):
+    def changelist_view(self, request, extra_context=None):
+        if not request.user.has_perm('cards.change_cardtemplate'):
+            from django.core.exceptions import PermissionDenied
+            raise PermissionDenied
+        return redirect('/control/icons')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Card)

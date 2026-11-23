@@ -15,6 +15,11 @@ def validate_content(content, workspace=None):
     if errors:
         raise ValidationError('Проверьте содержимое: ' + '; '.join(
             f'{" / ".join(map(str, error.path))}: {error.message}' for error in errors))
+    if content.get('design'):
+        from .designs import validate_design, contrast
+        validate_design(content['design'])
+        if content['design']['buttonStyle'] == 'outline' and contrast(content['accent'], content['design']['background']) < 4.5:
+            raise ValidationError('Цвет контурных кнопок должен хорошо отличаться от фона.')
     from .models import Asset
     for asset_field in IMAGE_FIELDS.values():
         if asset_field in content:
