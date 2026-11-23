@@ -27,7 +27,10 @@ def manager(view):
     return never_cache(wrapped)
 
 
-def demo(design):
+def demo(design, preset_id=None):
+    from .premium import PREMIUM_ID, demo as premium_demo
+    if str(preset_id) == PREMIUM_ID:
+        return premium_demo(design)
     example = get_example('designer')
     content = deepcopy(example['content'])
     content.update(design=deepcopy(design), accent=design['accent'], phone='+79990000000')
@@ -94,10 +97,10 @@ def edit(request, pk):
         if request.headers.get('Accept') == 'application/json':
             return JsonResponse({'error':' '.join(str(error) for errors in form.errors.values() for error in errors)},status=status)
     design = form.design if hasattr(form, 'design') else (item.draft or deepcopy(DEFAULT))
-    context = {'item': item, 'form': form, **demo(design),
+    context = {'item': item, 'form': form, **demo(design, item.pk),
                'blocks': [{'key': key, 'label': dict(BLOCKS)[key]} for key in design['blocks']]}
     from .visual_views import editor_context
-    context.update(editor_context(context['content'],request.user,template=True))
+    context.update(editor_context(context['content'],request.user,template=True,example_pdf_url=context.get('example_pdf_url','')))
     return render(request, 'studio/edit.html', context, status=status)
 
 
@@ -176,6 +179,10 @@ def catalog(request, pk):
         item = get_object_or_404(CardTemplate, pk=template_id, status='published')
         try:
             definition = deepcopy(validate_design(item.published))
+            from .premium import PREMIUM_ID
+            if str(item.pk) == PREMIUM_ID:
+                # Portfolio photos are examples, never the customer's own work.
+                definition.get('carousel', {})['photos'] = []
             definition.update(sourceId=str(item.pk), sourceVersion=item.published_version, sourceName=item.name)
             content = deepcopy(card.draft)
             content.update(design=definition, accent=definition['accent'])
@@ -185,5 +192,5 @@ def catalog(request, pk):
         else:
             messages.success(request, 'Шаблон применён к черновику. Опубликуйте визитку, чтобы обновить её для посетителей.')
         return redirect303(f'/app/cards/{pk}/edit')
-    items = [{'item': item, **demo(item.published)} for item in CardTemplate.objects.filter(status='published')]
+    items = [{'item': item, **demo(item.published, item.pk)} for item in CardTemplate.objects.filter(status='published')]
     return render(request, 'studio/catalog.html', {'items': items, 'card': card})

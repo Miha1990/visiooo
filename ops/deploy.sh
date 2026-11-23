@@ -18,6 +18,7 @@ backup="backups/database-$(date -u +%Y%m%dT%H%M%SZ)-$$.dump"
 test -s "$backup"
 "${dc[@]}" run --rm --no-deps web python manage.py check --deploy --fail-level WARNING
 "${dc[@]}" run --rm --no-deps web python manage.py migrate --noinput
+"${dc[@]}" run --rm --no-deps web python manage.py install_premium_template
 "${dc[@]}" up -d --wait --wait-timeout 120 web notifications
 "${dc[@]}" exec -T web python manage.py cleanup_unused_assets
 "${dc[@]}" exec -T web python manage.py cleanup_analytics_consents

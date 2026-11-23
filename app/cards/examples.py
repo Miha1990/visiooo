@@ -55,6 +55,13 @@ def example_cards():
 
 
 def get_example(slug):
+    if slug == 'premium':
+        from .premium import demo
+        value = demo()
+        return {'slug':'premium','label':'Все возможности в одном шаблоне','style':'Премиальный · молочный и бронза',
+                'content':value['content'],'assets':value['example_assets'],
+                'qr_url':value['example_qr_url'],'vcard_url':value['example_vcard_url'],
+                'gallery':value['example_gallery'],'pdf_url':value['example_pdf_url']}
     for item in example_cards():
         if item['slug'] == slug:
             return item
@@ -69,7 +76,8 @@ def detail(request, slug):
     seo = metadata(request, title=f'{example["content"]["name"]} — пример визитки',
                    description=example['content']['title'] + '. Демонстрационный пример оформления электронной визитки.',
                    image=settings.PUBLIC_BASE_URL + static(example['assets']['header']))
-    return render(request, 'cards/example.html', {'example': example, 'seo': seo})
+    return render(request, 'cards/example.html', {'example': example, 'seo': seo,
+        'example_gallery':example.get('gallery',[]),'example_pdf_url':example.get('pdf_url','')})
 
 
 @require_GET

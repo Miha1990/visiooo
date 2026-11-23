@@ -1,0 +1,114 @@
+{
+  "blocks": [
+    "cover",
+    "avatar",
+    "identity",
+    "bio",
+    "save",
+    "contacts",
+    "socials",
+    "carousel",
+    "video",
+    "document",
+    "map"
+  ],
+  "hidden": [],
+  "accent": "#685440",
+  "background": "#F8F5EF",
+  "text": "#242A28",
+  "font": "serif",
+  "align": "center",
+  "buttonShape": "rounded",
+  "buttonStyle": "filled",
+  "buttonColumns": 1,
+  "iconPosition": "left",
+  "iconSize": 24,
+  "avatarShape": "rounded",
+  "avatarSize": 112,
+  "coverHeight": 220,
+  "gap": 24,
+  "radius": 28,
+  "nameSize": 36,
+  "weight": 400,
+  "socialMode": "radial",
+  "caption": "ДЕТАЛИ СОЗДАЮТ ВПЕЧАТЛЕНИЕ",
+  "saveLabel": "Сохранить знакомство",
+  "phoneLabel": "Личный звонок",
+  "emailLabel": "Написать письмо",
+  "socialLabel": "Остаёмся на связи",
+  "icons": {},
+  "allowAccent": false,
+  "allowFont": false,
+  "carousel": {
+    "photos": [
+      "75d4fb3d-5668-4a4f-92c2-a8070a95eb11",
+      "75d4fb3d-5668-4a4f-92c2-a8070a95eb12",
+      "75d4fb3d-5668-4a4f-92c2-a8070a95eb13"
+    ],
+    "visible": 1,
+    "height": 240,
+    "autoplay": true,
+    "interval": 6
+  },
+  "blockStyles": {
+    "cover": {
+      "align": "left",
+      "iconPosition": "left"
+    },
+    "identity": {
+      "align": "center",
+      "iconPosition": "left"
+    },
+    "bio": {
+      "align": "center",
+      "iconPosition": "left"
+    },
+    "save": {
+      "align": "center",
+      "iconPosition": "left",
+      "buttonShape": "pill",
+      "buttonCorners": [
+        100,
+        100,
+        100,
+        100
+      ]
+    },
+    "contacts": {
+      "align": "left",
+      "iconPosition": "left",
+      "buttonCorners": [
+        14,
+        14,
+        14,
+        14
+      ]
+    },
+    "socials": {
+      "align": "center",
+      "iconPosition": "left"
+    },
+    "carousel": {
+      "align": "left",
+      "iconPosition": "left"
+    },
+    "video": {
+      "align": "left",
+      "iconPosition": "left"
+    },
+    "document": {
+      "align": "center",
+      "iconPosition": "left",
+      "buttonCorners": [
+        14,
+        14,
+        14,
+        14
+      ]
+    },
+    "map": {
+      "align": "left",
+      "iconPosition": "left"
+    }
+  }
+}

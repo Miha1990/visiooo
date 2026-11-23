@@ -25,7 +25,7 @@ from .template_icons import sanitize_svg
 from .blocks import carousel_limit
 
 
-def editor_context(content, user, *, template=False, card=None):
+def editor_context(content, user, *, template=False, card=None, example_pdf_url=''):
     from django.db.models import Q
     design = editor_design(from_content(content))
     content = deepcopy(content)
@@ -33,6 +33,7 @@ def editor_context(content, user, *, template=False, card=None):
     icons = TemplateIcon.objects.filter(Q(owner__isnull=True) | Q(owner=user))
     return {'content': content, 'editor_data': {'design': design, 'content': content,
             'template': template, 'blocks': dict(BLOCKS), 'carouselLimit': carousel_limit(),
+            'samplePdfUrl':example_pdf_url,
             'icons': [{'id':str(i.pk),'name':i.name,'url':reverse('template_icon',args=[i.pk])} for i in icons],
             'uploadUrl': reverse('visual_media') if template else reverse('visual_card_media',args=[card.pk])}}
 

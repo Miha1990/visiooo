@@ -84,7 +84,7 @@
     const mapNode=card.querySelector('[data-map-block]');
     if(mapNode){mapNode.querySelector('[data-map-address]').textContent=location.address||'Укажите адрес';setEmbed(mapNode.querySelector('[data-external-embed]'),window.CardEmbeds.map(location));}
     const docNode=card.querySelector('[data-document-block]');
-    if(docNode){const link=docNode.querySelector('[data-document-link]');if(doc.assetId&&urls.has(doc.assetId))link.href=urls.get(doc.assetId);link.hidden=!doc.assetId;link.textContent=doc.label||'Скачать прайс-лист (PDF)';docNode.querySelector('[data-document-empty]').hidden=Boolean(doc.assetId);}
+    if(docNode){const link=docNode.querySelector('[data-document-link]');if(data.samplePdfUrl)link.href=data.samplePdfUrl;if(doc.assetId&&urls.has(doc.assetId))link.href=urls.get(doc.assetId);link.hidden=!doc.assetId&&!data.samplePdfUrl;link.textContent=doc.label||'Скачать прайс-лист (PDF)';docNode.querySelector('[data-document-empty]').hidden=Boolean(doc.assetId||data.samplePdfUrl);}
   }
   const existingPDF=card.querySelector('[data-document-link][href]');if(existingPDF&&content.document?.assetId)urls.set(content.document.assetId,existingPDF.href);
   function overlay(){

@@ -63,6 +63,8 @@ def card_image(context, slot):
 def gallery_images(context):
     from django.urls import reverse
     content=context['content']; card=context.get('card')
+    if context.get('example_gallery'):
+        return context['example_gallery']
     if 'galleryAssetIds' in content and card and not context.get('example_assets'):
         return [{'id':pk,'url':reverse('preview_asset',args=[card.pk,pk]) if context.get('preview') else reverse('public_asset',args=[card.public_id,pk])} for pk in content['galleryAssetIds']]
     return [{'id':pk,'url':reverse('template_photo',args=[pk])} for pk in content.get('design',{}).get('carousel',{}).get('photos',[])]
@@ -84,6 +86,8 @@ def address_map(content):
 @register.simple_tag(takes_context=True)
 def document_url(context):
     from django.urls import reverse
+    if context.get('example_pdf_url'):
+        return context['example_pdf_url']
     pk = context['content'].get('document', {}).get('assetId')
     card = context.get('card')
     if not pk or not card: return ''

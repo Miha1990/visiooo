@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
 {% block title %}Студия шаблонов — Визитка{% endblock %}
 {% block content %}<section class="shell"><h1>Студия шаблонов</h1><p>Создавайте оформление из блоков и публикуйте его в каталоге для клиентов.</p>
-<div class="studio-tools"><form method="post">{% csrf_token %}<button class="button">Создать шаблон</button></form><a class="button secondary" href="{% url 'template_icons' %}">Библиотека значков</a><a href="/admin/">Администрирование сайта</a></div>
+<div class="studio-tools"><form method="post">{% csrf_token %}<button class="button">Создать шаблон</button></form><a class="button secondary" href="{% url 'template_icons' %}">Библиотека значков</a><a href="/examples/premium" target="_blank" rel="noopener">Образец «Тихая роскошь»</a><a href="/admin/">Администрирование сайта</a></div>
 <div class="studio-catalog">{% for item in items %}<article class="panel"><p class="eyebrow">{{ item.get_status_display }} · {{ item.category|default:'Без категории' }}</p><h2>{{ item.name }}</h2><p>{{ item.description }}</p><p class="muted">Опубликованная версия: {{ item.published_version }}</p><a class="button" href="{% url 'template_edit' item.pk %}">Редактировать</a></article>{% empty %}<p>Шаблонов пока нет. Создайте первый или сохраните оформление своей визитки из редактора.</p>{% endfor %}</div></section>{% endblock %}
