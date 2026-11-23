@@ -50,9 +50,30 @@ def dashboard(request):
         else:
             return redirect303(f'/app/cards/{card.pk}/edit')
         return redirect303('/app/cards')
-    cards = Card.objects.filter(workspace=workspace).exclude(status='deleted').select_related('published_revision').order_by('-updated_at')
-    return render(request, 'cards/dashboard.html', {'cards': cards,
+    cards = list(Card.objects.filter(workspace=workspace).exclude(status='deleted').select_related('published_revision').order_by('-updated_at'))
+    selected = next((card for card in cards if str(card.pk) == request.GET.get('card')), cards[0] if cards else None)
+    return render(request, 'cards/dashboard.html', {'cards': cards, 'card': selected,
+        'content': selected.draft if selected else {}, 'preview': True,
+        'public_url': public_url(selected) if selected else '',
         'subscription': workspace.subscription, 'active_pro': active_subscription(workspace)})
+
+
+@login_required
+@never_cache
+@require_GET
+def client_menu(request):
+    return render(request, 'cards/client_menu.html')
+
+
+@login_required
+@never_cache
+@require_GET
+def client_analytics(request):
+    workspace = workspace_for(request.user)
+    cards = Card.objects.filter(workspace=workspace).exclude(status='deleted')
+    return render(request, 'cards/client_analytics.html', {
+        'card_count': cards.count(), 'published_count': cards.filter(status='published', blocked=False).count(),
+        'draft_count': cards.filter(status='draft').count(), 'active_pro': active_subscription(workspace)})
 
 
 @login_required
@@ -92,6 +113,7 @@ def edit(request, pk):
             'form': AvatarUploadForm(auto_id=f'{target}_%s', initial={
                 'card_id': card.pk, 'draft_version': card.draft_version, 'target': target})})
     return render(request, 'cards/edit.html', {'card': card, 'form': form, 'content': card.draft,
+        'initial_view': 'preview' if request.GET.get('view') == 'preview' else 'edit',
         'image_panels': image_panels, 'content_blocks':form.blocks,
         'gallery_ids':card.draft.get('galleryAssetIds', []),
         'gallery_limit':carousel_limit(),

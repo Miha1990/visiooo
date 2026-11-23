@@ -129,6 +129,7 @@ if (form) {
 const editor = document.querySelector('.editor');
 if (editor) {
   editor.classList.add('has-view-toggle');
+  document.querySelectorAll('[data-editor-view]').forEach(item => item.setAttribute('aria-pressed', String(item.dataset.editorView === editor.dataset.view)));
   document.querySelectorAll('[data-editor-view]').forEach(button => {
     button.addEventListener('click', () => {
       editor.dataset.view = button.dataset.editorView;

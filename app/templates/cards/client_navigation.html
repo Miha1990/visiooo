@@ -1,0 +1,5 @@
+<nav class="client-bottom-nav" aria-label="Навигация кабинета">
+<a href="{% url 'dashboard' %}" {% if client_tab == 'cards' %}aria-current="page"{% endif %}><svg aria-hidden="true"><use href="#client-cards"/></svg><span>Визитки</span></a>
+<a href="{% url 'client_analytics' %}" {% if client_tab == 'analytics' %}aria-current="page"{% endif %}><svg aria-hidden="true"><use href="#client-analytics"/></svg><span>Аналитика</span></a>
+<a href="{% url 'client_menu' %}" {% if client_tab == 'menu' %}aria-current="page"{% endif %}><svg aria-hidden="true"><use href="#client-menu"/></svg><span>Меню</span></a>
+</nav>

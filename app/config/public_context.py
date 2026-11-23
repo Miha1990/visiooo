@@ -5,7 +5,11 @@ def public_context(request):
     from billing.services import enabled
     from .seo import metadata
     from .analytics import configuration
-    return {'analytics': configuration(request), 'seo': metadata(request), 'operator': {'name': settings.OPERATOR_NAME, 'phone': settings.OPERATOR_PHONE,
+    client_area = (request.user.is_authenticated and request.path.startswith('/app/')
+                   and not getattr(request, 'domain_workspace', None))
+    return {'client_area': client_area,
+            'client_tab': 'analytics' if request.path == '/app/analytics' else 'cards' if request.path.startswith('/app/cards') else 'menu',
+            'analytics': configuration(request), 'seo': metadata(request), 'operator': {'name': settings.OPERATOR_NAME, 'phone': settings.OPERATOR_PHONE,
                          'email': settings.OPERATOR_EMAIL, 'inn': settings.OPERATOR_INN,
                          'address': settings.OPERATOR_ADDRESS},
             'legal_version': settings.LEGAL_VERSION,

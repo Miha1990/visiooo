@@ -164,7 +164,7 @@ class DomainTests(TestCase):
         for suffix in ('', '/contact.vcf', '/qr.png'):
             self.assertEqual(self.client.get(f'/c/{self.card.public_id}{suffix}', HTTP_HOST=binding.hostname).status_code, 200)
             self.assertEqual(self.client.get(f'/c/{self.other_card.public_id}{suffix}', HTTP_HOST=binding.hostname).status_code, 404)
-        for path in ('/accounts/login', '/accounts/register', '/app/cards', '/app/domains', '/admin/', '/health/ready'):
+        for path in ('/accounts/login', '/accounts/register', '/app/cards', '/app/domains', '/app/menu', '/app/analytics', '/admin/', '/health/ready'):
             self.assertEqual(self.client.get(path, HTTP_HOST=binding.hostname).status_code, 404)
 
     def test_physical_carriers_are_scoped_to_domain_workspace(self):

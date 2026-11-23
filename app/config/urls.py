@@ -58,6 +58,8 @@ urlpatterns = [
     path('accounts/password-reset/sent', TemplateView.as_view(template_name='accounts/password_reset_sent.html'), name='password_reset_sent'),
     path('accounts/password-reset/<str:token>', password_reset.confirm_reset, name='password_reset_confirm'),
     path('app/cards', views.dashboard, name='dashboard'),
+    path('app/menu', views.client_menu, name='client_menu'),
+    path('app/analytics', views.client_analytics, name='client_analytics'),
     path('app/subscription', billing.index, name='subscription'),
     path('app/subscription/checkout', billing.checkout, name='checkout'),
     path('app/subscription/promo', billing.redeem_promo, name='redeem_promo'),
