@@ -5,15 +5,18 @@ document.querySelectorAll('[data-avatar-toggle]').forEach(button => {
   const show = visible => {
     photo.hidden = visible;
     qr.hidden = !visible;
+    photo.setAttribute('aria-hidden', String(visible));
+    qr.setAttribute('aria-hidden', String(!visible));
     button.dataset.qrVisible = String(visible);
     button.setAttribute('aria-pressed', String(visible));
     button.setAttribute('aria-label', visible ? 'Показать фото' : 'Показать QR-код визитки');
   };
+  show(false);
   image.addEventListener('error', () => {
     show(false);
     image.removeAttribute('src');
     const hint = button.nextElementSibling;
-    if (hint) hint.textContent = 'QR недоступен. Проверьте публикацию визитки.';
+    if (hint && !('ownerPortrait' in button.dataset)) hint.textContent = 'QR недоступен. Проверьте публикацию визитки.';
   });
   button.addEventListener('click', () => {
     const visible = button.getAttribute('aria-pressed') !== 'true';

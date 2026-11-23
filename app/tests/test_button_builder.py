@@ -48,6 +48,17 @@ class ButtonBuilderTests(TestCase):
         self.assertContains(response,'card-builder.js');self.assertContains(response,'builder-options')
         self.card.refresh_from_db();self.assertNotIn('buttonLayout',self.card.draft)
 
+    def test_background_control_and_customer_background_layer_are_removed(self):
+        response=self.client.get(f'/app/cards/{self.card.pk}/edit')
+        self.assertNotContains(response,'data-image-slot="background"')
+        self.assertEqual({panel['target'] for panel in response.context['image_panels']},{'logo','header','avatar'})
+        design=deepcopy(DEFAULT)
+        save_card(self.user,self.card.pk,1,{**self.card.draft,'design':design})
+        response=self.client.get(f'/app/cards/{self.card.pk}/edit')
+        self.assertNotContains(response,'class="card-background"')
+        self.card.refresh_from_db();publish_card(self.user,self.card.pk,self.card.draft_version)
+        self.assertNotContains(Client().get(f'/c/{self.card.public_id}'),'class="card-background"')
+
     def test_save_and_close_saves_draft_and_returns_to_selected_card(self):
         data=self.payload([{'kind':'telegram','label':'Telegram','value':'t.me/person'}])
         data.update(name='Новое имя',save_and_close='yes')
@@ -69,6 +80,21 @@ class ButtonBuilderTests(TestCase):
         self.assertEqual(image_response.status_code,200);b''.join(image_response.streaming_content)
         publish_card(self.user,self.card.pk,self.card.draft_version)
         self.assertContains(Client().get(f'/c/{self.card.public_id}'),'class="card-logo"')
+
+    def test_public_photo_has_no_qr_toggle_but_owner_keeps_it(self):
+        self.client.post('/app/assets',{'card_id':str(self.card.pk),'draft_version':1,'target':'avatar','image':photo()})
+        self.card.refresh_from_db()
+        for designed in (False,True):
+            if designed:
+                save_card(self.user,self.card.pk,self.card.draft_version,{**self.card.draft,'design':deepcopy(DEFAULT)})
+                self.card.refresh_from_db()
+            publish_card(self.user,self.card.pk,self.card.draft_version)
+            public=Client().get(f'/c/{self.card.public_id}')
+            self.assertContains(public,'avatar-photo-face')
+            self.assertNotContains(public,'data-avatar-toggle')
+            self.assertNotContains(public,'data-avatar-qr')
+            self.assertNotContains(public,'Нажмите на фото, чтобы показать QR')
+            self.assertContains(self.client.get(f'/app/cards/{self.card.pk}/edit'),'data-avatar-toggle')
 
     def test_invalid_buttons_are_rejected_and_local_file_can_wait_for_upload(self):
         for item in [{'kind':'bad','label':'X','value':'https://example.com'},

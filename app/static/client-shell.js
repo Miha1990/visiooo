@@ -1,6 +1,8 @@
 (() => {
   const qrDialog = document.querySelector('[data-qr-dialog]');
+  const portrait = document.querySelector('[data-owner-portrait]');
   document.querySelectorAll('[data-open-qr]').forEach(link => link.addEventListener('click', event => {
+    if (portrait) { event.preventDefault(); portrait.click(); portrait.scrollIntoView({behavior:'smooth',block:'center'}); return; }
     if (!qrDialog || typeof qrDialog.showModal !== 'function') return;
     event.preventDefault();
     if (!qrDialog.open) qrDialog.showModal();

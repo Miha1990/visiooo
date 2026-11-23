@@ -1,5 +1,5 @@
 .designed-card{background:var(--design-bg);color:var(--design-text);font-family:var(--design-font);border-radius:var(--design-radius);overflow:hidden;position:relative;isolation:isolate;width:100%;max-width:480px}
-.designed-card .design-body{display:flex;flex-direction:column;gap:var(--design-gap);padding:22px;background:var(--design-bg);color:var(--design-text);position:relative;text-align:var(--design-align)}
+.designed-card .design-body{display:flex;flex-direction:column;gap:var(--design-gap);padding:22px;background:transparent;color:var(--design-text);position:relative;text-align:var(--design-align)}
 .designed-card [data-design-block][hidden]{display:none!important}
 .designed-card .contact-cover span:empty{display:none}
 .designed-card [data-design-block=bio]:has(.contact-bio:empty),.designed-card [data-design-block=contacts]:has(.contact-actions:empty),.designed-card [data-design-block=socials]:has(.social-section[hidden]){display:none}

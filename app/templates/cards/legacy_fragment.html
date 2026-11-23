@@ -1,23 +1,21 @@
 {% load static card_tags %}
-<article class="contact-card template-{{ content.template }}{% if content.backgroundAssetId %} has-background{% endif %}{% if content.headerAssetId %} has-header{% endif %}" data-button-layout="{{ content.buttonLayout }}" style="--accent:{{ content.accent }}">
-  {% if content.backgroundAssetId %}
-    <img class="card-background" alt="" aria-hidden="true" src="{% if example_assets %}{% static example_assets.background %}{% elif preview %}{% url 'preview_asset' card.pk content.backgroundAssetId %}{% else %}{% url 'public_asset' card.public_id content.backgroundAssetId %}{% endif %}">
-  {% endif %}
+<article class="contact-card template-{{ content.template }}{% if content.headerAssetId %} has-header{% endif %}" data-button-layout="{{ content.buttonLayout }}" style="--accent:{{ content.accent }}">
   {% if preview or content.headerAssetId or content.logoAssetId %}<div class="contact-cover" data-content-block="cover" {% if not content.headerAssetId and not content.logoAssetId %}hidden{% endif %}>
     {% include 'cards/logo.html' %}
     {% if content.headerAssetId %}
       <img class="cover-photo" alt="" aria-hidden="true" src="{% if example_assets %}{% static example_assets.header %}{% elif preview %}{% url 'preview_asset' card.pk content.headerAssetId %}{% else %}{% url 'public_asset' card.public_id content.headerAssetId %}{% endif %}">
     {% endif %}
   </div>
-  {% endif %}{% if preview or content.avatarAssetId %}<button type="button" class="contact-avatar avatar-toggle" data-content-block="avatar" {% if not content.avatarAssetId %}hidden{% endif %} data-avatar-toggle aria-pressed="false" aria-label="Показать QR-код визитки" title="Нажмите, чтобы показать QR">
+  {% endif %}{% if preview or content.avatarAssetId %}{% if preview %}<button type="button" class="contact-avatar avatar-toggle" data-content-block="avatar" {% if not content.avatarAssetId %}hidden{% endif %} data-avatar-toggle aria-pressed="false" aria-label="Показать QR-код визитки" title="Нажмите, чтобы показать QR">{% else %}<div class="contact-avatar avatar-static" data-content-block="avatar">{% endif %}
     <span class="avatar-photo-face">
       {% if content.avatarAssetId %}
         <img class="contact-avatar avatar-photo" width="88" height="88" alt="Фото {{ content.name }}" src="{% if example_assets %}{% static example_assets.avatar %}{% elif preview %}{% url 'preview_asset' card.pk content.avatarAssetId %}{% else %}{% url 'public_asset' card.public_id content.avatarAssetId %}{% endif %}">
       {% else %}<span data-preview="initial">{{ content.name|first }}</span>{% endif %}
 </span>
-    <span class="avatar-qr-face" hidden><img width="180" height="180" alt="QR со ссылкой на визитку" data-avatar-qr="{% if example_assets %}{{ example_qr_url }}{% elif preview %}{% url 'qr' card.pk %}{% else %}{% url 'public_qr' card.public_id %}{% endif %}"></span>
+    {% if preview %}<span class="avatar-qr-face" hidden><img width="180" height="180" alt="QR со ссылкой на визитку" data-avatar-qr="{% url 'qr' card.pk %}"></span>
 </button>
   <p class="avatar-toggle-hint" {% if not content.avatarAssetId %}hidden{% endif %}>Нажмите на фото, чтобы показать QR</p>
+  {% else %}</div>{% endif %}
   {% endif %}<div class="contact-body">
     {% if publication_conditions %}<aside class="publication-conditions"><strong>Условия обработки опубликованных данных</strong><p>{{ publication_conditions|linebreaksbr }}</p></aside>{% endif %}
     <{{ name_heading|default:"h1" }} data-preview="name">{{ content.name }}</{{ name_heading|default:"h1" }}>

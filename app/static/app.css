@@ -339,13 +339,20 @@ summary::-webkit-details-marker { display: none; }
 .contact-card.has-header.template-minimal .contact-avatar { margin-top: -34px; border: 5px solid white; }
 
 /* Tap the profile photo to share the permanent card URL as a QR. */
-.avatar-toggle { padding: 0; cursor: pointer; overflow: hidden; appearance: none; box-sizing: content-box; transition: width .15s, height .15s; }
+.avatar-toggle { padding: 0; cursor: pointer; overflow: hidden; appearance: none; box-sizing: content-box; position:relative; perspective:800px; }
+.avatar-static { padding: 0; overflow: hidden; box-sizing: content-box; }
+.avatar-static > .avatar-photo-face { display: grid; place-items: center; width: 100%; height: 100%; border-radius: inherit; }
+.contact-card .avatar-static > .avatar-photo-face > .contact-avatar.avatar-photo { display: block; width: 100%; height: 100%; margin: 0; border: 0; border-radius: inherit; object-fit: cover; }
 .avatar-toggle .avatar-photo-face { display: grid; place-items: center; width: 100%; height: 100%; }
 .avatar-toggle .contact-avatar.avatar-photo { display: block; width: 100%; height: 100%; margin: 0; border: 0; border-radius: inherit; object-fit: cover; }
 .avatar-toggle .avatar-qr-face { display: block; width: 100%; height: 100%; background: white; }
 .avatar-toggle .avatar-qr-face img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .avatar-toggle [hidden] { display: none !important; }
-.contact-card .avatar-toggle[data-qr-visible="true"] { width: 180px; height: 180px; border-radius: 14px; background: white; }
+:is(.contact-card,.client-profile) .avatar-toggle > :is(.avatar-photo-face,.avatar-qr-face) { display:grid!important;position:absolute;inset:0;width:100%;height:100%;border-radius:inherit;backface-visibility:hidden;-webkit-backface-visibility:hidden;transition:transform .45s ease;box-sizing:border-box; }
+:is(.contact-card,.client-profile) .avatar-toggle > .avatar-photo-face { transform:rotateY(0deg); }
+:is(.contact-card,.client-profile) .avatar-toggle > .avatar-qr-face { transform:rotateY(180deg);padding:16%;background:white; }
+:is(.contact-card,.client-profile) .avatar-toggle[data-qr-visible=true] > .avatar-photo-face { transform:rotateY(-180deg); }
+:is(.contact-card,.client-profile) .avatar-toggle[data-qr-visible=true] > .avatar-qr-face { transform:rotateY(0deg); }
 .avatar-toggle-hint { font-size: 10px; color: #536067; padding: 5px 10px; width: fit-content; border-radius: 6px; background: #fffffff2; margin: -12px 20px 20px 28px; position: relative; }
 .template-profile .avatar-toggle-hint { margin-left: auto; margin-right: auto; }
 .physical-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; margin-top: 30px; }
@@ -356,7 +363,7 @@ summary::-webkit-details-marker { display: none; }
 .nfc-panel h3 { font-size: 23px; }
 .nfc-panel .button { width: 100%; margin: 18px 0 10px; }
 @media(max-width:780px) { .physical-grid { grid-template-columns: 1fr; } .physical-link { margin-left: 0; display: block; } }
-@media(prefers-reduced-motion:reduce) { .avatar-toggle { transition: none; } }
+@media(prefers-reduced-motion:reduce) { .avatar-toggle > :is(.avatar-photo-face,.avatar-qr-face) { transition: none!important; } }
 .contact-card .avatar-toggle > .avatar-photo-face > .contact-avatar.avatar-photo { width: 100%; height: 100%; margin: 0; border: 0; border-radius: inherit; }
 .domain-add { margin-left: 0; margin-top: 30px; }
 .domain-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }

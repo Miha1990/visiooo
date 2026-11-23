@@ -264,8 +264,9 @@ class ImageTests(TestCase):
             self.card.refresh_from_db()
             publish_card(self.user, self.card.pk, self.card.draft_version)
             response = self.client.get(reverse('public', args=[self.card.public_id]))
-            self.assertContains(response, f'template-{template} has-background')
-            self.assertContains(response, self.public_url(background))
+            self.assertContains(response, f'template-{template}')
+            self.assertNotContains(response, 'has-background')
+            self.assertNotContains(response, self.public_url(background))
 
     def test_background_cannot_reference_foreign_photo_or_bypass_expiry(self):
         from cards.validation import validate_content
@@ -312,11 +313,14 @@ class ImageTests(TestCase):
             self.card.refresh_from_db()
             publish_card(self.user, self.card.pk, self.card.draft_version)
             response = self.client.get(reverse('public', args=[self.card.public_id]))
-            self.assertContains(response, f'template-{template} has-background has-header')
-            for asset in images.values():
-                self.assertContains(response, self.public_url(asset))
+            self.assertContains(response, f'template-{template} has-header')
+            for field, asset in images.items():
+                if field == 'backgroundAssetId':
+                    self.assertNotContains(response, self.public_url(asset))
+                else:
+                    self.assertContains(response, self.public_url(asset))
             self.assertContains(response, 'class="cover-photo"')
-            self.assertContains(response, 'class="card-background"')
+            self.assertNotContains(response, 'class="card-background"')
             self.assertContains(response, 'class="contact-avatar avatar-photo"')
 
     def test_replacing_and_removing_header_leaves_other_images_and_snapshot_intact(self):
@@ -376,11 +380,12 @@ class ImageTests(TestCase):
 
     def test_editor_has_three_ordered_controls_with_unique_field_ids(self):
         response = self.client.get(reverse('edit', args=[self.card.pk]))
-        self.assertContains(response, 'data-image-slot="background"')
+        self.assertNotContains(response, 'data-image-slot="background"')
+        self.assertContains(response, 'data-image-slot="logo"')
         self.assertContains(response, 'data-image-slot="avatar"')
         self.assertContains(response, 'data-image-slot="header"')
         html = response.content.decode()
-        self.assertLess(html.index('data-image-slot="background"'), html.index('data-image-slot="avatar"'))
+        self.assertLess(html.index('data-image-slot="logo"'), html.index('data-image-slot="avatar"'))
         self.assertLess(html.index('data-image-slot="avatar"'), html.index('data-image-slot="header"'))
-        for target in ('background', 'avatar', 'header'):
+        for target in ('logo', 'avatar', 'header'):
             self.assertContains(response, f'id="{target}_image"', count=1)

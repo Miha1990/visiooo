@@ -39,9 +39,9 @@
           <div class="editor-save-row"><button class="button">Сохранить изменения</button></div>
         </form>
       </div>
-      <section class="styling-section" id="styling-fields" aria-label="Фон, фото и шапка">
+      <section class="styling-section" id="styling-fields" aria-label="Логотип, фото и шапка">
         <h2 class="styling-title">Оформление визитки</h2>
-        <p class="muted micro">Фон, фото и шапка загружаются отдельно. Текстовые правки сохранятся перед загрузкой файла.</p>
+        <p class="muted micro">Логотип, фото и шапка загружаются отдельно. Текстовые правки сохранятся перед загрузкой файла.</p>
         {% for panel in image_panels %}
         <div class="panel avatar-panel image-panel" data-image-slot="{{ panel.target }}">
           <div class="panel-heading"><h2>{{ panel.label }}</h2><span class="muted micro">0{{ forloop.counter }} / ОФОРМЛЕНИЕ</span></div>

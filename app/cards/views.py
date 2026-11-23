@@ -124,6 +124,8 @@ def edit(request, pk):
         'header': ('Шапка', 'Отдельная фотография в верхней части визитки.'),
     }
     for target, field in IMAGE_FIELDS.items():
+        if target == 'background':
+            continue
         if target != 'background' and ('avatar' if target == 'avatar' else 'cover') not in form.blocks:
             continue
         label, description = descriptions[target]
