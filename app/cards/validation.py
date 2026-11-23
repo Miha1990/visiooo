@@ -1,4 +1,5 @@
 import json
+import math
 from pathlib import Path
 from urllib.parse import urlsplit
 from django.core.exceptions import ValidationError
@@ -21,9 +22,24 @@ def validate_content(content, workspace=None):
         if content['design']['buttonStyle'] == 'outline' and contrast(content['accent'], content['design']['background']) < 4.5:
             raise ValidationError('Цвет контурных кнопок должен хорошо отличаться от фона.')
     from .models import Asset
+    from .blocks import video_embed
+    video = content.get('video', {})
+    if video.get('url'):
+        video_embed(video['url'], video.get('embedUrl', ''))
+    elif video.get('embedUrl'):
+        raise ValidationError('Сначала укажите ссылку на видео.')
+    location = content.get('map', {})
+    if ('latitude' in location) != ('longitude' in location):
+        raise ValidationError('Укажите обе координаты точки.')
+    if any(not math.isfinite(location[key]) for key in ('latitude','longitude') if key in location):
+        raise ValidationError('Координаты должны быть конечными числами.')
     for asset_id in content_asset_ids(content):
-        if workspace is None or not Asset.objects.filter(pk=asset_id, workspace=workspace).exists():
-            raise ValidationError('Фото недоступно. Загрузите изображение в своём аккаунте.')
+        expected = 'pdf' if asset_id == content.get('document', {}).get('assetId') else 'image'
+        if workspace is None or not Asset.objects.filter(pk=asset_id, workspace=workspace, kind=expected).exists():
+            raise ValidationError('Файл недоступен. Загрузите его в своём аккаунте.')
+    image_ids = {content.get(field) for field in IMAGE_FIELDS.values()} | set(content.get('galleryAssetIds', []))
+    if content.get('document', {}).get('assetId') in image_ids - {None}:
+        raise ValidationError('PDF нельзя использовать вместо фотографии.')
     if content.get('email'):
         validate_email(content['email'])
     urls = [link['url'] for link in content['links']]

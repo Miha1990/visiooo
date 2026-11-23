@@ -65,7 +65,7 @@
   }
   function refresh(root=document) {
     const cards=root.matches?.('.designed-card')?[root]:[...root.querySelectorAll('.designed-card')];
-    cards.forEach(card=>{canvas(card);card.querySelectorAll('[data-card-carousel]').forEach(carousel);card.querySelectorAll('[data-contact-sun]').forEach(el=>sun(el,card.dataset.socialMode==='radial'));});
+    cards.forEach(card=>{card.querySelectorAll('[data-load-embed]').forEach(button=>{button.onclick=()=>{const box=button.closest('[data-external-embed]'),url=box.dataset.embedUrl;if(!/^https:\/\/(www\.youtube-nocookie\.com\/embed\/|rutube\.ru\/play\/embed\/|vk\.com\/video_ext\.php\?|yandex\.ru\/map-widget\/v1\/)/.test(url)||box.querySelector('iframe'))return;const iframe=document.createElement('iframe');iframe.src=url;iframe.title=box.dataset.embedTitle||'Встроенный сервис';iframe.allow='fullscreen; picture-in-picture; encrypted-media';iframe.allowFullscreen=true;iframe.referrerPolicy='strict-origin-when-cross-origin';box.querySelectorAll('button,small').forEach(node=>node.hidden=true);box.append(iframe);};});canvas(card);card.querySelectorAll('[data-card-carousel]').forEach(carousel);card.querySelectorAll('[data-contact-sun]').forEach(el=>sun(el,card.dataset.socialMode==='radial'));});
   }
   window.CardWidgets={refresh};refresh();
 })();

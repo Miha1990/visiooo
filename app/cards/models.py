@@ -1,6 +1,7 @@
 import secrets
 import uuid
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 from workspaces.models import Workspace
 
 
@@ -114,6 +115,7 @@ class CardRevision(models.Model):
 class Asset(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, verbose_name='Идентификатор')
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, verbose_name='Личный кабинет')
+    kind = models.CharField(max_length=8, default='image', choices=[('image','Изображение'),('pdf','PDF-файл')], verbose_name='Тип файла')
     object_key = models.CharField(max_length=240, unique=True, editable=False, verbose_name='Путь в хранилище')
     bytes = models.PositiveIntegerField(verbose_name='Размер в байтах')
     width = models.PositiveIntegerField(verbose_name='Ширина')
@@ -159,3 +161,21 @@ class PhysicalCardEvent(models.Model):
 
     def __str__(self):
         return f'{self.get_action_display()} — {self.physical_card}'
+
+
+class CardBlockSettings(models.Model):
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    carousel_limit = models.PositiveSmallIntegerField(default=10, verbose_name='Максимум фото в карусели',
+        validators=[MinValueValidator(1), MaxValueValidator(100)],
+        help_text='От 1 до 100. Уменьшение лимита не удаляет уже загруженные фото.')
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return 'Лимиты блоков визитки'
+
+    class Meta:
+        verbose_name = 'настройки блоков визитки'
+        verbose_name_plural = 'Настройки блоков визитки'

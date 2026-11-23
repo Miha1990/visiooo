@@ -22,6 +22,7 @@ from .images import normalize_image, private_storage, upload_avatar
 from .services import own_card, save_card, workspace_for, active_subscription, public_card, Conflict
 from .asset_cleanup import referenced_asset_ids
 from .template_icons import sanitize_svg
+from .blocks import carousel_limit
 
 
 def editor_context(content, user, *, template=False, card=None):
@@ -31,7 +32,7 @@ def editor_context(content, user, *, template=False, card=None):
     content['design'] = design
     icons = TemplateIcon.objects.filter(Q(owner__isnull=True) | Q(owner=user))
     return {'content': content, 'editor_data': {'design': design, 'content': content,
-            'template': template, 'blocks': dict(BLOCKS),
+            'template': template, 'blocks': dict(BLOCKS), 'carouselLimit': carousel_limit(),
             'icons': [{'id':str(i.pk),'name':i.name,'url':reverse('template_icon',args=[i.pk])} for i in icons],
             'uploadUrl': reverse('visual_media') if template else reverse('visual_card_media',args=[card.pk])}}
 
@@ -89,8 +90,10 @@ def upload_gallery(user, pk, version, upload):
                 raise Conflict('Черновик изменился. Обновите страницу.')
             content = deepcopy(card.draft)
             photos = content.setdefault('galleryAssetIds',[])
-            if len(photos) >= 10:
-                raise ValidationError('В карусели может быть не больше 10 фотографий. Удалите лишнюю и сохраните черновик.')
+            from .blocks import carousel_limit
+            limit = carousel_limit()
+            if len(photos) >= limit:
+                raise ValidationError(f'В карусели может быть не больше {limit} фотографий. Удалите лишнюю и сохраните черновик.')
             refs = referenced_asset_ids(workspace.pk)
             used = Asset.objects.filter(workspace=workspace,pk__in=refs).aggregate(total=Sum('bytes'))['total'] or 0
             if used+len(data) > (50 if active_subscription(workspace) else 10)*1024*1024:
@@ -127,6 +130,12 @@ def media(request, pk=None):
             svg = sanitize_svg(upload.read(65537))
             item = TemplateIcon.objects.create(name='Значок блока',svg=svg,owner=None if shared else request.user)
             return JsonResponse({'id':str(item.pk),'url':reverse('template_icon',args=[item.pk]),'name':item.name})
+        if kind == 'pdf':
+            if pk is None:
+                raise ValidationError('PDF загружается в личную визитку клиента. В шаблоне настройте оформление блока.')
+            from .blocks import upload_pdf
+            asset = upload_pdf(request.user,pk,int(request.POST.get('draft_version','0')),upload)
+            return JsonResponse({'id':str(asset.pk),'url':reverse('preview_asset',args=[pk,asset.pk]),'version':own_card(request.user,pk).draft_version})
         if pk is None:
             data, _, _ = normalize_image(upload)
             item = TemplatePhoto.objects.create(name='Фото шаблона',image=data)

@@ -19,7 +19,13 @@ def image_response(asset):
         photo = private_storage().open(asset.object_key, 'rb')
     except FileNotFoundError:
         raise Http404
-    response = FileResponse(photo, content_type='image/webp')
+    response = FileResponse(photo, content_type='application/pdf' if asset.kind == 'pdf' else 'image/webp')
+    response['X-Content-Type-Options'] = 'nosniff'
+    if asset.kind == 'pdf':
+        response['Content-Disposition'] = 'attachment; filename="document.pdf"'
+        response['Content-Security-Policy'] = "default-src 'none'; sandbox"
+        response['X-Robots-Tag'] = 'noindex, nofollow'
+        return response
     response['X-Robots-Tag'] = 'noindex, nofollow'
     response['Content-Disposition'] = 'inline; filename="photo.webp"'
     return response

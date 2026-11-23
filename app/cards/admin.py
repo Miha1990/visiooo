@@ -90,3 +90,14 @@ class PhysicalCardEventAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+from .models import CardBlockSettings
+
+@admin.register(CardBlockSettings)
+class BlockSettingsAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return not CardBlockSettings.objects.exists() and super().has_add_permission(request)
+
+    def has_delete_permission(self, request, obj=None):
+        return False

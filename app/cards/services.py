@@ -41,6 +41,8 @@ def save_card(user, pk, version, content):
     Workspace.objects.select_for_update().get(pk=workspace_for(user).pk)
     card = own_card(user, pk)
     validate_content(content, workspace=card.workspace)
+    from .blocks import validate_gallery_limit
+    validate_gallery_limit(content, card.draft)
     # Conditional UPDATE also protects against stale writes with SQLite.
     changed = Card.objects.filter(pk=card.pk, draft_version=version, status__in=['draft', 'published']).update(
         draft=content, draft_version=version + 1, updated_at=timezone.now())

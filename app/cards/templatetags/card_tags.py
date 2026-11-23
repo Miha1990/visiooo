@@ -60,3 +60,25 @@ def gallery_images(context):
     if 'galleryAssetIds' in content and card and not context.get('example_assets'):
         return [{'id':pk,'url':reverse('preview_asset',args=[card.pk,pk]) if context.get('preview') else reverse('public_asset',args=[card.public_id,pk])} for pk in content['galleryAssetIds']]
     return [{'id':pk,'url':reverse('template_photo',args=[pk])} for pk in content.get('design',{}).get('carousel',{}).get('photos',[])]
+
+
+@register.simple_tag
+def video_player(content):
+    from cards.blocks import video_embed
+    video = content.get('video', {})
+    return video_embed(video['url'], video.get('embedUrl', '')) if video.get('url') else ''
+
+
+@register.simple_tag
+def address_map(content):
+    from cards.blocks import map_embed
+    return map_embed(content.get('map', {}))
+
+
+@register.simple_tag(takes_context=True)
+def document_url(context):
+    from django.urls import reverse
+    pk = context['content'].get('document', {}).get('assetId')
+    card = context.get('card')
+    if not pk or not card: return ''
+    return reverse('preview_asset', args=[card.pk, pk]) if context.get('preview') else reverse('public_asset', args=[card.public_id, pk])

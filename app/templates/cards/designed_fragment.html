@@ -43,4 +43,4 @@
       {% endfor %}
       </div></div>
     </section>
-    {% endwith %}{% elif block == 'carousel' %}{% include 'cards/carousel.html' %}{% endif %}</div>{% endfor %}</div>{% if publication_conditions %}<aside class="publication-conditions"><strong>Условия обработки опубликованных данных</strong><p>{{ publication_conditions|linebreaksbr }}</p></aside>{% endif %}</article>
+    {% endwith %}{% elif block == 'carousel' %}{% include 'cards/carousel.html' %}{% elif block == 'video' or block == 'document' or block == 'map' %}{% include 'cards/media_blocks.html' %}{% endif %}</div>{% endfor %}</div>{% if publication_conditions %}<aside class="publication-conditions"><strong>Условия обработки опубликованных данных</strong><p>{{ publication_conditions|linebreaksbr }}</p></aside>{% endif %}</article>

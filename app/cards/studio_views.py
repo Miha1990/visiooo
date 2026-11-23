@@ -57,6 +57,8 @@ def edit(request, pk):
         if form.is_valid():
             try:
                 validate_resources(form.design, request.user)
+                from .blocks import validate_gallery_limit
+                validate_gallery_limit({'design':form.design}, {'design':item.draft})
             except ValidationError as error:
                 form.add_error(None,error)
         if not form.errors:

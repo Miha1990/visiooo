@@ -10,6 +10,7 @@
   const clamp=(v,min,max)=>Math.min(max,Math.max(min,Number(v)||0));
   const rounded=v=>Math.round(v*100)/100;
   const snapshot=()=>JSON.stringify({design,content});
+  const galleryLimit=data.carouselLimit||10;
   const history=[];
   const checkpoint=()=>{const value=snapshot();if(history.at(-1)!==value){history.push(value);if(history.length>30)history.shift();}};
   const state=key=>(design.blockStyles??={})[key]??={align:'inherit',iconPosition:'inherit'};
@@ -67,6 +68,25 @@
     const track=carousel.querySelector('.carousel-track');track.replaceChildren();
     photos().forEach((id,i)=>{const figure=element('figure',{class:'carousel-slide','data-slide-id':id});figure.append(element('img',{src:urls.get(id)||`/template-photos/${id}.webp`,alt:`Фотография ${i+1} из ${photos().length}`,loading:'lazy'}));track.append(figure);});
   }
+  function setEmbed(node,url){
+    if(!node)return;
+    if(node.dataset.embedUrl!==url){node.querySelector('iframe')?.remove();node.dataset.embedUrl=url;node.querySelectorAll('button,small').forEach(item=>item.hidden=false);}
+    node.querySelector('[data-load-embed]').disabled=!url;
+  }
+  function renderMedia(){
+    const video=content.video||{},location=content.map||{},doc=content.document||{};
+    const videoNode=card.querySelector('[data-video-block]');
+    if(videoNode){
+      videoNode.querySelector('[data-video-title]').textContent=video.title||'Видео';
+      const link=videoNode.querySelector('[data-video-link]');link.href=safeUrl(video.url);link.hidden=!video.url;
+      setEmbed(videoNode.querySelector('[data-external-embed]'),window.CardEmbeds.video(video.url||'',video.embedUrl||''));
+    }
+    const mapNode=card.querySelector('[data-map-block]');
+    if(mapNode){mapNode.querySelector('[data-map-address]').textContent=location.address||'Укажите адрес';setEmbed(mapNode.querySelector('[data-external-embed]'),window.CardEmbeds.map(location));}
+    const docNode=card.querySelector('[data-document-block]');
+    if(docNode){const link=docNode.querySelector('[data-document-link]');if(doc.assetId&&urls.has(doc.assetId))link.href=urls.get(doc.assetId);link.hidden=!doc.assetId;link.textContent=doc.label||'Скачать прайс-лист (PDF)';docNode.querySelector('[data-document-empty]').hidden=Boolean(doc.assetId);}
+  }
+  const existingPDF=card.querySelector('[data-document-link][href]');if(existingPDF&&content.document?.assetId)urls.set(content.document.assetId,existingPDF.href);
   function overlay(){
     const node=block(selected);selection.hidden=preview||!node||node.hidden;if(selection.hidden)return;
     const rect=node.getBoundingClientRect(),stage=artboard.getBoundingClientRect();
@@ -75,6 +95,7 @@
   }
   function apply(widgets=true){
     content.design=design;content.accent=design.accent;
+    renderMedia();
     const set=(key,value)=>card.style.setProperty(`--${key}`,value);
     for(const [key,value]of Object.entries({'accent':design.accent,'design-bg':design.background,'design-text':design.text,'design-font':fonts[design.font],'design-align':design.align,'design-gap':`${design.gap}px`,'design-radius':`${design.radius}px`,'design-avatar':`${design.avatarSize}px`,'design-avatar-radius':`${({circle:999,rounded:16,square:0})[design.avatarShape]}px`,'design-cover':`${design.coverHeight}px`,'design-icon':`${design.iconSize}px`,'design-name':`${design.nameSize}px`,'design-weight':design.weight,'design-columns':design.buttonColumns}))set(key,value);
     const defaultRadius=design.buttonCorners?.map(v=>`${v}px`).join(' ')||`${({rect:0,rounded:12,pill:999})[design.buttonShape]}px`;
@@ -111,7 +132,7 @@
   function layers(){
     const list=form.querySelector('[data-layer-list]');list.replaceChildren();
     for(const key of design.blocks)button(`${design.hidden.includes(key)?'Скрыт: ':''}${data.blocks[key]}`,()=>select(key),list).setAttribute('aria-pressed',String(selected===key));
-    form.querySelector('[data-add-carousel]').hidden=!design.hidden.includes('carousel');
+    form.querySelectorAll('[data-add-block]').forEach(button=>button.hidden=!design.hidden.includes(button.dataset.addBlock));
   }
   function enableCanvas(){
     if(design.canvas?.enabled)return;
@@ -184,12 +205,38 @@
         if(content.links.length<10)button('Добавить кнопку со ссылкой',()=>{checkpoint();content.links.push({label:'Новая кнопка',url:'https://example.ru'});dirty=true;renderContacts();apply();inspectorContent();});
       }
     }
+    if(['video','document','map'].includes(selected)&&data.template)small('В шаблоне настраивается расположение и оформление. Видео, PDF и адрес клиент добавляет в своей визитке.');
+    if(selected==='video'&&!data.template){
+      content.video??={};
+      control('Название видео',content.video.title||'',value=>content.video.title=value);
+      control('Ссылка на видео',content.video.url||'',value=>content.video.url=value,{type:'url'});
+      control('Ссылка плеера ВК (при необходимости)',content.video.embedUrl||'',value=>content.video.embedUrl=value,{type:'url'});
+      small('Рутуб, ВК Видео или Ютуб. Для ВК при ошибке плеера откройте «Поделиться → Экспортировать» и скопируйте адрес src из кода, включая hash. Размещение на других сайтах должно быть разрешено автором.');
+      button('Убрать видео',()=>{checkpoint();delete content.video;dirty=true;apply();inspectorContent();});
+    }
+    if(selected==='document'&&!data.template){
+      content.document??={};
+      control('Текст кнопки скачивания',content.document.label||'',value=>content.document.label=value);
+      button(content.document.assetId?'Заменить PDF':'Загрузить PDF',()=>{if(!busy)form.querySelector('[data-pdf-file]').click();});
+      small('Один PDF до 10 МБ. Посетитель сможет скачать файл. Загружайте документы, которые разрешено публиковать.');
+      if(content.document.assetId)button('Убрать файл',()=>{checkpoint();delete content.document.assetId;dirty=true;apply();inspectorContent();});
+    }
+    if(selected==='map'&&!data.template){
+      content.map??={};
+      control('Полный адрес',content.map.address||'',value=>{content.map.address=value;delete content.map.latitude;delete content.map.longitude;});
+      small('Введите город, улицу и дом. Проверьте найденную точку в предпросмотре. При неоднозначном адресе уточните обе координаты с Яндекс Карт.');
+      for(const [key,label,min,max]of [['latitude','Широта',-90,90],['longitude','Долгота',-180,180]]){
+        const input=control(label,content.map[key]??'',value=>content.map[key]=clamp(value,min,max),{type:'number',min,max,step:.000001});
+        input.addEventListener('input',()=>{if(input.value===''){delete content.map[key];apply();}});
+      }
+      button('Использовать поиск по адресу',()=>{checkpoint();delete content.map.latitude;delete content.map.longitude;dirty=true;apply();inspectorContent();});
+    }
     if(selected==='carousel'){
       control('Фотографий одновременно',design.carousel.visible,value=>{design.carousel.visible=clamp(value,1,10);renderGallery();},{type:'number',min:1,max:10});
       control('Высота фотографии',design.carousel.height,value=>{design.carousel.height=clamp(value,80,600);renderGallery();},{type:'number',min:80,max:600});
       control('Автоматическое пролистывание',design.carousel.autoplay,value=>{design.carousel.autoplay=value;renderGallery();},{type:'checkbox'});
       control('Интервал, секунд',design.carousel.interval,value=>{design.carousel.interval=clamp(value,2,120);renderGallery();},{type:'number',min:2,max:120});
-      button(`Добавить фотографии (${photos().length}/10)`,()=>choosePhoto('gallery'));small('Можно листать вручную и свайпом. Автопоказ приостанавливается при наведении, фокусе и скрытии страницы. Собственные фото заменяют фото шаблона.');
+      button(`Добавить фотографии (${photos().length}/${galleryLimit})`,()=>choosePhoto('gallery'));small('Можно листать вручную и свайпом. Автопоказ приостанавливается при наведении, фокусе и скрытии страницы. Собственные фото заменяют фото шаблона.');
       const list=element('div',{class:'photo-list'});inspector.append(list);
       photos().forEach((id,i)=>{const row=element('div',{class:'photo-row'});row.append(element('img',{src:urls.get(id)||`/template-photos/${id}.webp`,alt:`Фото ${i+1}`}));
         for(const [label,delta]of [['Раньше',-1],['Позже',1]])button(label,()=>{checkpoint();const items=photos();if(i+delta>=0&&i+delta<items.length)[items[i],items[i+delta]]=[items[i+delta],items[i]];dirty=true;renderGallery();apply();inspectorContent();},row);
@@ -231,7 +278,7 @@
   form.querySelector('[data-screen]').addEventListener('change',event=>{artboard.style.width=`${event.target.value}px`;requestAnimationFrame(()=>apply());});
   form.querySelector('[data-preview-mode]').addEventListener('click',event=>{preview=!preview;form.classList.toggle('is-preview',preview);event.currentTarget.setAttribute('aria-pressed',String(preview));event.currentTarget.textContent=preview?'Вернуться к оформлению':'Предпросмотр';window.CardWidgets?.refresh(card);overlay();});
   form.querySelectorAll('[data-global]').forEach(input=>{input.value=design[input.dataset.global];if(!data.template&&design.sourceId&&((input.dataset.global==='font'&&!design.allowFont)||(input.dataset.global==='accent'&&!design.allowAccent)))input.disabled=true;input.addEventListener('focus',checkpoint);input.addEventListener('input',()=>{design[input.dataset.global]=input.value;dirty=true;apply();});});
-  form.querySelector('[data-add-carousel]').addEventListener('click',()=>{checkpoint();design.hidden=design.hidden.filter(key=>key!=='carousel');if(design.canvas?.enabled){const frame=design.frames.carousel;frame.y=Math.min(3600,design.canvas.height);frame.height=0;design.canvas.height=Math.min(4000,Math.ceil(frame.y+design.carousel.height+100));}dirty=true;apply();select('carousel');});
+  form.querySelectorAll('[data-add-block]').forEach(button=>button.addEventListener('click',()=>{const key=button.dataset.addBlock;checkpoint();design.hidden=design.hidden.filter(item=>item!==key);if(design.canvas?.enabled){const frame=design.frames[key];frame.y=Math.min(3500,design.canvas.height);frame.height=0;design.canvas.height=Math.min(4000,frame.y+450);}dirty=true;apply();select(key);}));
   function undo(){if(!history.length)return;const previous=JSON.parse(history.pop());design=previous.design;content=previous.content;dirty=true;renderContacts();renderGallery();apply();select(selected);}
   form.querySelector('[data-undo]').addEventListener('click',undo);
   document.addEventListener('keydown',event=>{
@@ -284,7 +331,7 @@
     const files=[...event.target.files];event.target.value='';if(!files.length||busy)return;
     const kind=pendingPhoto;
     const count=data.template?photos().length:(content.galleryAssetIds||[]).length;
-    if(kind==='gallery'&&count+files.length>10){message('В карусели может быть до 10 фотографий.',true);return;}
+    if(kind==='gallery'&&count+files.length>galleryLimit){message(`В карусели может быть до ${galleryLimit} фотографий.`,true);return;}
     busy=true;message('Загружаю фотографии…');
     try{
       await saveBeforeUpload();
@@ -300,6 +347,12 @@
       }
       history.length=0;dirty=true;renderGallery();apply();inspectorContent();message('Фото загружены. Сохраните оформление; публичная визитка обновится после публикации.');
     }catch(error){message(error.message,true);}finally{busy=false;renderGallery();apply();inspectorContent();}
+  });
+  form.querySelector('[data-pdf-file]').addEventListener('change',async event=>{
+    const file=event.target.files[0];event.target.value='';if(!file||busy)return;
+    if(file.size>10*1024*1024){message('PDF должен быть не больше 10 МБ.',true);return;}
+    busy=true;message('Загружаю PDF…');
+    try{await saveBeforeUpload();const result=await upload(file,'pdf');urls.set(result.id,result.url);content.document??={};content.document.assetId=result.id;history.length=0;dirty=true;apply();inspectorContent();message('PDF добавлен в черновик. Опубликуйте визитку, чтобы файл стал доступен посетителям.');}catch(error){message(error.message,true);}finally{busy=false;}
   });
   form.querySelector('[data-icon-file]').addEventListener('change',async event=>{
     const file=event.target.files[0];event.target.value='';if(!file||!pendingIcon||busy)return;const target={...pendingIcon};busy=true;message('Загружаю значок…');

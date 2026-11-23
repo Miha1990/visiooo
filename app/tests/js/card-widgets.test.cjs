@@ -15,13 +15,28 @@ function setup({autoplay=true,reduced=false,radial=false}={}){
  track.querySelectorAll=()=>slides;track.scrollTo=({left})=>{track.scrollLeft=left;track.events.scroll?.();};
  gallery.querySelector=selector=>({'.carousel-track':track,'[data-carousel-status]':status,'[data-carousel-prev]':prev,'[data-carousel-next]':next,'[data-carousel-pause]':pause,'.carousel-empty':empty,'.carousel-controls':controls})[selector];
  const sun=node(),toggle=node(),links=Array.from({length:4},()=>node());sun.clientWidth=280;sun.querySelector=()=>toggle;sun.querySelectorAll=()=>links;
- card.querySelectorAll=selector=>selector==='[data-card-carousel]'?[gallery]:[sun];
+ card.querySelectorAll=selector=>selector==='[data-card-carousel]'?[gallery]:selector==='[data-contact-sun]'?[sun]:[];
  const document=node();document.hidden=false;document.querySelectorAll=()=>[card];
  const timers=new Map();let id=0;
  const window={matchMedia:()=>({matches:reduced})};
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../../static/card-widgets.js'),'utf8'),{document,window,setInterval(fn,ms){timers.set(++id,{fn,ms});return id;},clearInterval(key){timers.delete(key);}});
  return {card,gallery,track,prev,next,pause,status,document,timers,sun,toggle,links,window};
 }
+
+test('external embeds make no iframe until explicit click and reject other hosts',()=>{
+ const card=node(),button=node(),small=node(),box=node(),frames=[];
+ box.dataset={embedUrl:'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',embedTitle:'Видео'};
+ box.querySelector=()=>frames[0]||null;box.querySelectorAll=()=>[button,small];box.append=frame=>frames.push(frame);
+ button.closest=()=>box;
+ card.clientWidth=360;card.querySelectorAll=selector=>selector==='[data-load-embed]'?[button]:[];
+ const document={querySelectorAll:()=>[card],createElement:tag=>({tag})};
+ const window={};
+ vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../../static/card-widgets.js'),'utf8'),{document,window});
+ assert.equal(frames.length,0);button.onclick();assert.equal(frames.length,1);
+ assert.equal(frames[0].src,box.dataset.embedUrl);assert.equal(frames[0].allowFullscreen,true);assert.equal(button.hidden,true);
+ button.onclick();assert.equal(frames.length,1);
+ frames.length=0;box.dataset.embedUrl='https://evil.test/embed/anything';button.onclick();assert.equal(frames.length,0);
+});
 test('carousel advances manually, wraps and pauses its automatic timer',()=>{
  const {next,prev,track,pause,timers,status}=setup();
  assert.equal(timers.size,1);assert.equal([...timers.values()][0].ms,5000);

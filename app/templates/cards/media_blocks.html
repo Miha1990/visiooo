@@ -1,0 +1,27 @@
+{% load card_tags %}
+{% if block == 'video' %}
+{% video_player content as player_url %}
+<section class="card-media-block" data-video-block>
+  <h2 data-video-title>{{ content.video.title|default:'Видео' }}</h2>
+  <div class="card-embed" data-external-embed data-embed-url="{{ player_url }}" data-embed-title="Видеоплеер">
+    <button type="button" data-load-embed {% if not player_url %}disabled{% endif %}>Смотреть видео</button>
+    <small>При нажатии загрузится плеер выбранного видеосервиса. Сервис получит ваш IP-адрес и может использовать файлы cookie.</small>
+  </div>
+  <a data-video-link href="{{ content.video.url|default:'#' }}" target="_blank" rel="noopener noreferrer" {% if not player_url %}hidden{% endif %}>Открыть на сайте видеосервиса</a>
+</section>
+{% elif block == 'document' %}
+{% document_url as pdf_url %}
+<section class="card-media-block" data-document-block>
+  <a class="card-pdf-button" data-document-link {% if pdf_url %}href="{{ pdf_url }}" download{% else %}hidden{% endif %}>{{ content.document.label|default:'Скачать прайс-лист (PDF)' }}</a>
+  <p data-document-empty {% if pdf_url %}hidden{% endif %}>Добавьте PDF-файл</p>
+</section>
+{% elif block == 'map' %}
+{% address_map content as map_url %}
+<section class="card-media-block" data-map-block>
+  <h2>Как нас найти</h2><p data-map-address>{{ content.map.address|default:'Укажите адрес' }}</p>
+  <div class="card-embed card-map" data-external-embed data-embed-url="{{ map_url }}" data-embed-title="Карта с адресом">
+    <button type="button" data-load-embed {% if not map_url %}disabled{% endif %}>Показать карту</button>
+    <small>При нажатии загрузятся Яндекс Карты. Яндекс получит ваш IP-адрес и может использовать файлы cookie.</small>
+  </div>
+</section>
+{% endif %}

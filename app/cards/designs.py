@@ -8,13 +8,13 @@ from .validation import SCHEMA
 DESIGN_VALIDATOR=Draft202012Validator({'$ref':'#/$defs/design','$defs':SCHEMA['$defs']},format_checker=FormatChecker())
 
 BLOCKS = [('cover', 'Шапка'), ('avatar', 'Фото'), ('identity', 'Имя и должность'),
-          ('bio', 'О себе'), ('save', 'Сохранение контакта'), ('contacts', 'Контакты и ссылки'), ('socials', 'Соцсети'), ('carousel', 'Карусель фотографий')]
+          ('bio', 'О себе'), ('save', 'Сохранение контакта'), ('contacts', 'Контакты и ссылки'), ('socials', 'Соцсети'), ('carousel', 'Карусель фотографий'), ('video', 'Видео'), ('document', 'PDF-файл'), ('map', 'Адрес на карте')]
 FONTS = [('ui', 'Современный'), ('serif', 'Книжный'), ('rounded', 'Мягкий')]
 FONT_CSS = {'ui': "'Segoe UI',system-ui,sans-serif", 'serif': 'Georgia,serif', 'rounded': "'Trebuchet MS',Arial,sans-serif"}
 ICON_ROLES = [('save', 'Сохранение контакта'), ('phone', 'Телефон'), ('email', 'Почта'), ('link', 'Дополнительные ссылки'),
               ('telegram', 'Телеграм'), ('vk', 'ВКонтакте'), ('ok', 'Одноклассники'), ('max', 'Макс'),
               ('instagram', 'Инстаграм'), ('threads', 'Тредс'), ('avito', 'Авито'), ('website', 'Сайт')]
-DEFAULT = {'blocks': [key for key, _ in BLOCKS if key != 'carousel'], 'hidden': [], 'accent': '#2457DB',
+DEFAULT = {'blocks': [key for key, _ in BLOCKS if key not in ('carousel','video','document','map')], 'hidden': [], 'accent': '#2457DB',
     'background': '#FFFFFF', 'text': '#17272D', 'font': 'ui', 'align': 'left',
     'buttonShape': 'rounded', 'buttonStyle': 'filled', 'buttonColumns': 1, 'iconPosition': 'left',
     'iconSize': 24, 'avatarShape': 'circle', 'avatarSize': 96, 'coverHeight': 130,
@@ -83,11 +83,12 @@ def block_settings(design, key):
 
 def editor_design(value):
     value = deepcopy(value)
-    if 'carousel' not in value['blocks']:
-        value['blocks'].append('carousel')
-        value['hidden'].append('carousel')
-        if value.get('canvas',{}).get('enabled'):
-            value.setdefault('frames',{})['carousel']={'x':6,'y':0,'width':88,'unit':'%','height':0,'z':1,'corners':[0,0,0,0]}
+    for key in ('carousel','video','document','map'):
+        if key not in value['blocks']:
+            value['blocks'].append(key)
+            value['hidden'].append(key)
+            if value.get('canvas',{}).get('enabled'):
+                value.setdefault('frames',{})[key]={'x':6,'y':0,'width':88,'unit':'%','height':0,'z':1,'corners':[0,0,0,0]}
     value.setdefault('carousel', {'photos': [], 'visible': 1, 'height': 220, 'autoplay': False, 'interval': 5})
     return value
 
