@@ -7,7 +7,7 @@ from django.templatetags.static import static
 from django.urls import reverse
 
 PREMIUM_ID = '75d4fb3d-5668-4a4f-92c2-a8070a95eb01'
-PRESET_PATH = Path(__file__).with_name('presets') / 'premium-v1.json'
+PRESET_PATH = Path(__file__).with_name('presets') / 'premium-v2.json'
 PHOTO_ASSETS = {
     '75d4fb3d-5668-4a4f-92c2-a8070a95eb11':'property-cover.webp',
     '75d4fb3d-5668-4a4f-92c2-a8070a95eb12':'designer-cover.webp',

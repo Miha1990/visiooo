@@ -63,6 +63,9 @@
   function renderGallery(){
     const carousel=card.querySelector('[data-card-carousel]');if(!carousel)return;
     const settings=design.carousel;
+    let heading=carousel.querySelector('h2');
+    if(settings.title&&!heading){heading=element('h2');carousel.prepend(heading);}
+    if(heading){heading.textContent=settings.title||'';heading.hidden=!settings.title;}
     carousel.dataset.visible=settings.visible;carousel.dataset.autoplay=String(settings.autoplay);carousel.dataset.interval=settings.interval;
     carousel.style.setProperty('--slides-visible',settings.visible);carousel.style.setProperty('--slide-height',`${settings.height}px`);
     const track=carousel.querySelector('.carousel-track');track.replaceChildren();
@@ -115,7 +118,7 @@
       const img=node.querySelector('[data-block-icon]');img.hidden=!settings.icon;if(settings.icon)img.src=`/template-icons/${settings.icon}.svg`;else img.removeAttribute('src');
     }
     card.querySelectorAll('[data-design-label]').forEach(node=>{if(!node.isContentEditable)node.textContent=design[node.dataset.designLabel];});
-    for(const key of ['name','title','company','bio']){const node=card.querySelector(`[data-preview="${key}"]`);if(node&&!node.isContentEditable)node.textContent=content[key]||'';}
+    for(const key of ['name','title','company','bio']){const node=card.querySelector(`[data-preview="${key}"]`);if(node&&!node.isContentEditable){node.textContent=content[key]||'';if(key!=='name')node.hidden=!String(content[key]||'').trim();}}
     card.querySelectorAll('[data-design-icon]').forEach(img=>img.src=iconUrl(img.dataset.designIcon));
     form.querySelector('[data-layout-mode]').value=design.canvas?.enabled?'free':'flow';
     form.querySelector('[data-canvas-height]').value=design.canvas?.height||Math.round(body.getBoundingClientRect().height/scale());
@@ -232,6 +235,7 @@
       button('Использовать поиск по адресу',()=>{checkpoint();delete content.map.latitude;delete content.map.longitude;dirty=true;apply();inspectorContent();});
     }
     if(selected==='carousel'){
+      control('Заголовок галереи',design.carousel.title||'',value=>{design.carousel.title=value;renderGallery();});
       control('Фотографий одновременно',design.carousel.visible,value=>{design.carousel.visible=clamp(value,1,10);renderGallery();},{type:'number',min:1,max:10});
       control('Высота фотографии',design.carousel.height,value=>{design.carousel.height=clamp(value,80,600);renderGallery();},{type:'number',min:80,max:600});
       control('Автоматическое пролистывание',design.carousel.autoplay,value=>{design.carousel.autoplay=value;renderGallery();},{type:'checkbox'});

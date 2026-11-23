@@ -44,6 +44,11 @@ test('carousel advances manually, wraps and pauses its automatic timer',()=>{
  prev.onclick();assert.equal(track.scrollLeft,0);prev.onclick();assert.equal(track.scrollLeft,300);
  pause.onclick();assert.equal(timers.size,0);pause.onclick();assert.equal(timers.size,1);
 });
+
+test('narrow gallery fits one readable slide and can reach its final photo',()=>{
+ const {gallery,window,prev,track}=setup();gallery.clientWidth=280;window.CardWidgets.refresh();
+ assert.equal(gallery.style.values['--slides-visible'],'1');prev.onclick();assert.equal(track.scrollLeft,400);
+});
 test('autoplay stops while hidden or focused and does not start with reduced motion',()=>{
  const {gallery,document,timers}=setup();gallery.events.focusin();assert.equal(timers.size,0);
  gallery.events.focusout({relatedTarget:null});assert.equal(timers.size,1);

@@ -31,7 +31,7 @@ def editor_context(content, user, *, template=False, card=None, example_pdf_url=
     content = deepcopy(content)
     content['design'] = design
     icons = TemplateIcon.objects.filter(Q(owner__isnull=True) | Q(owner=user))
-    return {'content': content, 'editor_data': {'design': design, 'content': content,
+    return {'content': content, 'visual_editor':True, 'editor_data': {'design': design, 'content': content,
             'template': template, 'blocks': dict(BLOCKS), 'carouselLimit': carousel_limit(),
             'samplePdfUrl':example_pdf_url,
             'icons': [{'id':str(i.pk),'name':i.name,'url':reverse('template_icon',args=[i.pk])} for i in icons],

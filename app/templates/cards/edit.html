@@ -1,5 +1,6 @@
 {% extends 'base.html' %}{% load static %}
 {% block title %}Редактор — Визитка{% endblock %}
+{% block extra_head %}<script src="{% static 'card-embeds.js' %}" defer></script><script src="{% static 'client-preview.js' %}" defer></script><script src="{% static 'client-editor.js' %}" defer></script>{% endblock %}
 {% block content %}
 <section class="shell editor" data-view="edit">
   <a class="back-link" href="/app/cards">Мои визитки</a>
@@ -8,6 +9,7 @@
   <div class="page-heading"><div><p class="eyebrow">ВАША ИСТОРИЯ В ДЕТАЛЯХ</p><h1>Редактор визитки<span class="blue">.</span></h1></div>
     <span class="status">{% if card.blocked %}Заблокирована{% elif card.has_changes %}Есть неопубликованные изменения{% elif card.status == 'published' %}Опубликовано{% else %}Черновик{% endif %}</span>
   </div>
+  <nav class="editor-section-nav" aria-label="Разделы визитки"><a href="#profile-fields">Данные</a><a href="#styling-fields">Фотографии</a><a href="#content-blocks">Материалы</a><a href="#publish-card">Публикация</a></nav>
   <div class="editor-view-controls" role="group" aria-label="Режим редактора">
     <button type="button" class="view-button" data-editor-view="edit" aria-pressed="true">Редактор</button>
     <button type="button" class="view-button" data-editor-view="preview" aria-pressed="false">Предпросмотр и QR</button>
@@ -16,29 +18,29 @@
 {% if user.is_staff and perms.cards.add_cardtemplate and perms.cards.change_cardtemplate %}<form method="post" action="{% url 'template_from_card' card.pk %}">{% csrf_token %}<p><button class="text-button">Сохранить оформление как шаблон</button></p><p class="micro muted">Сначала сохраните черновик. Личные фотографии и контакты не копируются.</p></form>{% endif %}
 <div class="editor-grid">
     <div class="editor-form-column">
-      <div class="panel">
+      <div class="panel" id="profile-fields">
         <div class="panel-heading"><h2>Расскажите о себе</h2><span class="muted micro">01 / СОДЕРЖИМОЕ</span></div>
         <form method="post" id="editor-form" class="stack">
           {% csrf_token %}{{ form.non_field_errors }}{% for field in form.hidden_fields %}{{ field }}{{ field.errors }}{% endfor %}
-          {% for field in form.details_fields %}<div>{{ field.label_tag }}{{ field }}{{ field.errors }}{% if field.help_text %}<div class="helptext">{{ field.help_text }}</div>{% endif %}</div>{% endfor %}
-          <fieldset class="social-fields"><legend>Соцсети и сайт</legend>
+          {% for field in form.details_fields %}{% if field.name == 'links' %}<details class="client-section" {% if field.errors %}open{% endif %}><summary>Дополнительные кнопки<span>Необязательно</span></summary>{% endif %}<div>{{ field.label_tag }}{{ field }}{{ field.errors }}{% if field.help_text %}<div class="helptext">{{ field.help_text }}</div>{% endif %}</div>{% if field.name == 'links' %}</details>{% endif %}{% endfor %}
+          <details class="client-section" {% if form.errors %}open{% endif %}><summary>Соцсети и сайт<span>Необязательно</span></summary><fieldset class="social-fields"><legend>Соцсети и сайт</legend>
             <p class="muted micro">Укажите полные ссылки. Посетитель увидит кнопку с названием соцсети и значком, без адреса ссылки. Пустые поля не отображаются на визитке.</p>
             {% for item in form.social_fields %}
               <div class="social-field"><label for="{{ item.field.id_for_label }}"><img src="{% static 'icons/' %}{{ item.key }}.svg" width="23" height="23" alt="">{{ item.field.label }}</label>{{ item.field }}{{ item.field.errors }}</div>
             {% endfor %}
-          </fieldset>
+          </fieldset></details>
           <div id="content-blocks">
-          {% for group in form.content_fields %}<fieldset><legend>{{ group.label }}</legend>
+          {% for group in form.content_fields %}<details class="client-section" {% if form.errors %}open{% endif %}><summary>{{ group.label }}<span>Необязательно</span></summary><fieldset><legend class="sr-only">{{ group.label }}</legend>
           {% for field in group.fields %}<div>{{ field.label_tag }}{{ field }}{{ field.errors }}{% if field.help_text %}<div class="helptext">{{ field.help_text }}</div>{% endif %}</div>{% endfor %}
-          </fieldset>{% endfor %}
+          </fieldset></details>{% endfor %}
           </div>
-          <p class="micro muted">Пустые поля и незаполненные блоки не отображаются в опубликованной визитке. Сохраните данные перед загрузкой файлов.</p>
-          <button class="button">Сохранить черновик</button>
+          <p class="micro muted">Пустые поля скрываются после публикации. Вы можете сначала заполнить главное, а материалы добавить позже.</p>
+          <div class="editor-save-row"><button class="button">Сохранить изменения</button></div>
         </form>
       </div>
-      <section class="styling-section" aria-label="Фон, фото и шапка">
+      <section class="styling-section" id="styling-fields" aria-label="Фон, фото и шапка">
         <h2 class="styling-title">Оформление визитки</h2>
-        <p class="muted micro">Три независимых изображения. Сначала сохраните текстовые правки выше.</p>
+        <p class="muted micro">Фон, фото и шапка загружаются отдельно. Текстовые правки сохранятся перед загрузкой файла.</p>
         {% for panel in image_panels %}
         <div class="panel avatar-panel image-panel" data-image-slot="{{ panel.target }}">
           <div class="panel-heading"><h2>{{ panel.label }}</h2><span class="muted micro">0{{ forloop.counter }} / ОФОРМЛЕНИЕ</span></div>
@@ -58,7 +60,7 @@
         {% endfor %}
       </section>
       {% include 'cards/client_media.html' %}
-      <div class="panel publish-panel">
+      <div class="panel publish-panel" id="publish-card">
         <h2>Готовы к знакомству?</h2><p class="muted">Сначала сохраните правки, затем опубликуйте. Черновик виден только вам.</p>
         {% if not active_pro %}<p class="notice">Для публикации нужен активный Профи. Оплатить подписку можно в разделе «Подписка».</p>{% endif %}
         <form method="post" action="{% url 'publish' card.pk %}" class="stack">

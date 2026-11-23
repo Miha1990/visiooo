@@ -1,5 +1,5 @@
-.contact-card:not(.designed-card):not(:has(.contact-cover))>.contact-avatar{margin-top:24px}
-.contact-card:not(.designed-card):not(:has(.avatar-toggle))>.contact-body{padding-top:28px}
+.contact-card:not(.designed-card):not(:has(.contact-cover:not([hidden])))>.contact-avatar{margin-top:24px}
+.contact-card:not(.designed-card):not(:has(.avatar-toggle:not([hidden])))>.contact-body{padding-top:28px}
 .designed-card img[hidden],.designed-card .card-pdf-button[hidden],.designed-card [data-carousel-pause][hidden],.carousel-empty[hidden],.carousel-controls[hidden],.sun-toggle[hidden]{display:none!important}
 .designed-card[data-canvas-enabled=true] .design-body{display:block;padding:0;height:calc(var(--canvas-height,1000) * 1px * var(--canvas-scale,1));margin:0;background:transparent}
 .designed-card[data-canvas-enabled=true] [data-design-block]{position:absolute;box-sizing:border-box;border-radius:var(--frame-radius,0);overflow:visible}

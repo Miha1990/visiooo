@@ -71,8 +71,12 @@ def edit(request, pk):
                 form.add_error(None, str(error))
                 status = 409
             else:
+                if request.headers.get('Accept') == 'application/json':
+                    return JsonResponse({'version':own_card(request.user,pk).draft_version})
                 messages.success(request, 'Черновик сохранён. Для обновления публичной страницы нажмите «Опубликовать».')
                 return redirect303(f'/app/cards/{pk}/edit')
+        if request.headers.get('Accept') == 'application/json':
+            return JsonResponse({'errors':form.errors.get_json_data(), 'error':'Проверьте поля визитки. Правки не сохранены.'},status=status)
     image_panels = []
     descriptions = {
         'background': ('Фон', 'Фотография на фоне всей визитки. Текст останется на светлой подложке.'),

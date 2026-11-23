@@ -3,13 +3,13 @@
   {% if content.backgroundAssetId %}
     <img class="card-background" alt="" aria-hidden="true" src="{% if example_assets %}{% static example_assets.background %}{% elif preview %}{% url 'preview_asset' card.pk content.backgroundAssetId %}{% else %}{% url 'public_asset' card.public_id content.backgroundAssetId %}{% endif %}">
   {% endif %}
-  {% if preview or content.headerAssetId %}<div class="contact-cover">
+  {% if preview or content.headerAssetId %}<div class="contact-cover" data-content-block="cover" {% if not content.headerAssetId %}hidden{% endif %}>
     {% if content.headerAssetId %}
       <img class="cover-photo" alt="" aria-hidden="true" src="{% if example_assets %}{% static example_assets.header %}{% elif preview %}{% url 'preview_asset' card.pk content.headerAssetId %}{% else %}{% url 'public_asset' card.public_id content.headerAssetId %}{% endif %}">
     {% endif %}
     <span>ПРИЯТНО ПОЗНАКОМИТЬСЯ</span>
   </div>
-  {% endif %}{% if preview or content.avatarAssetId %}<button type="button" class="contact-avatar avatar-toggle" data-avatar-toggle aria-pressed="false" aria-label="Показать QR-код визитки" title="Нажмите, чтобы показать QR">
+  {% endif %}{% if preview or content.avatarAssetId %}<button type="button" class="contact-avatar avatar-toggle" data-content-block="avatar" {% if not content.avatarAssetId %}hidden{% endif %} data-avatar-toggle aria-pressed="false" aria-label="Показать QR-код визитки" title="Нажмите, чтобы показать QR">
     <span class="avatar-photo-face">
       {% if content.avatarAssetId %}
         <img class="contact-avatar avatar-photo" width="88" height="88" alt="Фото {{ content.name }}" src="{% if example_assets %}{% static example_assets.avatar %}{% elif preview %}{% url 'preview_asset' card.pk content.avatarAssetId %}{% else %}{% url 'public_asset' card.public_id content.avatarAssetId %}{% endif %}">
@@ -17,17 +17,17 @@
 </span>
     <span class="avatar-qr-face" hidden><img width="180" height="180" alt="QR со ссылкой на визитку" data-avatar-qr="{% if example_assets %}{{ example_qr_url }}{% elif preview %}{% url 'qr' card.pk %}{% else %}{% url 'public_qr' card.public_id %}{% endif %}"></span>
 </button>
-  <p class="avatar-toggle-hint">Нажмите на фото, чтобы показать QR</p>
+  <p class="avatar-toggle-hint" {% if not content.avatarAssetId %}hidden{% endif %}>Нажмите на фото, чтобы показать QR</p>
   {% endif %}<div class="contact-body">
     {% if publication_conditions %}<aside class="publication-conditions"><strong>Условия обработки опубликованных данных</strong><p>{{ publication_conditions|linebreaksbr }}</p></aside>{% endif %}
     <{{ name_heading|default:"h1" }} data-preview="name">{{ content.name }}</{{ name_heading|default:"h1" }}>
-    {% if preview or content.title %}<p class="contact-role" data-preview="title">{{ content.title }}</p>{% endif %}
-    {% if preview or content.company %}<p class="contact-company" data-preview="company">{{ content.company }}</p>{% endif %}
-    {% if preview or content.bio %}<p class="contact-bio" data-preview="bio">{{ content.bio }}</p>{% endif %}
+    {% if preview or content.title %}<p class="contact-role" data-preview="title" {% if not content.title %}hidden{% endif %}>{{ content.title }}</p>{% endif %}
+    {% if preview or content.company %}<p class="contact-company" data-preview="company" {% if not content.company %}hidden{% endif %}>{{ content.company }}</p>{% endif %}
+    {% if preview or content.bio %}<p class="contact-bio" data-preview="bio" {% if not content.bio %}hidden{% endif %}>{{ content.bio }}</p>{% endif %}
     {% if example_assets %}<a class="button contact-save" href="{{ example_vcard_url }}">＋ Сохранить контакт</a>
     {% elif preview %}<span class="button contact-save">＋ Сохранить контакт</span>
     {% else %}<a class="button contact-save" href="{% url 'vcard' card.public_id %}">＋ Сохранить контакт</a>{% endif %}
-    {% if preview or content.phone or content.email or content.links %}<div class="contact-actions">
+    {% if preview or content.phone or content.email or content.links %}<div class="contact-actions" data-content-block="contacts" {% if not content.phone and not content.email and not content.links %}hidden{% endif %}>
       {% if content.phone %}<a href="tel:{{ content.phone }}">Позвонить<span>{{ content.phone }}</span></a>{% endif %}
       {% if content.email %}<a href="mailto:{{ content.email }}">Написать<span>{{ content.email }}</span></a>{% endif %}
       {% for link in content.links %}<a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.label }}</a>{% endfor %}
@@ -42,9 +42,9 @@
       </div>
     </section>
     {% endwith %}
-    {% if content.galleryAssetIds %}{% include 'cards/carousel.html' %}{% endif %}
-    {% if content.video.url %}{% include 'cards/media_blocks.html' with block='video' %}{% endif %}
-    {% if content.document.assetId %}{% include 'cards/media_blocks.html' with block='document' %}{% endif %}
-    {% if content.map.address %}{% include 'cards/media_blocks.html' with block='map' %}{% endif %}
+    {% if preview or content.galleryAssetIds %}<div data-content-block="carousel" {% if not content.galleryAssetIds %}hidden{% endif %}>{% include 'cards/carousel.html' %}</div>{% endif %}
+    {% if preview or content.video.url %}<div data-content-block="video" {% if not content.video.url %}hidden{% endif %}>{% include 'cards/media_blocks.html' with block='video' %}</div>{% endif %}
+    {% if preview or content.document.assetId %}<div data-content-block="document" {% if not content.document.assetId %}hidden{% endif %}>{% include 'cards/media_blocks.html' with block='document' %}</div>{% endif %}
+    {% if preview or content.map.address %}<div data-content-block="map" {% if not content.map.address %}hidden{% endif %}>{% include 'cards/media_blocks.html' with block='map' %}</div>{% endif %}
   </div>
 </article>

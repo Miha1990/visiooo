@@ -121,6 +121,7 @@ if (form) {
       socialContainer.append(anchor);
     }
     socialSection.hidden = !socialContainer.childElementCount;
+    window.CardWidgets?.refresh(card);
   };
   socialFields.forEach(input => input.addEventListener('input', updateSocials));
   updateSocials();
@@ -134,6 +135,10 @@ if (editor) {
       document.querySelectorAll('[data-editor-view]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
     });
   });
+  editor.querySelectorAll('.editor-section-nav a').forEach(link=>link.addEventListener('click',()=>{
+    editor.dataset.view='edit';
+    document.querySelectorAll('[data-editor-view]').forEach(item=>item.setAttribute('aria-pressed',String(item.dataset.editorView==='edit')));
+  }));
 }
 document.querySelectorAll('[data-copy], [data-share]').forEach(button => {
   button.addEventListener('click', async () => {

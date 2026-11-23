@@ -642,6 +642,10 @@
               "type": "integer",
               "minimum": 2,
               "maximum": 120
+            },
+            "title": {
+              "type": "string",
+              "maxLength": 80
             }
           }
         },

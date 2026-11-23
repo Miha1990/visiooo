@@ -15,7 +15,7 @@ class PremiumExampleTests(SimpleTestCase):
         self.assertEqual(response.status_code,200)
         for key,_ in BLOCKS:self.assertContains(response,f'data-design-block="{key}"')
         for value in ('premium-example.pdf','data-avatar-toggle','data-social-mode="radial"',
-                      'data-autoplay="true"','youtube-nocookie.com/embed/aqz-KE-bpKQ','Показать карту'):
+                      'data-autoplay="false"','youtube-nocookie.com/embed/aqz-KE-bpKQ','Показать карту'):
             self.assertContains(response,value)
         self.assertNotContains(response,'<iframe')
         self.assertContains(self.client.get('/examples/premium/contact.vcf'),'Елена Морозова')
