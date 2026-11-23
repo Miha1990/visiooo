@@ -340,7 +340,7 @@ summary::-webkit-details-marker { display: none; }
 
 /* Tap the profile photo to share the permanent card URL as a QR. */
 .avatar-toggle { padding: 0; cursor: pointer; overflow: hidden; appearance: none; box-sizing: content-box; position:relative; perspective:800px; }
-.contact-save-group{width:100%;min-width:0}.contact-save-group>.contact-save{width:100%;box-sizing:border-box}.contact-save-help{font:12px/1.5 'Segoe UI',system-ui,sans-serif;color:inherit;margin:8px 0 16px;overflow-wrap:anywhere}.contact-save-help p{margin:0 0 6px}.contact-save-help>a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.contact-save-group{width:100%;min-width:0}.contact-save-group>.contact-save{width:100%;box-sizing:border-box}
 .avatar-static { padding: 0; overflow: hidden; box-sizing: content-box; }
 .avatar-static > .avatar-photo-face { display: grid; place-items: center; width: 100%; height: 100%; border-radius: inherit; }
 .contact-card .avatar-static > .avatar-photo-face > .contact-avatar.avatar-photo { display: block; width: 100%; height: 100%; margin: 0; border: 0; border-radius: inherit; object-fit: cover; }

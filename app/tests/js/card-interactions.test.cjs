@@ -39,17 +39,6 @@ test('one click shows QR, second click restores photo and accessibility state', 
   assert.equal(button.attrs['aria-pressed'], 'false');
 });
 
-test('saving a contact keeps native link navigation and shows device-specific fallback instructions',()=>{
- for(const [userAgent,platform,maxTouchPoints,expected]of [
-  ['iPhone','iPhone',5,'Создать новый контакт'],['Android','Linux',1,'Контакты'],['Macintosh','MacIntel',5,'Создать новый контакт'],['Desktop','Win32',0,'импортировать']]){
-  const link=element(),help=element(),instructions=element();help.hidden=true;
-  help.querySelector=()=>instructions;link.closest=()=>({querySelector:()=>help});
-  vm.runInNewContext(source('card-interactions.js'),{navigator:{userAgent,platform,maxTouchPoints},document:{querySelectorAll:selector=>selector==='[data-save-contact]'?[link]:[]}});
-  link.events.click({preventDefault(){throw Error('Native navigation must proceed');}});
-  assert.equal(help.hidden,false);assert.ok(instructions.textContent.includes(expected));assert.ok(!instructions.textContent.includes('Контакт сохранён'));
- }
-});
-
 test('failed QR request returns to photo and allows retry', () => {
   const {button, photo, image, hint} = avatar();
   button.events.click();

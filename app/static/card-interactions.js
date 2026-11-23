@@ -24,19 +24,3 @@ document.querySelectorAll('[data-avatar-toggle]').forEach(button => {
     show(visible);
   });
 });
-
-document.querySelectorAll('[data-save-contact]').forEach(link => {
-  link.addEventListener('click', () => {
-    const help = link.closest('.contact-save-group')?.querySelector('[data-contact-help]');
-    if (!help) return;
-    const ua = navigator.userAgent || '';
-    const apple = /iPhone|iPad|iPod/i.test(ua) || (/Mac/i.test(navigator.platform || '') && navigator.maxTouchPoints > 1);
-    const instructions = help.querySelector('[data-contact-instructions]');
-    instructions.textContent = apple
-      ? 'В открывшейся карточке выберите «Создать новый контакт» или «Добавить к существующему» и подтвердите сохранение. Если файл скачался, откройте его в приложении «Файлы».'
-      : /Android/i.test(ua)
-        ? 'Откройте файл contact.vcf в приложении «Контакты» и подтвердите добавление. Если файл только скачался, откройте его из загрузок браузера. Также можно выбрать в «Контактах» импорт из файла VCF.'
-        : 'Откройте файл contact.vcf в приложении контактов и подтвердите добавление. Файл также можно импортировать в телефонную книгу.';
-    help.hidden = false;
-  });
-});
