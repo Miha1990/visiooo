@@ -34,6 +34,14 @@ services:
       timeout: 10s
       start_period: 30s
       retries: 5
+  notifications:
+    image: visiooo:local
+    restart: unless-stopped
+    env_file: app/.env
+    command: [python, manage.py, send_payment_notifications, --watch]
+    depends_on:
+      web:
+        condition: service_healthy
 volumes:
   postgres_data:
   private_media:

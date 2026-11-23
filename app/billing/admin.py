@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Subscription, Payment, PromoCode, AccessGrant
+from .models import Subscription, Payment, PromoCode, AccessGrant, PaymentNotificationSettings, PaymentNotification
+from smtplib import SMTPException
 from .forms import PaymentAdminForm, PromoAdminForm, AccessGrantAdminForm
 from .promotions import grant_access, revoke_access
 from django.core.mail import send_mail
@@ -113,5 +114,57 @@ class PaymentAdmin(admin.ModelAdmin):
                     f'Поддержка: {settings.OPERATOR_EMAIL}', settings.DEFAULT_FROM_EMAIL, [payment.user.email])
                 if sent:
                     Payment.objects.filter(pk=payment.pk).update(receipt_sent_at=timezone.now())
-            except OSError:
+            except (OSError, SMTPException):
                 self.message_user(request, f'{payment.pk}: письмо не отправлено; повторите позже.', level='error')
+
+
+@admin.register(PaymentNotificationSettings)
+class PaymentNotificationSettingsAdmin(admin.ModelAdmin):
+    fields = ('email',)
+    list_display = ('__str__', 'email')
+    actions = ('send_test_notification',)
+
+    def has_add_permission(self, request):
+        return not PaymentNotificationSettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    @admin.action(description='Отправить проверочное письмо на указанную почту', permissions=['change'])
+    def send_test_notification(self, request, queryset):
+        for configuration in queryset:
+            if not configuration.email:
+                self.message_user(request, 'Сначала сохраните почту для уведомлений.', level='warning')
+                continue
+            try:
+                sent = send_mail('Проверка уведомлений «Визитки»',
+                    'Это проверочное письмо. Оплата не проводилась.\n'
+                    'На эту почту будут приходить уведомления о подтверждённых оплатах '
+                    'с суммой и почтой покупателя для отправки чека НПД.',
+                    settings.DEFAULT_FROM_EMAIL, [configuration.email])
+                if not sent:
+                    raise OSError('Mail was not accepted')
+            except (OSError, SMTPException):
+                self.message_user(request, 'Не удалось передать письмо почтовому серверу. Проверьте настройки почты.', level='error')
+            else:
+                self.message_user(request, 'Проверочное письмо передано почтовому серверу. Проверьте входящие и папку нежелательной почты.')
+
+
+@admin.register(PaymentNotification)
+class PaymentNotificationAdmin(admin.ModelAdmin):
+    list_display = ('payment', 'customer_email', 'recipient', 'created_at', 'sent_at', 'attempts', 'last_error')
+    list_filter = ('sent_at',)
+    search_fields = ('payment__id', 'customer_email', 'recipient')
+    readonly_fields = tuple(field.name for field in PaymentNotification._meta.fields)
+    actions = ('retry_selected',)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    @admin.action(description='Повторить отправку неотправленных уведомлений', permissions=['change'])
+    def retry_selected(self, request, queryset):
+        count = queryset.filter(sent_at__isnull=True).update(retry_at=timezone.now())
+        self.message_user(request, f'Поставлено на повторную отправку: {count}.')

@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from workspaces.models import Workspace
-from .models import Payment, Subscription
+from .models import Payment, Subscription, PaymentNotification
 from . import gateway
 
 PRICES = {'month': Decimal('199.00'), 'year': Decimal('1490.00')}
@@ -67,6 +67,7 @@ def apply(payment_id, data):
     validate(payment, data)
     payment.provider_id = data['id']
     status = data['status']
+    first_success = status == 'succeeded' and payment.applied_at is None
     if status == 'succeeded':
         if payment.applied_at is None:
             sub, _ = Subscription.objects.get_or_create(workspace_id=payment.workspace_id)
@@ -93,6 +94,9 @@ def apply(payment_id, data):
     if confirmation:
         payment.confirmation_url = safe_confirmation(confirmation)
     payment.save()
+    if first_success and not payment.test:
+        PaymentNotification.objects.get_or_create(payment=payment,
+            defaults={'customer_email': payment.user.email})
     return payment
 
 

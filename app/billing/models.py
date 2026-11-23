@@ -144,3 +144,36 @@ class Payment(models.Model):
 
     def __str__(self):
         return f'Платёж {self.pk}'
+
+
+class PaymentNotificationSettings(models.Model):
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    email = models.EmailField('Почта для уведомлений об оплатах', blank=True,
+        help_text='Укажите свою почту. На неё придут сумма оплаты и почта покупателя для отправки чека. Пока поле пустое, уведомления ждут в очереди.')
+
+    class Meta:
+        verbose_name = 'настройка уведомлений об оплатах'
+        verbose_name_plural = 'Настройки уведомлений об оплатах'
+        constraints = [models.CheckConstraint(condition=Q(id=1), name='payment_notification_settings_singleton')]
+
+    def __str__(self):
+        return 'Уведомления об оплатах'
+
+
+class PaymentNotification(models.Model):
+    payment = models.OneToOneField(Payment, on_delete=models.PROTECT, related_name='operator_notification', verbose_name='Платёж')
+    customer_email = models.EmailField('Почта покупателя для чека')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создано')
+    sent_at = models.DateTimeField(null=True, blank=True, verbose_name='Передано почтовому серверу')
+    recipient = models.EmailField('Отправлено на почту', blank=True)
+    attempts = models.PositiveIntegerField(default=0, verbose_name='Попыток отправки')
+    retry_at = models.DateTimeField(default=timezone.now, db_index=True, verbose_name='Следующая попытка')
+    last_error = models.CharField(max_length=80, blank=True, verbose_name='Причина задержки')
+
+    class Meta:
+        verbose_name = 'уведомление об оплате'
+        verbose_name_plural = 'Уведомления об оплатах'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'Уведомление о платеже {self.payment_id}'
