@@ -111,6 +111,8 @@ def edit(request, pk):
                     updated = own_card(request.user,pk)
                     return JsonResponse({'version':updated.draft_version, 'address':updated.public_id, 'public_url':public_url(updated)})
                 messages.success(request, 'Черновик сохранён. Для обновления публичной страницы нажмите «Опубликовать».')
+                if request.POST.get('save_and_close') == 'yes':
+                    return redirect303(f'/app/cards?card={pk}')
                 return redirect303(f'/app/cards/{pk}/edit')
         if request.headers.get('Accept') == 'application/json':
             return JsonResponse({'errors':form.errors.get_json_data(), 'error':'Проверьте поля визитки. Правки не сохранены.'},status=status)

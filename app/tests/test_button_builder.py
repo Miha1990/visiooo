@@ -48,6 +48,18 @@ class ButtonBuilderTests(TestCase):
         self.assertContains(response,'card-builder.js');self.assertContains(response,'builder-options')
         self.card.refresh_from_db();self.assertNotIn('buttonLayout',self.card.draft)
 
+    def test_save_and_close_saves_draft_and_returns_to_selected_card(self):
+        data=self.payload([{'kind':'telegram','label':'Telegram','value':'t.me/person'}])
+        data.update(name='Новое имя',save_and_close='yes')
+        response=self.client.post(f'/app/cards/{self.card.pk}/edit',data)
+        self.assertEqual(response.status_code,303)
+        self.assertEqual(response['Location'],f'/app/cards?card={self.card.pk}')
+        self.card.refresh_from_db();self.assertEqual(self.card.draft['name'],'Новое имя')
+        self.assertEqual(self.card.draft['buttons'][0]['value'],'https://t.me/person')
+        self.assertEqual(self.card.status,'draft')
+        data.update(name='',draft_version=self.card.draft_version)
+        self.assertEqual(self.client.post(f'/app/cards/{self.card.pk}/edit',data).status_code,422)
+
     def test_logo_is_independent_and_uses_owned_asset_routes(self):
         response=self.client.post('/app/assets',{'card_id':str(self.card.pk),'draft_version':1,'target':'logo','image':photo()})
         self.assertEqual(response.status_code,303)

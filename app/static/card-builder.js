@@ -12,11 +12,14 @@
   const iconBase=new URL('icons/',document.querySelector('script[src*="card-builder."]').src).href;
   const image=kind=>node('img',{src:iconBase+(types.get(kind)?.icon||'link')+'.svg',width:28,height:28,alt:''});
   const built=node('div',{class:'builder-editor'}),cover=node('div',{class:'builder-cover'}),identity=button('',()=>profile.showModal(),'builder-identity'),tiles=node('div',{class:'builder-tiles'}),rows=node('div',{class:'builder-rows'});
+  identity.setAttribute('aria-label','Изменить имя, должность, компанию и информацию о себе');
+  const socials=node('section',{class:'builder-socials'}),socialGrid=node('div',{class:'builder-social-grid'});
+  socials.append(node('h2',{},'Соцсети и мессенджеры'),socialGrid);
   const oldChildren=[...form.children],sourceBox=node('div',{class:'builder-source',hidden:''});
   for(const child of oldChildren)sourceBox.append(child);form.append(sourceBox);form.noValidate=true;
   const mode=node('input',{type:'hidden',name:'builder_mode',value:'tiles'});form.append(mode);form.action=location.pathname;
   const errors=[...sourceBox.querySelectorAll('.errorlist')].map(el=>el.textContent.trim()).filter(Boolean);
-  editor.prepend(built);built.append(cover,form);form.prepend(identity,tiles,rows);
+  editor.prepend(built);built.append(cover,form);form.prepend(identity,tiles,rows,socials);
   const dialog=(title,parent=editor)=>{
     const el=node('dialog',{class:'builder-dialog','aria-label':title}),head=node('div',{class:'builder-dialog-head'});
     head.append(node('h2',{},title),button('Закрыть',()=>el.close(),'builder-close'));el.append(head);parent.append(el);
@@ -77,23 +80,27 @@
   edit.addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.tagName==='INPUT'){event.preventDefault();if(commit())edit.close();}});
   const remove=button('Удалить блок',()=>{items.splice(editing,1);persist();edit.close();},'builder-remove');edit.append(remove);
   function editButton(index,newKind){
-    editing=index;kind=index<0?newKind:items[index].kind;const item=items[index];
-    caption.value=item?.label||types.get(kind).label;target.value=item?.value||'';error.textContent='';remove.hidden=index<0;
+    editing=index;kind=newKind||items[index]?.kind;const item=items[index],sameKind=item?.kind===kind;
+    caption.value=sameKind?item.label:types.get(kind).label;target.value=sameKind?item.value:'';error.textContent='';remove.hidden=index<0;
     targetLabel.textContent=kind==='phone'||kind==='other_phone'?'Номер телефона':kind==='email'?'Электронная почта':kind==='file'?'URL файла (или загрузите PDF ниже)':'URL';
     target.inputMode=kind==='phone'||kind==='other_phone'?'tel':kind==='email'?'email':'url';
     target.placeholder=kind==='phone'||kind==='other_phone'?'89289091817':kind==='email'?'mail@example.ru':'google.com';
     fileUpload.hidden=kind!=='file'||!media.has('document');edit.showModal();
   }
-  function choose(){search.value='';filter();chooser.showModal();search.focus();}
+  let choiceGroup='all',choiceIndex=-1;
+  function choose(group='all',index=-1){choiceGroup=group;choiceIndex=index;search.value='';filter();chooser.showModal();search.focus();}
   function filter(){
     const text=search.value.toLowerCase().trim();choices.replaceChildren();
+    if(choiceIndex>=0&&!text){const current=items[choiceIndex];choices.append(button('Редактировать «'+current.label+'»',()=>{chooser.close();editButton(choiceIndex);},'builder-choice builder-current-choice'),node('p',{class:'builder-replace-hint'},'Или выберите другой тип блока. Замена сохранится после нажатия «Готово».'));}
     for(const group of ['Реквизиты','Дополнительный контент','Соцсети и мессенджеры']){
+      if(choiceGroup==='social'&&group!=='Соцсети и мессенджеры')continue;
+      if(choiceGroup==='primary'&&group==='Соцсети и мессенджеры')continue;
       const found=options.filter(item=>item.group===group&&(`${item.label} ${item.kind}`).toLowerCase().includes(text));if(!found.length)continue;
       const grid=node('div',{class:group==='Соцсети и мессенджеры'?'builder-choice-socials':'builder-choice-list'});choices.append(node('h3',{},group),grid);
-      for(const item of found){const b=button('',()=>{chooser.close();editButton(-1,item.kind);},'builder-choice');b.append(image(item.kind),node('span',{},item.label));grid.append(b);}
+      for(const item of found){const b=button('',()=>{chooser.close();editButton(choiceIndex,item.kind);},'builder-choice');b.append(image(item.kind),node('span',{},item.label));grid.append(b);}
     }
     const extras=[['carousel','Карусель фотографий'],['video','Видео'],['map','Адрес на карте']].filter(([key,label])=>(media.has(key)||sources.has(key))&&label.toLowerCase().includes(text));
-    if(extras.length){choices.append(node('h3',{},'Другие блоки'));for(const [key,label]of extras)choices.append(button(label,()=>{chooser.close();openMedia(key);},'builder-choice'));}
+    if(extras.length&&choiceGroup!=='social'&&choiceIndex<0){choices.append(node('h3',{},'Другие блоки'));for(const [key,label]of extras)choices.append(button(label,()=>{chooser.close();openMedia(key);},'builder-choice'));}
     if(!choices.childElementCount)choices.append(node('p',{},'Ничего не найдено. Попробуйте другое название.'));
   }
   search.addEventListener('input',filter);
@@ -126,13 +133,20 @@
     for(const [key,label]of [['name','Имя'],['title','Должность'],['company','Компания'],['bio','О себе']]){
       const value=field(key)?.value.trim();identity.append(node('span',{class:'builder-identity-'+key},value&&value!=='Новая визитка'?value:label));
     }
-    tiles.replaceChildren();rows.replaceChildren();
-    for(let i=0;i<Math.max(2,items.length);i++){
-      const item=items[i],b=button('',()=>item?editButton(i):choose(),item?'builder-filled-button':'builder-add-button');
-      if(item)b.append(image(item.kind),node('span',{},item.label));else b.append(node('span',{'aria-hidden':'true'},'+'),node('span',{},'Добавить'));
+    tiles.replaceChildren();rows.replaceChildren();socialGrid.replaceChildren();
+    const primary=items.map((item,index)=>({item,index})).filter(({item})=>types.get(item.kind)?.group!=='Соцсети и мессенджеры');
+    for(let i=0;i<Math.max(2,primary.length);i++){
+      const entry=primary[i],item=entry?.item,b=button('',()=>choose('all',entry?.index??-1),item?'builder-filled-button':'builder-add-button');
+      b.setAttribute('aria-label',item?'Изменить: '+item.label:'Добавить контакт или ссылку');
+      if(item)b.append(image(item.kind),node('span',{},item.label));else b.append(node('span',{'aria-hidden':'true'},'+'));
       (i<2?tiles:rows).append(b);
     }
-    rows.append(button('+ Добавить блок',choose,'builder-add-row'));
+    items.forEach((item,index)=>{if(types.get(item.kind)?.group!=='Соцсети и мессенджеры')return;
+      const tile=button('',()=>choose('all',index),'builder-social-tile'),face=node('span',{class:'builder-social-face'});
+      tile.setAttribute('aria-label','Изменить: '+item.label);face.append(image(item.kind));
+      tile.append(face,node('span',{class:'builder-social-name'},item.label),node('span',{class:'builder-social-value'},item.value.replace(/^https?:\/\//,'')));socialGrid.append(tile);
+    });
+    const addSocial=button('+',()=>choose('social'),'builder-social-add');addSocial.setAttribute('aria-label','Добавить соцсеть или мессенджер');socialGrid.append(addSocial);
     for(const [key,label]of [['carousel','Карусель фотографий'],['video','Видео'],['map','Карта']]){
       const filled=key==='carousel'?Boolean(media.get(key)?.querySelector('figure')):Boolean(field(key==='video'?'video_url':'map_address')?.value.trim());
       if(filled)rows.append(button(label,()=>openMedia(key),'builder-content-row'));
@@ -140,11 +154,14 @@
   }
   form.addEventListener('input',draw);
   form.addEventListener('submit',event=>{if(!form.checkValidity()){event.preventDefault();const invalid=form.querySelector(':invalid');const d=invalid?.closest('dialog');if(d&&!d.open)d.showModal();invalid?.reportValidity();}else if(form.confirmAddress&&!form.confirmAddress())event.preventDefault();});
-  const toolbar=node('div',{class:'builder-toolbar'}),save=node('button',{type:'submit',form:form.id,class:'button'},'Сохранить'),preview=button('Предпросмотр',()=>setView(editor.dataset.view==='preview'?'edit':'preview'));
-  toolbar.append(save,preview,button('Опубликовать',()=>publish.showModal()));editor.append(toolbar);
+  const topbar=node('nav',{class:'builder-topbar','aria-label':'Редактирование визитки'}),back=node('a',{href:'/app/cards'},'Назад'),save=node('button',{type:'submit',form:form.id,name:'save_and_close',value:'yes'},'Сохранить и закрыть');
+  topbar.append(back,save);editor.prepend(topbar);
+  const toolbar=node('div',{class:'builder-toolbar'}),addField=button('+ Добавить поле',()=>choose(),'builder-add-row'),preview=button('Предпросмотр',()=>setView(editor.dataset.view==='preview'?'edit':'preview'));
+  toolbar.append(addField);editor.append(toolbar);
   function setView(view){editor.dataset.view=view;preview.textContent=view==='preview'?'Редактировать':'Предпросмотр';}
-  const more=node('div',{class:'builder-more'});more.append(button('Оформление и шаблон',()=>settings.showModal()),button('Публикация',()=>publish.showModal()));form.append(more);
-  for(const child of [...editor.children])if(![built,toolbar].includes(child)&&child.tagName!=='DIALOG'&&!child.classList.contains('editor-grid'))child.hidden=true;
+  const more=node('div',{class:'builder-more'});more.append(preview,button('Оформление и шаблон',()=>settings.showModal()),button('Опубликовать',()=>publish.showModal()));form.append(more);
+  const returnToEdit=button('Вернуться к редактированию',()=>setView('edit'),'builder-preview-back');editor.querySelector('.preview-column')?.prepend(returnToEdit);
+  for(const child of [...editor.children])if(![topbar,built,toolbar].includes(child)&&child.tagName!=='DIALOG'&&!child.classList.contains('editor-grid'))child.hidden=true;
   const oldColumn=editor.querySelector('.editor-form-column');if(oldColumn)oldColumn.hidden=true;
   editor.classList.add('card-builder-active');
   if(errors.length)built.prepend(node('p',{class:'builder-error',role:'alert'},errors.join(' ')));
