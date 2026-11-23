@@ -21,3 +21,8 @@ def design_icons(design):
     import json
     from cards.designs import ICON_ROLES
     return json.dumps({key: design_icon(design, key) for key, _ in ICON_ROLES})
+
+@register.simple_tag
+def design_block(design, key):
+    from cards.designs import block_settings
+    return block_settings(design, key)

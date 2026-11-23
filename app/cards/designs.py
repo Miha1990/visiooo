@@ -55,6 +55,18 @@ def from_content(content):
     return value
 
 
+def block_settings(design, key):
+    """Resolve optional block overrides without changing older published designs."""
+    override = design.get('blockStyles', {}).get(key, {})
+    return {
+        'align': override.get('align', 'inherit'),
+        'iconPosition': override.get('iconPosition', 'inherit'),
+        'effectiveIconPosition': design['iconPosition'] if override.get('iconPosition', 'inherit') == 'inherit' else override['iconPosition'],
+        'iconSize': override.get('iconSize', design['iconSize']),
+        'icon': override.get('icon', ''),
+    }
+
+
 def css(value):
     value = validate_design(value)
     radius = {'square': 0, 'rounded': 16, 'circle': 999}[value['avatarShape']]

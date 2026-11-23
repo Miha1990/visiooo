@@ -22,7 +22,7 @@
           {% csrf_token %}{{ form.non_field_errors }}{{ form.draft_version }}{{ form.draft_version.errors }}
           {% for field in form.details_fields %}<div>{{ field.label_tag }}{{ field }}{{ field.errors }}{% if field.help_text %}<div class="helptext">{{ field.help_text }}</div>{% endif %}</div>{% endfor %}
           <fieldset class="social-fields"><legend>Соцсети и сайт</legend>
-            <p class="muted micro">Укажите полные ссылки. Пустые поля не отображаются на визитке.</p>
+            <p class="muted micro">Укажите полные ссылки. Посетитель увидит кнопку с названием соцсети и значком, без адреса ссылки. Пустые поля не отображаются на визитке.</p>
             {% for item in form.social_fields %}
               <div class="social-field"><label for="{{ item.field.id_for_label }}"><img src="{% static 'icons/' %}{{ item.key }}.svg" width="23" height="23" alt="">{{ item.field.label }}</label>{{ item.field }}{{ item.field.errors }}</div>
             {% endfor %}

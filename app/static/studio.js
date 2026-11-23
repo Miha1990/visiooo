@@ -25,6 +25,17 @@
     for (const key of order) {
       const block=body.querySelector(`[data-design-block="${key}"]`);
       block.hidden=hidden.includes(key);body.append(block);
+      const align=get(`block_${key}_align`) || 'inherit';
+      const position=get(`block_${key}_iconPosition`) || 'inherit';
+      block.dataset.blockAlign=align;block.dataset.blockIcons=position==='inherit'?get('iconPosition'):position;
+      const size=Number(get(`block_${key}_iconSize`)) || Number(get('iconSize'));
+      block.style?.setProperty('--design-icon',`${Math.max(16,Math.min(36,size))}px`);
+      const icon=block.querySelector?.('[data-block-icon]');
+      if(icon){
+        const value=get(`block_${key}_icon`);
+        icon.hidden=!value;
+        if(value)icon.src=`/template-icons/${value}.svg`;else icon.removeAttribute('src');
+      }
     }
     card.querySelectorAll('[data-design-label]').forEach(node=>node.textContent=get(node.dataset.designLabel));
     card.querySelectorAll('[data-design-icon]').forEach(node=>{

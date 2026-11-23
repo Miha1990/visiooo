@@ -391,6 +391,264 @@
         "sourceName": {
           "type": "string",
           "maxLength": 100
+        },
+        "blockStyles": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cover": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "align",
+                "iconPosition"
+              ],
+              "properties": {
+                "align": {
+                  "enum": [
+                    "inherit",
+                    "left",
+                    "center",
+                    "right"
+                  ]
+                },
+                "iconPosition": {
+                  "enum": [
+                    "inherit",
+                    "left",
+                    "right",
+                    "top",
+                    "none"
+                  ]
+                },
+                "iconSize": {
+                  "type": "integer",
+                  "minimum": 16,
+                  "maximum": 36
+                },
+                "icon": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "avatar": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "align",
+                "iconPosition"
+              ],
+              "properties": {
+                "align": {
+                  "enum": [
+                    "inherit",
+                    "left",
+                    "center",
+                    "right"
+                  ]
+                },
+                "iconPosition": {
+                  "enum": [
+                    "inherit",
+                    "left",
+                    "right",
+                    "top",
+                    "none"
+                  ]
+                },
+                "iconSize": {
+                  "type": "integer",
+                  "minimum": 16,
+                  "maximum": 36
+                },
+                "icon": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "identity": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "align",
+                "iconPosition"
+              ],
+              "properties": {
+                "align": {
+                  "enum": [
+                    "inherit",
+                    "left",
+                    "center",
+                    "right"
+                  ]
+                },
+                "iconPosition": {
+                  "enum": [
+                    "inherit",
+                    "left",
+                    "right",
+                    "top",
+                    "none"
+                  ]
+                },
+                "iconSize": {
+                  "type": "integer",
+                  "minimum": 16,
+                  "maximum": 36
+                },
+                "icon": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "bio": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "align",
+                "iconPosition"
+              ],
+              "properties": {
+                "align": {
+                  "enum": [
+                    "inherit",
+                    "left",
+                    "center",
+                    "right"
+                  ]
+                },
+                "iconPosition": {
+                  "enum": [
+                    "inherit",
+                    "left",
+                    "right",
+                    "top",
+                    "none"
+                  ]
+                },
+                "iconSize": {
+                  "type": "integer",
+                  "minimum": 16,
+                  "maximum": 36
+                },
+                "icon": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "save": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "align",
+                "iconPosition"
+              ],
+              "properties": {
+                "align": {
+                  "enum": [
+                    "inherit",
+                    "left",
+                    "center",
+                    "right"
+                  ]
+                },
+                "iconPosition": {
+                  "enum": [
+                    "inherit",
+                    "left",
+                    "right",
+                    "top",
+                    "none"
+                  ]
+                },
+                "iconSize": {
+                  "type": "integer",
+                  "minimum": 16,
+                  "maximum": 36
+                },
+                "icon": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "contacts": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "align",
+                "iconPosition"
+              ],
+              "properties": {
+                "align": {
+                  "enum": [
+                    "inherit",
+                    "left",
+                    "center",
+                    "right"
+                  ]
+                },
+                "iconPosition": {
+                  "enum": [
+                    "inherit",
+                    "left",
+                    "right",
+                    "top",
+                    "none"
+                  ]
+                },
+                "iconSize": {
+                  "type": "integer",
+                  "minimum": 16,
+                  "maximum": 36
+                },
+                "icon": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "socials": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "align",
+                "iconPosition"
+              ],
+              "properties": {
+                "align": {
+                  "enum": [
+                    "inherit",
+                    "left",
+                    "center",
+                    "right"
+                  ]
+                },
+                "iconPosition": {
+                  "enum": [
+                    "inherit",
+                    "left",
+                    "right",
+                    "top",
+                    "none"
+                  ]
+                },
+                "iconSize": {
+                  "type": "integer",
+                  "minimum": 16,
+                  "maximum": 36
+                },
+                "icon": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          }
         }
       }
     }

@@ -19,7 +19,7 @@ function studio() {
     Object.defineProperty(item,'previousElementSibling',{get(){return list.children[list.children.indexOf(item)-1];}});
     Object.defineProperty(item,'nextElementSibling',{get(){return list.children[list.children.indexOf(item)+1];}});
   }
-  const blocks=Object.fromEntries(keys.map(key=>[key,{key,hidden:false}]));
+  const blocks=Object.fromEntries(keys.map(key=>[key,{key,hidden:false,dataset:{},style:{values:{},setProperty(key,value){this.values[key]=value;}}}]));
   const body={order:[],querySelector(selector){return blocks[selector.match(/"(.*?)"/)[1]];},
     append(node){this.order=this.order.filter(key=>key!==node.key);this.order.push(node.key);}};
   const label={dataset:{designLabel:'caption'},textContent:''};
@@ -53,4 +53,17 @@ test('editing controls updates labels, SVG choice, hidden blocks and bounded siz
   assert.equal(card.style.values['--design-avatar'],'144px');
   assert.equal(card.style.values['--design-button-radius'],'999px');
   assert.equal(card.style.values['--design-columns'],'2');
+});
+
+test('block alignment and icons change independently without changing other blocks',()=>{
+  const {fields,form,blocks}=studio();
+  fields.block_identity_align={value:'center'};fields.block_contacts_align={value:'left'};
+  fields.block_contacts_iconPosition={value:'none'};fields.block_socials_iconPosition={value:'right'};
+  fields.block_socials_iconSize={value:'32'};form.events.change();
+  assert.equal(blocks.identity.dataset.blockAlign,'center');
+  assert.equal(blocks.contacts.dataset.blockAlign,'left');
+  assert.equal(blocks.contacts.dataset.blockIcons,'none');
+  assert.equal(blocks.socials.dataset.blockIcons,'right');
+  assert.equal(blocks.socials.style.values['--design-icon'],'32px');
+  assert.equal(blocks.save.dataset.blockIcons,'left');
 });

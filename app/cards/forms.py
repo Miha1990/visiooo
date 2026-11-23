@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from .validation import validate_content
 from .socials import SOCIAL_NETWORKS
 from .image_slots import IMAGE_FIELDS
+from .widgets import LinkButtonsWidget
 
 
 class CardForm(forms.Form):
@@ -20,8 +21,8 @@ class CardForm(forms.Form):
                                                         ('minimal', 'Минимализм'), ('profile', 'Профиль')])
     accent = forms.RegexField(label='Акцентный цвет', regex=r'^#[0-9a-fA-F]{6}$',
                              widget=forms.TextInput(attrs={'type': 'color'}))
-    links = forms.CharField(label='Дополнительные ссылки', required=False, widget=forms.Textarea(attrs={'rows': 4}),
-                            help_text='До 10 ссылок, каждая с новой строки: Название | https://example.ru')
+    links = forms.CharField(label='Кнопки со ссылками', required=False, widget=LinkButtonsWidget,
+                            help_text='До 10 кнопок. Название видно посетителю, адрес ссылки — только в редакторе.')
 
     def __init__(self, *args, card=None, **kwargs):
         super().__init__(*args, **kwargs)

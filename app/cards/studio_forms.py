@@ -1,6 +1,6 @@
 from copy import deepcopy
 from django import forms
-from .designs import BLOCKS, FONTS, ICON_ROLES, DEFAULT, validate_design
+from .designs import BLOCKS, FONTS, ICON_ROLES, DEFAULT, validate_design, block_settings
 from .models import TemplateIcon
 from .template_icons import sanitize_svg
 
@@ -18,14 +18,14 @@ class TemplateForm(forms.Form):
     background = forms.RegexField(label='Фон карточки', regex=r'^#[0-9a-fA-F]{6}$', widget=forms.TextInput(attrs={'type':'color'}))
     text = forms.RegexField(label='Цвет текста', regex=r'^#[0-9a-fA-F]{6}$', widget=forms.TextInput(attrs={'type':'color'}))
     font = forms.ChoiceField(label='Шрифт', choices=FONTS)
-    align = forms.ChoiceField(label='Выравнивание', choices=[('left','По левому краю'),('center','По центру')])
+    align = forms.ChoiceField(label='Общее выравнивание', choices=[('left','По левому краю'),('center','По центру')])
     nameSize = forms.IntegerField(label='Размер имени', min_value=22, max_value=40)
     weight = forms.TypedChoiceField(label='Насыщенность имени', choices=[(400,'Обычная'),(600,'Полужирная'),(700,'Жирная')], coerce=int)
     buttonShape = forms.ChoiceField(label='Форма кнопок', choices=[('rect','Прямоугольные'),('rounded','Скруглённые'),('pill','Овальные')])
     buttonStyle = forms.ChoiceField(label='Оформление кнопок', choices=[('filled','С заливкой'),('outline','Контурные')])
     buttonColumns = forms.TypedChoiceField(label='Расположение кнопок', choices=[(1,'Одна колонка'),(2,'Две колонки')], coerce=int)
-    iconPosition = forms.ChoiceField(label='Положение значков', choices=[('left','Слева'),('right','Справа'),('top','Сверху')])
-    iconSize = forms.IntegerField(label='Размер значков', min_value=16, max_value=36)
+    iconPosition = forms.ChoiceField(label='Общее положение значков', choices=[('left','Слева'),('right','Справа'),('top','Сверху')])
+    iconSize = forms.IntegerField(label='Общий размер значков', min_value=16, max_value=36)
     socialMode = forms.ChoiceField(label='Кнопки соцсетей', choices=[('both','Значок и подпись'),('icons','Круглые значки')])
     avatarShape = forms.ChoiceField(label='Форма фотографии', choices=[('circle','Круг'),('rounded','Скруглённый квадрат'),('square','Квадрат')])
     avatarSize = forms.IntegerField(label='Размер фотографии', min_value=64, max_value=144)
@@ -50,10 +50,27 @@ class TemplateForm(forms.Form):
         for role, label in ICON_ROLES:
             self.fields['icon_'+role] = forms.ModelChoiceField(label=label, queryset=TemplateIcon.objects.all(),
                 required=False, empty_label='Стандартный значок', initial=design['icons'].get(role))
+        for key, _ in BLOCKS:
+            values = block_settings(design, key)
+            prefix = f'block_{key}_'
+            self.fields[prefix+'align'] = forms.ChoiceField(label='Выравнивание текста и кнопок', required=False,
+                choices=[('inherit','Как в общих настройках'),('left','По левому краю'),('center','По центру'),('right','По правому краю')], initial=values['align'])
+            self.fields[prefix+'iconPosition'] = forms.ChoiceField(label='Положение значков', required=False,
+                choices=[('inherit','Как в общих настройках'),('left','Слева'),('right','Справа'),('top','Сверху'),('none','Без значков')], initial=values['iconPosition'])
+            self.fields[prefix+'iconSize'] = forms.IntegerField(label='Размер значков', required=False,
+                min_value=16, max_value=36, initial=design.get('blockStyles', {}).get(key, {}).get('iconSize'),
+                help_text='Пусто — общий размер значков.')
+            self.fields[prefix+'icon'] = forms.ModelChoiceField(label='Дополнительный значок блока', required=False,
+                queryset=TemplateIcon.objects.all(), empty_label='Без дополнительного значка', initial=values['icon'] or None)
 
     @property
     def settings_fields(self):
-        return [field for field in self if field.name not in ('version','block_order','hidden') and not field.name.startswith('icon_')]
+        return [field for field in self if field.name not in ('version','block_order','hidden') and not field.name.startswith(('icon_', 'block_'))]
+
+    @property
+    def block_fields(self):
+        return [{'key': key, 'label': label, 'fields': [self[f'block_{key}_{field}']
+                for field in ('align','iconPosition','iconSize','icon')]} for key, label in BLOCKS]
 
     @property
     def icon_fields(self):
@@ -66,6 +83,16 @@ class TemplateForm(forms.Form):
         design = {key: data[key] for key in DEFAULT if key not in ('blocks','icons')}
         design['blocks'] = data['block_order'].split(',')
         design['icons'] = {role: str(data['icon_'+role].pk) for role, _ in ICON_ROLES if data.get('icon_'+role)}
+        design['blockStyles'] = {}
+        for key, _ in BLOCKS:
+            prefix = f'block_{key}_'
+            values = {'align': data[prefix+'align'] or 'inherit',
+                      'iconPosition': data[prefix+'iconPosition'] or 'inherit'}
+            if data[prefix+'iconSize'] is not None:
+                values['iconSize'] = data[prefix+'iconSize']
+            if data[prefix+'icon']:
+                values['icon'] = str(data[prefix+'icon'].pk)
+            design['blockStyles'][key] = values
         self.design = validate_design(design)
         return data
 

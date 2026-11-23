@@ -5,7 +5,8 @@
   {% endif %}
 <div class="contact-body design-body">
 {% if publication_conditions %}<aside class="publication-conditions"><strong>Условия обработки опубликованных данных</strong><p>{{ publication_conditions|linebreaksbr }}</p></aside>{% endif %}
-{% for block in content.design.blocks %}<div data-design-block="{{ block }}" {% if block in content.design.hidden %}hidden{% endif %}>
+{% for block in content.design.blocks %}{% design_block content.design block as block_style %}<div data-design-block="{{ block }}" data-block-align="{{ block_style.align }}" data-block-icons="{{ block_style.effectiveIconPosition }}" style="--design-icon:{{ block_style.iconSize }}px" {% if block in content.design.hidden %}hidden{% endif %}>
+<img class="design-block-icon" data-block-icon="{{ block }}" {% if block_style.icon %}src="{% url 'template_icon' block_style.icon %}"{% else %}hidden{% endif %} width="24" height="24" alt="">
 {% if block == 'cover' %}
   <div class="contact-cover">
     {% if content.headerAssetId %}

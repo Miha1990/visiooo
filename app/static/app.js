@@ -59,7 +59,9 @@ if (form) {
     const email = form.elements.namedItem('email').value.trim();
     if (/^\+[1-9][0-9]{7,14}$/.test(phone)) add(card.dataset.phoneLabel || 'Позвонить', `tel:${phone}`, phone, false, 'phone');
     if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) add(card.dataset.emailLabel || 'Написать', `mailto:${email}`, email, false, 'email');
-    for (const line of form.elements.namedItem('links').value.split('\n').filter(line => line.trim()).slice(0, 10)) {
+    const linkRows = [...form.querySelectorAll('[data-link-row]')];
+    const lines = linkRows.length ? linkRows.map(row => `${row.querySelector('[data-link-label]').value} | ${row.querySelector('[data-link-url]').value}`) : (form.elements.namedItem('links')?.value || '').split('\n');
+    for (const line of lines.filter(line => line.trim()).slice(0, 10)) {
       const divider = line.indexOf('|');
       if (divider === -1) continue;
       const label = line.slice(0, divider).trim();
@@ -67,7 +69,25 @@ if (form) {
       if (label && safeHttp(url)) add(label, url, '', true);
     }
   };
-  for (const key of ['phone', 'email', 'website', 'links']) form.elements.namedItem(key).addEventListener('input', updateActions);
+  for (const key of ['phone', 'email', 'website', 'links']) form.elements.namedItem(key)?.addEventListener('input', updateActions);
+  const linkRows = [...form.querySelectorAll('[data-link-row]')];
+  linkRows.forEach(row => row.querySelectorAll('input').forEach(input => input.addEventListener('input', updateActions)));
+  const addLink = form.querySelector('[data-add-link]');
+  if (addLink) {
+    let firstEmptyShown = false;
+    linkRows.forEach(row => {
+      const empty = ![...row.querySelectorAll('input')].some(input => input.value.trim());
+      row.hidden = empty && firstEmptyShown;
+      if (empty) firstEmptyShown = true;
+    });
+    const updateAddLink = () => {addLink.hidden = !linkRows.some(row => row.hidden);};
+    addLink.addEventListener('click', () => {
+      const row = linkRows.find(row => row.hidden);
+      if (row) {row.hidden = false;row.querySelector('input').focus();}
+      updateAddLink();
+    });
+    updateAddLink();
+  }
   updateActions();
 
   const socialSection = card.querySelector('.social-section');

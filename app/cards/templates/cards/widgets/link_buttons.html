@@ -1,0 +1,10 @@
+<div class="link-button-fields" data-link-buttons>
+{% for row in widget.rows %}<div class="link-button-row" data-link-row>
+<label for="{{ widget.attrs.id }}_label_{{ forloop.counter }}">Название кнопки {{ forloop.counter }}</label>
+<input type="text" name="{{ widget.name }}_label" id="{{ widget.attrs.id }}_label_{{ forloop.counter }}" value="{{ row.label }}" maxlength="60" placeholder="Например: Инстаграм" data-link-label>
+<label for="{{ widget.attrs.id }}_url_{{ forloop.counter }}">Адрес ссылки</label>
+<input type="url" name="{{ widget.name }}_url" id="{{ widget.attrs.id }}_url_{{ forloop.counter }}" value="{{ row.url }}" maxlength="2048" placeholder="https://…" data-link-url>
+</div>{% endfor %}
+<button class="text-button" type="button" data-add-link hidden>Добавить ссылку</button>
+<p class="micro muted">На визитке отображается только название кнопки. Адрес открывается при нажатии. Чтобы удалить кнопку, очистите оба поля.</p>
+</div>

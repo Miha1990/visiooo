@@ -113,8 +113,68 @@ class StudioTests(TestCase):
             with self.subTest(svg=malicious),self.assertRaises(ValidationError):sanitize_svg(malicious)
 
     def test_bounded_design(self):
-        for changes in [{'hidden':['identity']},{'font':'url(evil)'},{'gap':1000},{'blocks':['identity']},{'text':'red;position:fixed'}]:
+        for changes in [{'hidden':['identity']},{'font':'url(evil)'},{'gap':1000},{'blocks':['identity']},{'text':'red;position:fixed'},
+                        {'blockStyles':{'unknown':{}}},
+                        {'blockStyles':{'identity':{'align':'center;position:fixed','iconPosition':'left','iconSize':24}}},
+                        {'blockStyles':{'contacts':{'align':'left','iconPosition':'none','iconSize':999}}}]:
             with self.subTest(changes=changes),self.assertRaises(ValidationError):validate_design({**deepcopy(DEFAULT),**changes})
+
+    def test_independent_block_settings_persist_and_render(self):
+        icon=TemplateIcon.objects.create(name='Мой значок',svg='<svg xmlns="http://www.w3.org/2000/svg"/>')
+        data=self.data(operation='publish',block_identity_align='center',block_contacts_align='left',
+            block_contacts_iconPosition='none',block_socials_align='right',block_socials_iconPosition='top',
+            block_socials_iconSize=32,block_identity_icon=str(icon.pk))
+        self.assertEqual(self.client.post(f'/control/templates/{self.item.pk}',data).status_code,303)
+        self.item.refresh_from_db()
+        self.assertEqual(self.item.published['blockStyles']['identity']['align'],'center')
+        self.assertEqual(self.item.published['blockStyles']['contacts']['align'],'left')
+        self.assertEqual(self.item.published['blockStyles']['socials']['iconSize'],32)
+        self.client.post(f'/app/cards/{self.card.pk}/templates',{'template_id':self.item.pk,'draft_version':1})
+        self.card.refresh_from_db();publish_card(self.user,self.card.pk,self.card.draft_version)
+        response=self.client.get(f'/c/{self.card.public_id}')
+        self.assertContains(response,'data-design-block="identity" data-block-align="center"')
+        self.assertContains(response,'data-design-block="contacts" data-block-align="left" data-block-icons="none"')
+        self.assertContains(response,f'src="/template-icons/{icon.pk}.svg"')
+
+    def test_old_snapshots_keep_working_without_block_overrides(self):
+        self.card.draft['design']=deepcopy(DEFAULT);self.card.save()
+        publish_card(self.user,self.card.pk,1)
+        self.assertContains(self.client.get(f'/c/{self.card.public_id}'),'data-block-align="inherit"')
+        self.assertNotIn('blockStyles',self.card.draft['design'])
+
+    def test_named_link_buttons_save_and_never_show_the_url_as_text(self):
+        from html.parser import HTMLParser
+        class VisibleText(HTMLParser):
+            def __init__(self):super().__init__();self.text=[]
+            def handle_data(self,data):self.text.append(data)
+        url='https://www.instagram.com/test_profile/'
+        for template in ['classic','minimal','profile','design']:
+            self.card.refresh_from_db()
+            if template=='design':
+                self.card.draft['design']=deepcopy(DEFAULT);self.card.save()
+            response=self.client.post(f'/app/cards/{self.card.pk}/edit',{'name':'Тест','template':template,'accent':'#2457DB',
+                'draft_version':self.card.draft_version,'links_label':['Инстаграм',''], 'links_url':[url,''],
+                'social_instagram':'https://www.instagram.com/another_profile/'})
+            self.assertEqual(response.status_code,303)
+            self.card.refresh_from_db()
+            self.assertEqual(self.card.draft['links'],[{'label':'Инстаграм','url':url}])
+            publish_card(self.user,self.card.pk,self.card.draft_version)
+            response=self.client.get(f'/c/{self.card.public_id}')
+            self.assertContains(response,f'href="{url}"')
+            parser=VisibleText();parser.feed(response.content.decode())
+            visible=' '.join(parser.text)
+            self.assertIn('Инстаграм',visible);self.assertNotIn(url,visible)
+            self.assertNotIn('https://www.instagram.com/another_profile/',visible)
+        response=self.client.get(f'/app/cards/{self.card.pk}/edit')
+        self.assertContains(response,'Название кнопки 1')
+        self.assertContains(response,f'value="{url}"')
+
+    def test_named_link_buttons_validate_missing_label_and_unsafe_address(self):
+        for label,url in [('', 'https://example.test'),('Кнопка','javascript:alert(1)')]:
+            response=self.client.post(f'/app/cards/{self.card.pk}/edit',{'name':'Тест','template':'classic','accent':'#2457DB',
+                'draft_version':1,'links_label':[label],'links_url':[url]})
+            self.assertEqual(response.status_code,422)
+        self.card.refresh_from_db();self.assertEqual(self.card.draft_version,1)
 
     @override_settings(ROOT_URLCONF='domains.public_urls')
     def test_public_icon_available_on_custom_domain_urlconf(self):
