@@ -78,13 +78,23 @@ class CardBlockTests(TestCase):
         response=self.client.post(self.url+'/media',{'kind':'pdf','draft_version':1,'image':SimpleUploadedFile('x.pdf',b'%PDF-1.4\n%%EOF')})
         self.assertEqual(response.status_code,409)
 
-    def test_video_map_render_without_contacting_external_services(self):
+    def test_video_map_render_ready_without_intermediate_buttons(self):
         content={**self.card.draft,'design':layout(),'video':{'url':'https://youtu.be/dQw4w9WgXcQ','title':'Наше видео'},
                  'map':{'address':'Ростов-на-Дону, ул. Зорге, 27','latitude':47.2,'longitude':39.7}}
         self.assertEqual(self.save(content).status_code,200)
         self.card.refresh_from_db();publish_card(self.user,self.card.pk,self.card.draft_version)
         response=Client().get(f'/c/{self.card.public_id}')
         self.assertContains(response,'Наше видео');self.assertContains(response,'data-embed-url="https://www.youtube-nocookie.com/embed/')
-        self.assertContains(response,'Показать карту');self.assertNotContains(response,'<iframe')
+        self.assertNotContains(response,'data-load-embed');self.assertContains(response,'<iframe',count=2)
+        self.assertContains(response,'src="https://www.youtube-nocookie.com/embed/')
+        self.assertContains(response,'src="https://yandex.ru/map-widget/v1/')
         content['map']['latitude']=float('nan')
         self.assertEqual(self.save(content).status_code,422)
+
+    def test_hidden_video_and_map_do_not_create_iframes(self):
+        design = layout();design['hidden'] = ['video', 'map']
+        content = {**self.card.draft, 'design':design, 'video':{'url':'https://youtu.be/dQw4w9WgXcQ'},
+                   'map':{'address':'Ростов-на-Дону'}}
+        self.assertEqual(self.save(content).status_code,200)
+        self.card.refresh_from_db();publish_card(self.user,self.card.pk,self.card.draft_version)
+        self.assertNotContains(Client().get(f'/c/{self.card.public_id}'), '<iframe')

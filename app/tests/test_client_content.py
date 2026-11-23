@@ -88,5 +88,5 @@ class ClientContentTests(TestCase):
         self.client.post(f'/app/cards/{self.card.pk}/edit',self.form_data(video_url='https://youtu.be/dQw4w9WgXcQ'))
         self.card.refresh_from_db();publish_card(self.user,self.card.pk,self.card.draft_version)
         response=Client().get(f'/c/{self.card.public_id}')
-        self.assertContains(response,'Смотреть видео');self.assertNotContains(response,'Показать карту')
+        self.assertContains(response,'<iframe',count=1);self.assertNotContains(response,'data-load-embed')
         self.assertNotContains(response,'Добавьте фотографии');self.assertNotContains(response,'class="contact-cover"')

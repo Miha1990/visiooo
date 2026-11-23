@@ -1,0 +1,4 @@
+<div class="card-embed{% if block == 'map' %} card-map{% endif %}" data-external-embed data-embed-url="{{ embed_url }}" data-embed-title="{{ embed_title }}">
+{% if embed_url %}{% if not content.design or block not in content.design.hidden %}<iframe src="{{ embed_url }}" title="{{ embed_title }}" loading="eager" allow="fullscreen; picture-in-picture; encrypted-media" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>{% endif %}{% endif %}
+<p data-embed-empty {% if embed_url %}hidden{% endif %}>{{ empty_label }}</p>
+</div>

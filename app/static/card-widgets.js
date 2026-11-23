@@ -69,7 +69,16 @@
   }
   function refresh(root=document) {
     const cards=root.matches?.('.contact-card')?[root]:[...root.querySelectorAll('.contact-card')];
-    cards.forEach(card=>{card.querySelectorAll('[data-load-embed]').forEach(button=>{button.onclick=()=>{const box=button.closest('[data-external-embed]'),url=box.dataset.embedUrl;if(!/^https:\/\/(www\.youtube-nocookie\.com\/embed\/|rutube\.ru\/play\/embed\/|vk\.com\/video_ext\.php\?|yandex\.ru\/map-widget\/v1\/)/.test(url)||box.querySelector('iframe'))return;const iframe=document.createElement('iframe');iframe.src=url;iframe.title=box.dataset.embedTitle||'Встроенный сервис';iframe.allow='fullscreen; picture-in-picture; encrypted-media';iframe.allowFullscreen=true;iframe.referrerPolicy='strict-origin-when-cross-origin';box.querySelectorAll('button,small').forEach(node=>node.hidden=true);box.append(iframe);};});canvas(card);card.querySelectorAll('[data-card-carousel]').forEach(carousel);card.querySelectorAll('[data-contact-sun]').forEach(el=>sun(el,card.dataset.socialMode==='radial'));});
+    cards.forEach(card=>{card.querySelectorAll('[data-external-embed]').forEach(box=>{
+      const url=box.dataset.embedUrl,previous=box.querySelector('iframe');
+      const allowed=/^https:\/\/(www\.youtube-nocookie\.com\/embed\/|rutube\.ru\/play\/embed\/|vk\.com\/video_ext\.php\?|yandex\.ru\/map-widget\/v1\/)/.test(url);
+      if(!allowed||box.closest('[hidden]')){previous?.remove();return;}
+      if(previous?.getAttribute('src')===url)return;
+      previous?.remove();
+      const iframe=document.createElement('iframe');iframe.src=url;iframe.title=box.dataset.embedTitle||'Встроенный сервис';
+      iframe.allow='fullscreen; picture-in-picture; encrypted-media';iframe.allowFullscreen=true;iframe.loading='eager';iframe.referrerPolicy='strict-origin-when-cross-origin';
+      const empty=box.querySelector('[data-embed-empty]');if(empty)empty.hidden=true;box.append(iframe);
+    });canvas(card);card.querySelectorAll('[data-card-carousel]').forEach(carousel);card.querySelectorAll('[data-contact-sun]').forEach(el=>sun(el,card.dataset.socialMode==='radial'));});
   }
   window.CardWidgets={refresh};refresh();
 })();

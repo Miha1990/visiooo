@@ -99,6 +99,7 @@
  .designed-card [data-preview=name]{font-size:min(var(--design-name),29px)}
 }
 /* The administrator's free canvas retains its authored geometry while editing. */
+.visual-workspace:not(.is-preview) [data-external-embed] iframe{pointer-events:none}
 .visual-workspace:not(.is-preview) .designed-card .design-body{gap:var(--design-gap);padding:22px}
 .visual-workspace .designed-card[data-canvas-enabled=true] .design-body{padding:0;gap:0}
 .visual-workspace:not(.is-preview) .designed-card .contact-cover{height:var(--design-cover)}

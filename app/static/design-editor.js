@@ -73,8 +73,8 @@
   }
   function setEmbed(node,url){
     if(!node)return;
-    if(node.dataset.embedUrl!==url){node.querySelector('iframe')?.remove();node.dataset.embedUrl=url;node.querySelectorAll('button,small').forEach(item=>item.hidden=false);}
-    node.querySelector('[data-load-embed]').disabled=!url;
+    if(node.dataset.embedUrl!==url){node.querySelector('iframe')?.remove();node.dataset.embedUrl=url;}
+    const empty=node.querySelector('[data-embed-empty]');if(empty)empty.hidden=Boolean(url);
   }
   function renderMedia(){
     const video=content.video||{},location=content.map||{},doc=content.document||{};

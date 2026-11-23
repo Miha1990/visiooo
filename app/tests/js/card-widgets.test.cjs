@@ -23,19 +23,20 @@ function setup({autoplay=true,reduced=false,radial=false}={}){
  return {card,gallery,track,prev,next,pause,status,document,timers,sun,toggle,links,window};
 }
 
-test('external embeds make no iframe until explicit click and reject other hosts',()=>{
- const card=node(),button=node(),small=node(),box=node(),frames=[];
+test('external embeds load immediately, preserve an existing player and reject other hosts or hidden blocks',()=>{
+ const card=node(),box=node(),frames=[];let hidden=false;
  box.dataset={embedUrl:'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',embedTitle:'Видео'};
- box.querySelector=()=>frames[0]||null;box.querySelectorAll=()=>[button,small];box.append=frame=>frames.push(frame);
- button.closest=()=>box;
- card.clientWidth=360;card.querySelectorAll=selector=>selector==='[data-load-embed]'?[button]:[];
- const document={querySelectorAll:()=>[card],createElement:tag=>({tag})};
+ box.querySelector=selector=>selector==='iframe'?frames[0]||null:null;box.closest=()=>hidden?{}:null;box.append=frame=>frames.push(frame);
+ card.clientWidth=360;card.querySelectorAll=selector=>selector==='[data-external-embed]'?[box]:[];
+ const document={querySelectorAll:()=>[card],createElement:tag=>({tag,getAttribute(name){return this[name];},remove(){frames.splice(frames.indexOf(this),1);}})};
  const window={};
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../../static/card-widgets.js'),'utf8'),{document,window});
- assert.equal(frames.length,0);button.onclick();assert.equal(frames.length,1);
- assert.equal(frames[0].src,box.dataset.embedUrl);assert.equal(frames[0].allowFullscreen,true);assert.equal(button.hidden,true);
- button.onclick();assert.equal(frames.length,1);
- frames.length=0;box.dataset.embedUrl='https://evil.test/embed/anything';button.onclick();assert.equal(frames.length,0);
+ assert.equal(frames.length,1);const first=frames[0];
+ assert.equal(first.src,box.dataset.embedUrl);assert.equal(first.allowFullscreen,true);
+ window.CardWidgets.refresh();assert.equal(frames[0],first);
+ hidden=true;window.CardWidgets.refresh();assert.equal(frames.length,0);
+ hidden=false;box.dataset.embedUrl='https://evil.test/embed/anything';window.CardWidgets.refresh();assert.equal(frames.length,0);
+ box.dataset.embedUrl='https://yandex.ru/map-widget/v1/?text=test';window.CardWidgets.refresh();assert.equal(frames.length,1);
 });
 test('carousel advances manually, wraps and pauses its automatic timer',()=>{
  const {next,prev,track,pause,timers,status}=setup();
