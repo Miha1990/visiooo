@@ -97,7 +97,7 @@ class RegistrationCodeTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(self.client.post('/accounts/registration-code', {'code': self.code()}).status_code, 303)
 
-    def test_email_send_quota_and_cannot_replace_another_browser(self):
+    def test_email_send_quota_and_other_browser_cannot_replace_during_cooldown(self):
         self.start()
         original_password = PendingRegistration.objects.get().password
         other = Client()
@@ -108,6 +108,74 @@ class RegistrationCodeTests(TestCase):
             self.allow_resend()
             self.client.post('/accounts/registration-code/resend')
         self.assertEqual(len(mail.outbox), 5)
+
+    def test_repeat_form_within_minute_continues_with_current_code(self):
+        self.start()
+        code = self.code()
+        for _ in range(3):
+            self.assertEqual(self.client.post('/accounts/register', self.data)['Location'], '/accounts/registration-code')
+        self.assertEqual(len(mail.outbox), 1)
+        response = self.client.get('/accounts/registration-code')
+        self.assertContains(response, 'Код уже отправлен')
+        self.assertNotContains(response, 'Регистрация на эту почту уже начата')
+        self.assertEqual(self.client.post('/accounts/registration-code', {'code': code}).status_code, 303)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_repeat_form_after_minute_sends_new_code(self):
+        with patch('accounts.registration.secrets.randbelow', return_value=123456):
+            self.start()
+        self.allow_resend()
+        with patch('accounts.registration.secrets.randbelow', return_value=654321):
+            self.assertEqual(self.client.post('/accounts/register', self.data).status_code, 303)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(self.client.post('/accounts/registration-code', {'code': '123456'}).status_code, 422)
+        self.assertEqual(self.client.post('/accounts/registration-code', {'code': '654321'}).status_code, 303)
+
+    def test_new_browser_can_restart_after_minute_but_needs_fresh_code(self):
+        with patch('accounts.registration.secrets.randbelow', return_value=123456):
+            self.start()
+        previous_token = self.client.session['pending_registration']
+        other = Client()
+        changed = dict(self.data, password1='UpdatedPassword-239!', password2='UpdatedPassword-239!')
+        blocked = other.post('/accounts/register', changed)
+        self.assertContains(blocked, 'через минуту', status_code=422)
+        self.assertEqual(PendingRegistration.objects.get().browser_token.hex, previous_token.replace('-', ''))
+        self.allow_resend()
+        with patch('accounts.registration.secrets.randbelow', return_value=654321):
+            self.assertEqual(other.post('/accounts/register', changed).status_code, 303)
+        self.assertNotEqual(other.session['pending_registration'], previous_token)
+        self.assertEqual(other.post('/accounts/registration-code', {'code': '123456'}).status_code, 422)
+        self.assertFalse(User.objects.exists())
+        self.assertEqual(self.client.post('/accounts/registration-code', {'code': '654321'})['Location'], '/accounts/register')
+        self.assertEqual(other.post('/accounts/registration-code', {'code': '654321'}).status_code, 303)
+        self.assertTrue(User.objects.get().check_password(changed['password1']))
+
+    def test_restarting_in_another_browser_does_not_reset_guess_limit(self):
+        self.start()
+        for _ in range(5):
+            self.client.post('/accounts/registration-code', {'code': 'bad'})
+        self.allow_resend()
+        self.assertEqual(Client().post('/accounts/register', self.data).status_code, 422)
+        self.assertEqual(PendingRegistration.objects.get().attempts, 5)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_repeat_form_recovers_from_mail_failure(self):
+        with patch('accounts.registration.send_mail', side_effect=SMTPException('unavailable')):
+            self.start()
+        self.allow_resend()
+        self.assertEqual(self.client.post('/accounts/register', self.data).status_code, 303)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(self.client.post('/accounts/registration-code', {'code': self.code()}).status_code, 303)
+
+    def test_expired_rate_window_allows_new_code_after_wrong_attempts(self):
+        self.start()
+        PendingRegistration.objects.update(attempts=5, send_count=5,
+            window_started_at=timezone.now() - timedelta(hours=2))
+        self.allow_resend()
+        self.client.post('/accounts/registration-code/resend')
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(PendingRegistration.objects.get().attempts, 0)
+        self.assertEqual(self.client.post('/accounts/registration-code', {'code': self.code()}).status_code, 303)
 
     def test_consents_required_and_duplicate_email_rejected(self):
         self.assertEqual(self.client.post('/accounts/register', dict(self.data, consent='')).status_code, 422)

@@ -45,16 +45,25 @@ def snapshot_documents(request):
     return result
 
 
+def send_limit_error(pending, now):
+    if pending.last_sent_at and now < pending.last_sent_at + timedelta(seconds=60):
+        return 'Повторная отправка доступна через минуту после предыдущей.'
+    if now < pending.window_started_at + timedelta(hours=1) and pending.send_count >= 5:
+        return 'Лимит отправок исчерпан. Попробуйте через час.'
+    if now < pending.window_started_at + timedelta(hours=1) and pending.attempts >= 5:
+        return 'Слишком много попыток ввода кода. Попробуйте через час.'
+    return ''
+
+
 @sensitive_variables('code')
 def send_code(pending):
     """Called under a row lock; limits survive workers, browser changes and restarts."""
     now = timezone.now()
-    if pending.last_sent_at and now < pending.last_sent_at + timedelta(seconds=60):
-        return 'Повторная отправка доступна через минуту после предыдущей.'
+    error = send_limit_error(pending, now)
+    if error:
+        return error
     if now >= pending.window_started_at + timedelta(hours=1):
-        pending.window_started_at, pending.send_count = now, 0
-    if pending.send_count >= 5:
-        return 'Лимит отправок исчерпан. Попробуйте через час.'
+        pending.window_started_at, pending.send_count, pending.attempts = now, 0, 0
     code = f'{secrets.randbelow(1000000):06d}'
     while pending.code_digest and constant_time_compare(pending.code_digest, digest(pending, code)):
         code = f'{secrets.randbelow(1000000):06d}'
@@ -95,28 +104,35 @@ def start(request):
                 pending, created = PendingRegistration.objects.select_for_update().get_or_create(
                     email=form.cleaned_data['email'], defaults={'expires_at': now, 'window_started_at': now})
                 owned = str(pending.browser_token) == request.session.get(SESSION_KEY)
-                if not created and owned and pending.attempts < 5:
-                    pending.password = form.save(commit=False).password
-                    pending.first_name = form.cleaned_data['first_name']
-                    pending.last_name = form.cleaned_data['last_name']
-                    pending.legal_documents = snapshot_documents(request)
-                    pending.save(update_fields=['password', 'first_name', 'last_name', 'legal_documents'])
-                    return redirect(CODE_URL)
-                if not created and pending.last_sent_at and now < pending.last_sent_at + timedelta(hours=1):
-                    form.add_error(None, 'Регистрация на эту почту уже начата. Продолжите в том же браузере или попробуйте через час.')
+                error = send_limit_error(pending, now)
+                # Another browser must receive a fresh code before it can replace
+                # the pending password/session. Never reuse the previous browser's code.
+                if not created and not owned and error:
+                    form.add_error(None, error)
                 else:
-                    pending.browser_token = uuid.uuid4()
+                    if not owned:
+                        pending.browser_token = uuid.uuid4()
                     pending.password = form.save(commit=False).password
                     pending.first_name = form.cleaned_data['first_name']
                     pending.last_name = form.cleaned_data['last_name']
                     pending.legal_documents = snapshot_documents(request)
-                    pending.attempts = 0
+                    # Keep the last valid code during the one-minute cooldown.
+                    # Submitting the form again must not send repeated emails or
+                    # silently reset the verification-attempt limit.
+                    if (owned and pending.code_digest and pending.expires_at > now
+                            and pending.attempts < 5 and pending.last_sent_at
+                            and now < pending.last_sent_at + timedelta(seconds=60)):
+                        pending.save(update_fields=['password', 'first_name', 'last_name', 'legal_documents'])
+                        messages.info(request, 'Код уже отправлен. Введите последний полученный код или запросите новый через минуту.')
+                        return redirect(CODE_URL)
+                    pending.save(update_fields=['browser_token', 'password', 'first_name', 'last_name', 'legal_documents'])
                     error = send_code(pending)
                     request.session[SESSION_KEY] = str(pending.browser_token)
                     if error:
                         messages.error(request, error)
                     else:
-                        messages.success(request, 'Код отправлен на вашу почту.')
+                        messages.success(request, 'Код отправлен на вашу почту.' if created else
+                            'Новый код отправлен. Используйте код из последнего письма.')
                     return redirect(CODE_URL)
         except IntegrityError:
             form.add_error('email', 'Регистрация уже начата. Попробуйте ещё раз.')
@@ -189,10 +205,7 @@ def resend(request):
         pending = PendingRegistration.objects.select_for_update().filter(browser_token=token).first() if token else None
         if not pending:
             return redirect('/accounts/register')
-        if pending.attempts >= 5:
-            error = 'Слишком много попыток. Начните регистрацию заново через час.'
-        else:
-            error = send_code(pending)
+        error = send_code(pending)
     if error:
         messages.error(request, error)
     else:
