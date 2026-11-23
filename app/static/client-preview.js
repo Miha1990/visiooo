@@ -12,13 +12,17 @@
     node.querySelector('[data-load-embed]').disabled=!url;
   }
   function update(){
+    for(const key of ['phone','email']){
+      const example=document.querySelector(`[data-button-example="${key}"]`);
+      if(example)example.textContent=value(key+'_label')||card.dataset[key+'Label']||(key==='phone'?'Позвонить':'Написать');
+    }
     for(const key of ['title','company','bio']){const node=card.querySelector(`[data-preview="${key}"]`);if(node)node.hidden=!node.textContent.trim();}
     visibility('bio',Boolean(value('bio')));
     visibility('contacts',Boolean(card.querySelector('.contact-actions')?.childElementCount));
     visibility('socials',Boolean(card.querySelector('.social-links')?.childElementCount));
     visibility('carousel',Boolean(card.querySelector('.carousel-slide')));
     if(field('video_url')){
-      const url=value('video_url'),player=window.CardEmbeds.video(url,value('video_player'));
+      const url=window.WebLinks.normalize(value('video_url')),player=window.CardEmbeds.video(url,window.WebLinks.normalize(value('video_player')));
       visibility('video',Boolean(player));
       const section=card.querySelector('[data-video-block]');
       if(section){section.querySelector('[data-video-title]').textContent=value('video_title')||'Видео';embed(section.querySelector('[data-external-embed]'),player);const link=section.querySelector('[data-video-link]');link.hidden=!player;link.href=player?url:'#';}

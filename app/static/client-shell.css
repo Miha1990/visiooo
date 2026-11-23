@@ -25,6 +25,9 @@
 .client-bottom-nav a[aria-current]{background:#eaf1e9;color:#315948;font-weight:600}
 .client-area :is(input,select,textarea,button,a){scroll-margin-bottom:120px}
 .client-area .editor .editor-save-row{bottom:calc(86px + env(safe-area-inset-bottom))}
+.client-button-settings{min-width:0;margin:22px 0;padding:18px 14px;border:1px solid #dfe7e0;border-radius:16px;background:#fafcf9}
+.client-button-settings legend{padding:0 7px;font-size:16px;font-weight:600;color:#253b30}.client-button-settings>div{margin-top:16px}.client-button-settings input{width:100%;min-width:0;font-size:16px}
+.client-button-example{border-top:1px solid #e1e7e2;padding-top:16px;display:flex;flex-direction:column;align-items:flex-start;gap:8px}.client-button-example>span:first-child{font-size:11px;color:#68776f}.client-button-example>[data-button-example]{max-width:100%;padding:12px 20px;border-radius:12px;background:#315948;color:#fff;font-size:14px;overflow-wrap:anywhere}
 .client-card-picker{margin-bottom:16px}.client-card-picker label{display:block;font-size:12px;color:#68776f;margin-bottom:6px}.client-card-picker>div{display:flex;gap:8px}.client-card-picker select{width:100%;min-width:0;background:#fff;border:1px solid #dfe7e0;border-radius:12px;padding:10px;font-size:16px}.client-card-picker button{padding:10px;border:1px solid #dfe7e0;border-radius:12px;background:#fff;min-height:44px}
 .client-menu-account{font-size:14px;color:#68776f;overflow-wrap:anywhere;margin-bottom:24px}.client-menu-list{background:#fff;border:1px solid #e1e7e2;border-radius:18px;margin:14px 0;overflow:hidden}.client-menu-list>form{margin:0}
 .client-menu-list>a,.client-menu-list>form>button,.client-menu-list>details>summary{display:block;width:100%;min-height:56px;padding:16px 18px;text-align:left;font:500 15px/1.5 'Segoe UI',system-ui,sans-serif;color:#253b30;border:0;background:transparent;cursor:pointer;list-style:none}

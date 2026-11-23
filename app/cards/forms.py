@@ -1,10 +1,28 @@
 from django import forms
 from copy import deepcopy
+import re
 from django.core.exceptions import ValidationError
+from django.core.validators import URLValidator
 from .validation import validate_content
 from .socials import SOCIAL_NETWORKS
 from .image_slots import IMAGE_FIELDS
 from .widgets import LinkButtonsWidget
+
+
+class WebLinkField(forms.URLField):
+    widget = forms.TextInput
+    default_validators = [URLValidator(schemes=['http', 'https'])]
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('assume_scheme', 'https')
+        super().__init__(*args, **kwargs)
+        self.widget.attrs.update({'inputmode':'url', 'autocapitalize':'none', 'spellcheck':'false'})
+
+    def to_python(self, value):
+        value = (value or '').strip()
+        if re.match(r'^[^/:?#\s]+:[0-9]+(?:[/?#]|$)', value):
+            value = 'https://' + value
+        return super().to_python(value)
 
 
 class CardForm(forms.Form):
@@ -13,20 +31,27 @@ class CardForm(forms.Form):
     title = forms.CharField(label='Должность', max_length=120, required=False)
     company = forms.CharField(label='Компания', max_length=160, required=False)
     bio = forms.CharField(label='О себе', max_length=1000, required=False, widget=forms.Textarea(attrs={'rows': 4}))
-    phone = forms.RegexField(label='Телефон', regex=r'^\+[1-9][0-9]{7,14}$', required=False,
-                            help_text='Международный формат: +79991234567')
-    email = forms.EmailField(label='Публичная электронная почта', required=False, max_length=254)
-    website = forms.URLField(label='Сайт', required=False, max_length=2048, assume_scheme='https')
+    phone_label = forms.CharField(label='Текст на кнопке', max_length=80, required=False,
+        help_text='Например: «Позвонить» или «89289091817». Посетитель увидит только этот текст.')
+    phone = forms.CharField(label='Номер телефона', required=False, max_length=40,
+        widget=forms.TextInput(attrs={'type':'tel','inputmode':'tel','autocomplete':'tel','placeholder':'89289091817'}),
+        help_text='Номер для звонка. Можно указать 8 (928) 909-18-17 или +7 928 909-18-17. Пустой номер скрывает кнопку.')
+    email_label = forms.CharField(label='Текст на кнопке', max_length=80, required=False,
+        help_text='Например: «Написать письмо». Адрес почты на кнопке не показывается.')
+    email = forms.EmailField(label='Адрес электронной почты', required=False, max_length=254,
+        help_text='На этот адрес откроется письмо. Пустой адрес скрывает кнопку.')
+    website = WebLinkField(label='Сайт', required=False, max_length=2048,
+        help_text='Можно указать google.com — https:// добавится автоматически.')
     template = forms.ChoiceField(label='Шаблон', choices=[('classic', 'Классический'),
                                                         ('minimal', 'Минимализм'), ('profile', 'Профиль')])
     accent = forms.RegexField(label='Акцентный цвет', regex=r'^#[0-9a-fA-F]{6}$',
                              widget=forms.TextInput(attrs={'type': 'color'}))
     links = forms.CharField(label='Кнопки со ссылками', required=False, widget=LinkButtonsWidget,
-                            help_text='До 10 кнопок. Название видно посетителю, адрес ссылки — только в редакторе.')
-    video_url = forms.URLField(label='Ссылка на видео', required=False, max_length=2048, assume_scheme='https',
+                            help_text='До 10 кнопок. Ссылку можно вводить без https://, например google.com. На визитке видно только название кнопки.')
+    video_url = WebLinkField(label='Ссылка на видео', required=False, max_length=2048, assume_scheme='https',
         help_text='Рутуб, ВК Видео или Ютуб. Если оставить пустым, видеоблок не появится.')
     video_title = forms.CharField(label='Название видео', required=False, max_length=100)
-    video_player = forms.URLField(label='Ссылка плеера ВК (при необходимости)', required=False, max_length=2048, assume_scheme='https',
+    video_player = WebLinkField(label='Ссылка плеера ВК (при необходимости)', required=False, max_length=2048, assume_scheme='https',
         help_text='Если видео ВК не воспроизводится: «Поделиться → Экспортировать», скопируйте адрес src, включая hash, без HTML.')
     pdf_label = forms.CharField(label='Название кнопки PDF', required=False, max_length=100)
     map_address = forms.CharField(label='Адрес', required=False, max_length=300, help_text='Город, улица и дом. Пустой адрес скрывает карту.')
@@ -61,11 +86,11 @@ class CardForm(forms.Form):
                 self.fields['design_font'].disabled = True
                 self.fields['design_font'].widget = forms.HiddenInput()
         for key, label, placeholder in SOCIAL_NETWORKS:
-            self.fields[f'social_{key}'] = forms.URLField(label=label, required=False, max_length=2048,
-                assume_scheme='https', widget=forms.URLInput(attrs={
+            self.fields[f'social_{key}'] = WebLinkField(label=label, required=False, max_length=2048,
+                assume_scheme='https', widget=forms.TextInput(attrs={
                     'placeholder': placeholder, 'data-social': key, 'data-label': label}))
         self.fields['website'].widget.attrs.update({'data-social': 'website', 'data-label': 'Сайт',
-                                                   'placeholder': 'https://example.ru'})
+                                                   'placeholder': 'google.com'})
 
     @property
     def block_field_names(self):
@@ -80,10 +105,23 @@ class CardForm(forms.Form):
 
     @property
     def details_fields(self):
-        keys = ['name', 'title', 'company', 'bio', 'phone', 'email', 'template', 'accent', 'links']
+        keys = ['name', 'title', 'company', 'bio', 'template', 'accent', 'links']
         if 'design_font' in self.fields:
             keys.append('design_font')
         return [self[key] for key in keys if not self.fields[key].widget.is_hidden]
+
+    @property
+    def contact_buttons(self):
+        return [{'key': key, 'title': title, 'label_field': self[key+'_label'], 'target_field': self[key]}
+                for key, title in [('phone', 'Телефон'), ('email', 'Электронная почта')]]
+
+    def clean_phone(self):
+        value = re.sub(r'[\s()\-]', '', self.cleaned_data.get('phone', ''))
+        if len(value) == 11 and value.isascii() and value.isdigit() and value[0] in ('7','8'):
+            value = '+7' + value[1:]
+        if value and not re.fullmatch(r'\+[1-9][0-9]{7,14}', value):
+            raise ValidationError('Укажите номер с кодом страны, например +79289091817, или российский номер 89289091817.')
+        return value
 
     @property
     def social_fields(self):
@@ -102,7 +140,12 @@ class CardForm(forms.Form):
                 self.add_error('links', 'Укажите название и адрес через символ |.')
                 return data
             label, url = line.split('|', 1)
-            links.append({'label': label.strip(), 'url': url.strip()})
+            try:
+                url = WebLinkField(required=True, max_length=2048).clean(url)
+            except ValidationError as error:
+                self.add_error('links', error)
+                return data
+            links.append({'label': label.strip(), 'url': url})
         content = {'schemaVersion': 1, 'links': links}
         for key in ('galleryAssetIds','video','document','map'):
             if self.card and key in self.card.draft:
@@ -136,6 +179,9 @@ class CardForm(forms.Form):
         for key in ('name', 'title', 'company', 'bio', 'phone', 'email', 'website', 'template', 'accent'):
             if data.get(key):
                 content[key] = data[key]
+        for key, fallback in [('phone', 'Позвонить'), ('email', 'Написать')]:
+            if data.get(key) or data.get(key+'_label'):
+                content[key+'Label'] = data.get(key+'_label') or (self.design or {}).get(key+'Label') or fallback
         try:
             self.content = validate_content(content, workspace=self.card.workspace if self.card else None)
         except ValidationError as error:
@@ -145,6 +191,8 @@ class CardForm(forms.Form):
     @classmethod
     def for_card(cls, card, data=None):
         initial = dict(card.draft, draft_version=card.draft_version)
+        for key, fallback in [('phone', 'Позвонить'), ('email', 'Написать')]:
+            initial[key+'_label'] = card.draft.get(key+'Label') or card.draft.get('design', {}).get(key+'Label') or fallback
         initial['links'] = '\n'.join(f'{link["label"]} | {link["url"]}' for link in card.draft['links'])
         initial.update({f'social_{key}': url for key, url in card.draft.get('socials', {}).items()})
         initial.update(video_url=card.draft.get('video',{}).get('url',''), video_title=card.draft.get('video',{}).get('title',''),

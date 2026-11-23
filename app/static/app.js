@@ -29,12 +29,7 @@ if (form) {
   template.addEventListener('change', updateTemplate);
   updateTemplate();
 
-  const safeHttp = value => {
-    try {
-      const url = new URL(value);
-      return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password && !/[\x00-\x20]/.test(value);
-    } catch { return false; }
-  };
+  const httpUrl = value => window.WebLinks.normalize(value);
   const updateActions = () => {
     const actions = card.querySelector('.contact-actions');
     actions.replaceChildren();
@@ -55,21 +50,23 @@ if (form) {
       if (external) { anchor.target = '_blank'; anchor.rel = 'noopener noreferrer'; }
       actions.append(anchor);
     };
-    const phone = form.elements.namedItem('phone').value.trim();
+    let phone = form.elements.namedItem('phone').value.trim().replace(/[\s()\-]/g, '');
+    if (/^[78][0-9]{10}$/.test(phone)) phone = '+7' + phone.slice(1);
     const email = form.elements.namedItem('email').value.trim();
-    if (/^\+[1-9][0-9]{7,14}$/.test(phone)) add(card.dataset.phoneLabel || 'Позвонить', `tel:${phone}`, phone, false, 'phone');
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) add(card.dataset.emailLabel || 'Написать', `mailto:${email}`, email, false, 'email');
+    const phoneLabel = form.elements.namedItem('phone_label'), emailLabel = form.elements.namedItem('email_label');
+    if (/^\+[1-9][0-9]{7,14}$/.test(phone)) add(phoneLabel?.value.trim() || card.dataset.phoneLabel || 'Позвонить', `tel:${phone}`, phoneLabel ? '' : phone, false, 'phone');
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) add(emailLabel?.value.trim() || card.dataset.emailLabel || 'Написать', `mailto:${email}`, emailLabel ? '' : email, false, 'email');
     const linkRows = [...form.querySelectorAll('[data-link-row]')];
     const lines = linkRows.length ? linkRows.map(row => `${row.querySelector('[data-link-label]').value} | ${row.querySelector('[data-link-url]').value}`) : (form.elements.namedItem('links')?.value || '').split('\n');
     for (const line of lines.filter(line => line.trim()).slice(0, 10)) {
       const divider = line.indexOf('|');
       if (divider === -1) continue;
       const label = line.slice(0, divider).trim();
-      const url = line.slice(divider + 1).trim();
-      if (label && safeHttp(url)) add(label, url, '', true);
+      const url = httpUrl(line.slice(divider + 1));
+      if (label && url) add(label, url, '', true);
     }
   };
-  for (const key of ['phone', 'email', 'website', 'links']) form.elements.namedItem(key)?.addEventListener('input', updateActions);
+  for (const key of ['phone', 'email', 'phone_label', 'email_label', 'website', 'links']) form.elements.namedItem(key)?.addEventListener('input', updateActions);
   const linkRows = [...form.querySelectorAll('[data-link-row]')];
   linkRows.forEach(row => row.querySelectorAll('input').forEach(input => input.addEventListener('input', updateActions)));
   const addLink = form.querySelector('[data-add-link]');
@@ -97,9 +94,8 @@ if (form) {
   const updateSocials = () => {
     socialContainer.replaceChildren();
     for (const input of socialFields) {
-      let url = input.value.trim();
-      if (url && !url.includes(':')) url = `https://${url}`;
-      if (!safeHttp(url)) continue;
+      const url = httpUrl(input.value);
+      if (!url) continue;
       const key = input.dataset.social;
       const anchor = document.createElement('a');
       anchor.className = `social-link social-${key}`;

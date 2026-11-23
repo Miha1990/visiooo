@@ -3,8 +3,8 @@
 <label for="{{ widget.attrs.id }}_label_{{ forloop.counter }}">Название кнопки {{ forloop.counter }}</label>
 <input type="text" name="{{ widget.name }}_label" id="{{ widget.attrs.id }}_label_{{ forloop.counter }}" value="{{ row.label }}" maxlength="60" placeholder="Например: Инстаграм" data-link-label>
 <label for="{{ widget.attrs.id }}_url_{{ forloop.counter }}">Адрес ссылки</label>
-<input type="url" name="{{ widget.name }}_url" id="{{ widget.attrs.id }}_url_{{ forloop.counter }}" value="{{ row.url }}" maxlength="2048" placeholder="https://…" data-link-url>
+<input type="text" inputmode="url" autocapitalize="none" spellcheck="false" name="{{ widget.name }}_url" id="{{ widget.attrs.id }}_url_{{ forloop.counter }}" value="{{ row.url }}" maxlength="2048" placeholder="google.com" data-link-url>
 </div>{% endfor %}
 <button class="text-button" type="button" data-add-link hidden>Добавить ссылку</button>
-<p class="micro muted">На визитке отображается только название кнопки. Адрес открывается при нажатии. Чтобы удалить кнопку, очистите оба поля.</p>
+<p class="micro muted">Можно вводить адрес без www и https://. На визитке отображается только название кнопки. Чтобы удалить кнопку, очистите оба поля.</p>
 </div>
