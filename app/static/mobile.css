@@ -16,6 +16,18 @@
 .designed-card .contact-actions .contact-detail{font-size:13px;opacity:.8;max-width:100%;font-weight:400}
 .designed-card .contact-actions [data-design-label]{max-width:100%}
 .designed-card .social-section h2,.card-media-block h2,.card-carousel h2{font:600 16px/1.35 'Segoe UI',system-ui,sans-serif;letter-spacing:-.02em;margin:0 0 14px}
+/* Consistent optical size and quiet round plates for built-in and uploaded SVGs. */
+.designed-card .design-contact-icon{box-sizing:border-box;width:calc(var(--design-icon) + 12px);height:calc(var(--design-icon) + 12px);padding:6px;border-radius:50%;background:#fff;object-fit:contain}
+.designed-card .social-icon{box-sizing:border-box;min-width:34px;min-height:34px;padding:6px;border-radius:50%;background:#fff}
+.designed-card .social-icon img{display:block;object-fit:contain}
+.designed-card .social-link{line-height:1.4}
+/* Catalogue layouts use the same geometry in examples, previews and publication.
+   Overlap applies only to adjacent cover/photo blocks in flow, never the free canvas. */
+.designed-card[data-preset^="75d4fb3d-5668-4a4f-92c2-a8070a95eb"]:not([data-canvas-enabled=true]) .design-body>[data-design-block=cover]:not([hidden])+[data-design-block=avatar]{margin-top:-64px;position:relative;z-index:2}
+.designed-card[data-preset^="75d4fb3d-5668-4a4f-92c2-a8070a95eb"]:not([data-canvas-enabled=true]) .contact-avatar{box-shadow:0 0 0 5px var(--design-bg)}
+.designed-card[data-preset^="75d4fb3d-5668-4a4f-92c2-a8070a95eb"]:not([data-canvas-enabled=true]) .avatar-toggle-hint{font-size:10px;margin-top:10px;opacity:.65}
+.designed-card[data-preset^="75d4fb3d-5668-4a4f-92c2-a8070a95eb"]:not([data-canvas-enabled=true]) .contact-cover{border-radius:max(0px,calc(var(--design-radius) - 10px))}
+.designed-card[data-preset^="75d4fb3d-5668-4a4f-92c2-a8070a95eb"]:not([data-canvas-enabled=true]) .contact-actions .contact-detail{font-size:12px}
 .designed-card .is-radial{height:96px;transition:height .3s ease}
 .designed-card .is-radial[data-expanded=true]{height:280px}
 .designed-card .is-radial .sun-toggle{width:80px;height:80px;font-size:13px;line-height:1.3}

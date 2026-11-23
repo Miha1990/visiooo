@@ -32,9 +32,11 @@ EXAMPLES = [
 
 
 def example_cards():
+    from .builtin_templates import definition
     items = deepcopy(EXAMPLES)
     for item in items:
         slug = item['slug']
+        item['content']['design'] = definition(slug)
         item['assets'] = {'avatar': f'examples/{slug}-portrait.webp',
                           'header': f'examples/{slug}-cover.webp'}
         # Separate background and header photos demonstrate the independent slots.

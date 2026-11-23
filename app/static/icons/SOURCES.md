@@ -1,5 +1,7 @@
 # Источники значков
 
+- Служебные значки телефона, почты, ссылки, сохранения контакта и сайта: собственная отрисовка проекта на сетке 24 × 24 с толщиной линии 1,7. Логотипы соцсетей сохраняют фирменную геометрию; одинаковые размеры подложек задаются стилями визитки.
+
 - Instagram, Threads, Telegram, VK, OK: Simple Icons 16.0.0, https://github.com/simple-icons/simple-icons/tree/16.0.0/icons. Геометрия SVG сохранена; для Telegram/VK/OK установлен фирменный цвет заливки. Проект Simple Icons распространяет значки под CC0-1.0: https://github.com/simple-icons/simple-icons/blob/16.0.0/LICENSE.md. Названия и товарные знаки принадлежат владельцам.
 - MAX: официальный брендбук https://go.max.ru/brandbook, архив https://st.max.ru/brandbook/max-colored.zip, файл `Max colored.svg`.
 - Avito: векторный знак из четырёх цветных кругов; локальная геометрическая отрисовка.

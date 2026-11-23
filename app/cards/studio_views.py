@@ -31,7 +31,9 @@ def demo(design, preset_id=None):
     from .premium import PREMIUM_ID, demo as premium_demo
     if str(preset_id) == PREMIUM_ID:
         return premium_demo(design)
-    example = get_example('designer')
+    from .builtin_templates import EXAMPLE_TEMPLATES
+    slug = next((slug for slug, entry in EXAMPLE_TEMPLATES.items() if entry[0] == str(preset_id)), 'designer')
+    example = get_example(slug)
     content = deepcopy(example['content'])
     content.update(design=deepcopy(design), accent=design['accent'], phone='+79990000000')
     return {'content': content, 'example_assets': example['assets'],
