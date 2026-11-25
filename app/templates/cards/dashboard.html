@@ -3,6 +3,7 @@
 {% block content %}<section class="client-home" aria-label="Мои визитки">
 {% if not user.email_verified_at %}<div class="notice"><span>Подтвердите электронную почту перед публикацией.</span><form action="/accounts/resend" method="post">{% csrf_token %}<button class="text-button">Отправить ещё раз</button></form></div>{% endif %}
 {% if card %}
+<div class="client-cards-heading"><h2>Мои визитки</h2>{% include 'cards/create_action.html' %}</div>
 {% if cards|length > 1 %}<form method="get" class="client-card-picker"><label for="selected-card">Мои визитки</label><div><select id="selected-card" name="card">{% for item in cards %}<option value="{{ item.pk }}" {% if item.pk == card.pk %}selected{% endif %}>{{ item.draft.name }}</option>{% endfor %}</select><button type="submit">Выбрать</button></div></form>{% endif %}
 <article class="client-profile"><div class="client-cover">
 {% card_image 'logo' as logo_url %}{% if logo_url %}<img class="client-profile-logo" src="{{ logo_url }}" alt="Логотип {{ content.name }}">{% endif %}

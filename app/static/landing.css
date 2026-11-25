@@ -15,6 +15,7 @@
 .m-hero h1 { font-size: clamp(40px,4.8vw,64px); line-height: 1.08; font-weight: 500; margin: 26px 0; }
 .m-hero-copy > .m-lead { max-width: 510px; }
 .m-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 22px; margin: 30px 0 14px; }
+.marketing .create-card-form{margin:0;display:inline-block;max-width:100%}
 .m-hero-benefits { display: grid; gap: 7px; font-size: 12px; margin-top: 28px; color: #4d6067; }
 .m-showcase { position: relative; isolation: isolate; padding: 14px 20px 0; text-align: center; }
 .m-showcase::before { content: ''; position: absolute; inset: 85px -30px 80px; z-index: -1; border-radius: 50%; background: radial-gradient(ellipse,#dce6fc 0,#e6ebe1 60%,transparent 70%); }
