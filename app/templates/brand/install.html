@@ -1,0 +1,17 @@
+{% load static %}
+<aside class="install-banner" data-install-banner aria-labelledby="install-banner-title" hidden>
+  <img src="{% static 'brand/logo-mark-96.png' %}" width="48" height="48" alt="">
+  <div><h2 id="install-banner-title">Визитка на вашем телефоне</h2><p>Открывайте личный кабинет с главного экрана.</p><button type="button" data-install-open>Установить приложение</button></div>
+  <button type="button" class="install-close" data-install-dismiss aria-label="Закрыть предложение установки">×</button>
+</aside>
+<dialog class="install-dialog" data-install-dialog aria-labelledby="install-title" aria-describedby="install-description">
+  <button type="button" class="install-close" data-install-close aria-label="Закрыть инструкцию">×</button>
+  <img src="{% static 'brand/logo-mark-96.png' %}" width="64" height="64" alt="">
+  <p class="install-browser" data-install-browser></p><h2 id="install-title">Установить Визитку</h2>
+  <p id="install-description">Добавьте приложение на главный экран телефона.</p>
+  <ol data-install-steps></ol><p class="install-note" data-install-note hidden></p>
+  <button type="button" class="button" data-install-native hidden>Установить</button>
+  <button type="button" class="text-button" data-install-copy hidden>Скопировать адрес приложения</button>
+  <p class="install-status" data-install-status role="status"></p>
+  <button type="button" class="text-button install-done" data-install-close>Понятно</button>
+</dialog>
