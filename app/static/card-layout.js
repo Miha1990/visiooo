@@ -27,6 +27,13 @@
     if(buttons?.length&&grid){const children=[...grid.children],original=new Map(children.map((el,i)=>[el,i])),rank=el=>{const i=buttons.indexOf(Number(el.dataset.layoutButton));return i<0?buttons.length+original.get(el):i;};children.sort((a,b)=>rank(a)-rank(b)).forEach((el,index)=>{if(grid.children[index]!==el)grid.insertBefore(el,grid.children[index]||null);});}
   }
   function dimensions(state,key,create=false){const [group,index]=key.split(':');const map=group==='button'?(create?state.layout.buttons??={}:state.layout.buttons):(create?state.layout.blocks??={}:state.layout.blocks);return create?map[index??key]??={}:map?.[index??key]||{};}
+  function positionAvatar(card,state){
+    const avatar=card.querySelector('.contact-body>[data-layout-block="avatar"]');if(!avatar)return;
+    const previous=avatar.previousElementSibling,cover=previous?.dataset.layoutBlock==='cover'&&!previous.hidden?previous:null;
+    const photo=avatar.querySelector('.contact-avatar:not(.avatar-photo)')||avatar,amount=cover&&!avatar.hidden?state.layout.avatarOverlap??50:0;
+    avatar.classList.toggle('avatar-on-cover',amount>0);avatar.style.setProperty('--avatar-overlap',Math.round(photo.getBoundingClientRect().height*amount/100)+'px');
+    if(typeof ResizeObserver==='function'&&!state.avatarObserver){state.avatarObserver=new ResizeObserver(()=>positionAvatar(card,state));state.avatarObserver.observe(photo);}
+  }
   function size(el,config,button){
     el.classList.toggle('has-custom-size',Object.keys(config).length>0);
     const span={25:3,33:4,50:6,66:8,75:9,100:12}[config.width]||12;
@@ -70,8 +77,10 @@
     card.classList.toggle('layout-custom',active);
     if(active&&card.dataset.canvasEnabled==='true'){card.dataset.previousCanvas='true';card.dataset.canvasEnabled='false';}
     else if(!active&&card.dataset.previousCanvas==='true'){card.dataset.canvasEnabled='true';delete card.dataset.previousCanvas;}
-    for(const el of identify(card))size(el,dimensions(state,keyFor(el)),el.hasAttribute('data-layout-button'));
+    identify(card);
     orderBlocks(card,state);
+    for(const el of identify(card))size(el,dimensions(state,keyFor(el)),el.hasAttribute('data-layout-button'));
+    positionAvatar(card,state);
     const carousel=card.querySelector('[data-card-carousel]'),settings=state.layout.carousel;
     if(carousel){carousel.dataset.customSize=String(Boolean(settings));carousel.dataset.photoAspect=settings?.aspect||'custom';if(settings){carousel.dataset.visible=String(settings.visible||1);carousel.style.setProperty('--custom-slide-height',(settings.height||220)+'px');carousel.style.setProperty('--custom-slide-fit',settings.fit||'cover');}window.CardWidgets?.refresh(card);}
     renderDaisy(card,state.daisy);
