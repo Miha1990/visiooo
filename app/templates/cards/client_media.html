@@ -2,17 +2,18 @@
 <section class="panel" aria-label="Карусель товаров и фотографий" data-builder-media="carousel">
   <h2>Карусель товаров и фотографий</h2>
   <p class="micro muted">Загрузите фотографии товаров, работ или услуг. Лимит: {{ gallery_limit }}. Пустая карусель не показывается посетителям.</p>
-  <div class="client-gallery">
-  {% for id in gallery_ids %}<figure>
-    <img src="{% url 'preview_asset' card.pk id %}" alt="Фотография {{ forloop.counter }}" loading="lazy">
-    <form method="post" action="{% url 'card_content_media' card.pk %}">{% csrf_token %}
+  <p class="micro muted">Удерживайте фото и перетаскивайте, чтобы поменять порядок.</p>
+  <div class="client-gallery" data-gallery-editor role="list" aria-label="Порядок фотографий">
+  {% for id in gallery_ids %}<figure data-gallery-id="{{ id }}" tabindex="0" role="listitem" aria-label="Фотография {{ forloop.counter }}. Перемещение — клавишами со стрелками.">
+    <img src="{% url 'preview_asset' card.pk id %}" alt="Фотография {{ forloop.counter }}" loading="lazy" draggable="false">
+    <form method="post" action="{% url 'card_content_media' card.pk %}" data-ajax-media>{% csrf_token %}
       <input type="hidden" name="draft_version" value="{{ card.draft_version }}"><input type="hidden" name="asset_id" value="{{ id }}">
-      <button class="text-button" name="operation" value="earlier" {% if forloop.first %}disabled{% endif %}>Раньше</button>
-      <button class="text-button" name="operation" value="later" {% if forloop.last %}disabled{% endif %}>Позже</button>
-      <button class="text-button" name="operation" value="remove_photo">Удалить</button>
+      <input type="hidden" name="operation" value="remove_photo"><button type="submit" class="gallery-remove" data-gallery-remove aria-label="Удалить фотографию {{ forloop.counter }}" title="Удалить фото">×</button>
     </form>
   </figure>{% endfor %}
   </div>
+  <form method="post" action="{% url 'card_content_media' card.pk %}" data-gallery-reorder data-ajax-media hidden>{% csrf_token %}<input type="hidden" name="draft_version" value="{{ card.draft_version }}"><input type="hidden" name="operation" value="reorder_gallery"><input type="hidden" name="order"></form>
+  <p class="micro" data-gallery-status role="status" aria-live="polite"></p>
   <form method="post" enctype="multipart/form-data" action="{% url 'card_content_media' card.pk %}" class="stack">{% csrf_token %}
     <input type="hidden" name="draft_version" value="{{ card.draft_version }}"><input type="hidden" name="operation" value="gallery">
     <label for="gallery-file">Фотографии JPEG, PNG или WebP, до 5 МБ каждая</label><input type="file" id="gallery-file" name="file" accept="image/jpeg,image/png,image/webp" multiple required>

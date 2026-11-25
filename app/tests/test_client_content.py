@@ -1,4 +1,5 @@
 from copy import deepcopy
+import json
 from django.test import TestCase, Client
 from django.core.files.uploadedfile import SimpleUploadedFile
 from cards.forms import CardForm
@@ -88,6 +89,24 @@ class ClientContentTests(TestCase):
         self.post_media('gallery',file=[photo(),photo()]);self.card.refresh_from_db()
         self.assertEqual(self.card.draft['galleryAssetIds'],ids)
         self.assertEqual(Asset.objects.filter(workspace=self.space).count(),3)
+
+    def test_drag_order_saves_exact_owned_gallery_and_returns_current_version(self):
+        self.layout();self.customer()
+        self.post_media('gallery',file=[photo(),photo(),photo()]);self.card.refresh_from_db()
+        ids=self.card.draft['galleryAssetIds'];version=self.card.draft_version;order=[ids[2],ids[0],ids[1]]
+        response=self.client.post(f'/app/cards/{self.card.pk}/content-media',{'draft_version':version,'operation':'reorder_gallery','order':json.dumps(order)},HTTP_ACCEPT='application/json')
+        self.assertEqual(response.status_code,200);self.assertEqual(response.json(),{'version':version+1,'gallery':order})
+        self.card.refresh_from_db();self.assertEqual(self.card.draft['galleryAssetIds'],order)
+        for invalid in ([ids[0]]*3,ids[:2],[*ids[:2],'00000000-0000-0000-0000-000000000000'],{},[{}]*3):
+            response=self.client.post(f'/app/cards/{self.card.pk}/content-media',{'draft_version':self.card.draft_version,'operation':'reorder_gallery','order':json.dumps(invalid)},HTTP_ACCEPT='application/json')
+            self.assertEqual(response.status_code,400);self.card.refresh_from_db();self.assertEqual(self.card.draft['galleryAssetIds'],order)
+        response=self.client.post(f'/app/cards/{self.card.pk}/content-media',{'draft_version':version,'operation':'reorder_gallery','order':json.dumps(ids)},HTTP_ACCEPT='application/json')
+        self.assertEqual(response.status_code,409)
+        response=self.client.get(f'/app/cards/{self.card.pk}/edit')
+        self.assertContains(response,'data-gallery-remove');self.assertContains(response,'data-gallery-reorder')
+        self.assertNotContains(response,'>Раньше</button>');self.assertNotContains(response,'>Позже</button>')
+        response=self.client.post(f'/app/cards/{self.card.pk}/content-media',{'draft_version':self.card.draft_version,'operation':'remove_photo','asset_id':ids[0]},HTTP_ACCEPT='application/json')
+        self.assertEqual(response.status_code,200);self.assertEqual(response.json()['gallery'],[ids[2],ids[1]])
 
     def test_bad_file_rolls_back_the_entire_gallery_batch(self):
         from pathlib import Path

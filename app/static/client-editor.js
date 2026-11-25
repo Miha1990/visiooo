@@ -14,11 +14,11 @@
   const editor=form.closest('.editor');
   editor.querySelectorAll('form[enctype="multipart/form-data"],form[action*="/content-media"],form[action$="/avatar/remove"],form[action$="/publish"]').forEach(target=>{
     target.addEventListener('submit',async event=>{
-      if(approved.has(target)){approved.delete(target);leaving=true;return;}
-      if(fingerprint()===saved&&!(form.dataset?.pendingBuilder==='true'&&target.action?.endsWith('/publish'))){leaving=true;return;}
+      if(approved.has(target)){approved.delete(target);leaving=!target.hasAttribute('data-ajax-media');return;}
+      if(fingerprint()===saved&&!(form.dataset?.pendingBuilder==='true'&&target.action?.endsWith('/publish'))){leaving=!target.hasAttribute('data-ajax-media');return;}
       event.preventDefault();if(busy)return;
-      if(!form.checkValidity()){reveal(form.querySelector(':invalid'));form.reportValidity();return;}
-      if(form.confirmAddress&&!form.confirmAddress())return;
+      if(!form.checkValidity()){reveal(form.querySelector(':invalid'));form.reportValidity();target.dispatchEvent(new Event('card:submit-failed'));return;}
+      if(form.confirmAddress&&!form.confirmAddress()){target.dispatchEvent(new Event('card:submit-failed'));return;}
       busy=true;const submitter=event.submitter,payload=new FormData(form);
       form.inert=true;target.inert=true;if(submitter)submitter.disabled=true;
       try{
@@ -29,13 +29,14 @@
           for(const [name,items]of Object.entries(errors)){const input=form.elements.namedItem(name);if(input&&input.type!=='hidden'){input.setCustomValidity(items.map(item=>item.message).join(' '));first??=input;}}
           form.inert=false;
           showError(Object.values(errors).flat().map(item=>item.message).join(' ')||result.error||'Не удалось сохранить правки.',first);
+          target.dispatchEvent(new Event('card:submit-failed'));
           return;
         }
         if(result.address)form.dispatchEvent(new CustomEvent('card:saved',{detail:result}));
         saved=fingerprint();if(form.dataset)delete form.dataset.pendingBuilder;editor.querySelectorAll('input[name="draft_version"]').forEach(input=>input.value=result.version);
         form.inert=false;target.inert=false;if(submitter)submitter.disabled=false;
         approved.add(target);target.requestSubmit(submitter||undefined);
-      }catch{form.inert=false;showError('Не удалось сохранить данные. Проверьте соединение и повторите загрузку. Введённые данные остались в форме.');}
+      }catch{form.inert=false;showError('Не удалось сохранить данные. Проверьте соединение и повторите загрузку. Введённые данные остались в форме.');target.dispatchEvent(new Event('card:submit-failed'));}
       finally{busy=false;form.inert=false;target.inert=false;if(submitter)submitter.disabled=false;}
     });
   });

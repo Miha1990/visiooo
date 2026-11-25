@@ -9,12 +9,12 @@ function setup(reply){
  const form={action:'/edit',elements:{namedItem:key=>({name,draft_version:version})[key]},addEventListener:(key,fn)=>events[key]=fn,
   querySelector:()=>notice,prepend:node=>notice=node,checkValidity:()=>true,inert:false};
  const button={disabled:false};
- const upload={addEventListener:(key,fn)=>upload[key]=fn,requestSubmit(submitter){submissions++;upload.submit({submitter,preventDefault(){throw Error('Approved native submission must proceed');}});}};
+ const upload={hasAttribute:key=>key==='data-ajax-media'&&Boolean(upload.ajaxMedia),dispatchEvent:event=>{upload.lastEvent=event;},addEventListener:(key,fn)=>upload[key]=fn,requestSubmit(submitter){submissions++;upload.submit({submitter,preventDefault(){throw Error('Approved native submission must proceed');}});}};
  const editor={querySelectorAll:selector=>selector.startsWith('input')?[version,uploadVersion]:[upload]};form.closest=()=>editor;
  class FormData{constructor(){this.entries=[['name',name.value],['draft_version',version.value]];}[Symbol.iterator](){return this.entries[Symbol.iterator]();}}
  const document={getElementById:()=>form,createElement:()=>({dataset:{},setAttribute(){},scrollIntoView(){}})};
  const window={addEventListener:(key,fn)=>windowEvents[key]=fn};
- vm.runInNewContext(source,{document,window,FormData,WeakSet,location:{href:'/edit'},fetch:async()=>{calls++;return reply();}});
+ vm.runInNewContext(source,{document,window,FormData,WeakSet,Event,location:{href:'/edit'},fetch:async()=>{calls++;return reply();}});
  const submit=()=>{let prevented=false;const promise=upload.submit({submitter:button,preventDefault(){prevented=true;}});return {promise,get prevented(){return prevented;}};};
  return {form,name,version,upload,uploadVersion,button,group,submit,windowEvents,get calls(){return calls;},get submissions(){return submissions;},get notice(){return notice;}};
 }
@@ -34,6 +34,7 @@ test('validation failure keeps entered data and file upload pending',async()=>{
  await f.submit().promise;
  assert.equal(f.submissions,0);assert.equal(f.name.value,'Новый клиент');assert.equal(f.name.validityMessage,'Исправьте имя');assert.equal(f.group.open,true);assert.equal(f.name.focused,true);
  assert.equal(f.button.disabled,false);assert.equal(f.version.value,'1');
+ assert.equal(f.upload.lastEvent.type,'card:submit-failed');
 });
 test('unchanged content uploads directly, while unsaved navigation is guarded',async()=>{
  const f=setup(()=>{throw Error('No save needed');});await f.submit().promise;assert.equal(f.calls,0);
@@ -45,4 +46,8 @@ test('canceling an address change prevents autosave and the pending upload',asyn
  let confirmations=0;f.form.confirmAddress=()=>{confirmations++;return false;};
  const action=f.submit();await action.promise;
  assert.equal(action.prevented,true);assert.equal(confirmations,1);assert.equal(f.calls,0);assert.equal(f.submissions,0);assert.equal(f.form.inert,false);
+});
+test('an asynchronous media save keeps later unsaved text navigation guarded',async()=>{
+ const f=setup(()=>{throw Error('No text save needed');});f.upload.ajaxMedia=true;await f.submit().promise;
+ f.name.value='Новая правка после перестановки фото';let blocked=false;f.windowEvents.beforeunload({preventDefault(){blocked=true;}});assert.equal(blocked,true);
 });

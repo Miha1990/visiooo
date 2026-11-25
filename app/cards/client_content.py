@@ -1,9 +1,11 @@
 """Customer media controls preserve validated content and responsive sizes."""
 from copy import deepcopy
+import json
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.shortcuts import redirect
+from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from .services import own_card, save_card, Conflict
 
@@ -37,11 +39,12 @@ def block_has_content(content, key):
 @require_POST
 def media(request, pk):
     card = own_card(request.user, pk)
+    ajax = 'application/json' in request.headers.get('Accept', '')
     try:
         version = int(request.POST.get('draft_version', '0'))
         if version != card.draft_version: raise Conflict('Черновик изменился. Обновите страницу.')
         operation = request.POST.get('operation')
-        key = 'carousel' if operation in ('gallery','remove_photo','earlier','later') else 'document'
+        key = 'carousel' if operation in ('gallery','remove_photo','earlier','later','reorder_gallery') else 'document'
         if key not in available_blocks(card.draft):
             raise ValidationError('В выбранном шаблоне этот блок недоступен. Выберите другой шаблон.')
         if operation in ('gallery','pdf'):
@@ -57,6 +60,12 @@ def media(request, pk):
             content = deepcopy(card.draft)
             if operation == 'remove_pdf':
                 content.get('document', {}).pop('assetId', None)
+            elif operation == 'reorder_gallery':
+                order = json.loads(request.POST.get('order', '[]'))
+                photos = content.get('galleryAssetIds', [])
+                if not isinstance(order, list) or not all(isinstance(item, str) for item in order) or len(order) != len(photos) or len(set(order)) != len(order) or set(order) != set(photos):
+                    raise ValidationError('Список фотографий изменился. Обновите страницу.')
+                content['galleryAssetIds'] = order
             elif operation in ('remove_photo','earlier','later'):
                 photos = content.get('galleryAssetIds', [])
                 index = photos.index(request.POST.get('asset_id'))
@@ -67,7 +76,12 @@ def media(request, pk):
             else:
                 raise ValidationError('Неизвестное действие.')
             save_card(request.user, pk, version, content)
+        if ajax:
+            card.refresh_from_db()
+            return JsonResponse({'version':card.draft_version,'gallery':card.draft.get('galleryAssetIds',[])})
         messages.success(request, 'Содержимое обновлено в черновике. Опубликуйте визитку, чтобы изменения стали видны посетителям.')
     except (ValueError, ValidationError, Conflict) as error:
+        if ajax:
+            return JsonResponse({'error':' '.join(error.messages) if isinstance(error, ValidationError) else str(error) if isinstance(error, Conflict) else 'Проверьте фотографии и обновите страницу.'},status=409 if isinstance(error, Conflict) else 400)
         messages.error(request, ' '.join(error.messages) if isinstance(error, ValidationError) else str(error) if isinstance(error, Conflict) else 'Проверьте файл и обновите страницу.')
     return redirect(f'/app/cards/{pk}/edit#content-blocks')
