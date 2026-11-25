@@ -5,7 +5,7 @@
   <div><p class="eyebrow">ПЕРВЫЙ ШАГ К ЗНАКОМСТВУ</p><h1 class="page-title">Давайте<br><em>представимся.</em></h1>
     <p class="lead">Укажите данные и подтвердите почту кодом из письма. Затем подготовьте свою первую визитку. Для публикации подключите Профи.</p></div>
   <div class="panel"><h2>Создать аккаунт</h2><p class="muted">Уже знакомы? <a href="/accounts/login">Войти</a></p>
-    <form method="post" class="stack">{% csrf_token %}{{ form.as_div }}<button class="button">Получить код подтверждения</button></form>
+    <form method="post" class="stack" data-code-request data-retry-seconds="{{ code_retry_seconds }}" data-retry-email="{{ code_retry_email }}">{% csrf_token %}{{ form.as_div }}<button type="submit" class="button" data-code-request-button>Получить код подтверждения</button></form>
   </div>
 </section>
 {% endblock %}

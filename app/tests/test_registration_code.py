@@ -121,6 +121,32 @@ class RegistrationCodeTests(TestCase):
         self.assertEqual(self.client.post('/accounts/registration-code', {'code': code}).status_code, 303)
         self.assertEqual(User.objects.count(), 1)
 
+    def test_resend_timer_uses_server_deadline_on_refresh_and_failed_confirmation(self):
+        self.start()
+        response=self.client.get('/accounts/registration-code')
+        self.assertGreater(response.context['code_retry_seconds'],0)
+        self.assertLessEqual(response.context['code_retry_seconds'],60)
+        self.assertContains(response,'data-code-request-button disabled')
+        self.assertContains(self.client.get('/accounts/register'),'data-retry-email="new@example.test"')
+        self.client.post('/accounts/registration-code/resend')
+        self.assertEqual(len(mail.outbox),1)
+        PendingRegistration.objects.update(last_sent_at=timezone.now()-timedelta(seconds=31))
+        response=self.client.post('/accounts/registration-code',{'code':'bad'})
+        self.assertGreater(response.context['code_retry_seconds'],0)
+        self.assertLessEqual(response.context['code_retry_seconds'],29)
+        self.allow_resend()
+        response=self.client.get('/accounts/registration-code')
+        self.assertEqual(response.context['code_retry_seconds'],0)
+        self.assertNotContains(response,'data-code-request-button disabled')
+
+    def test_hourly_limit_is_reflected_in_timer_without_more_emails(self):
+        self.start()
+        PendingRegistration.objects.update(send_count=5)
+        response=self.client.get('/accounts/registration-code')
+        self.assertGreater(response.context['code_retry_seconds'],3500)
+        self.client.post('/accounts/registration-code/resend')
+        self.assertEqual(len(mail.outbox),1)
+
     def test_repeat_form_after_minute_sends_new_code(self):
         with patch('accounts.registration.secrets.randbelow', return_value=123456):
             self.start()

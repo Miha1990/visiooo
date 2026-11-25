@@ -1,4 +1,5 @@
 import hashlib
+import math
 import secrets
 import uuid
 from datetime import timedelta
@@ -25,6 +26,18 @@ from .models import LegalAcceptance, PendingRegistration, User
 
 SESSION_KEY = 'pending_registration'
 CODE_URL = '/accounts/registration-code'
+
+
+def retry_context(pending):
+    """Expose the actual server cooldown, including hourly limits, without secrets."""
+    if not pending:
+        return {'code_retry_seconds': 0, 'code_retry_email': ''}
+    now = timezone.now()
+    available = pending.last_sent_at + timedelta(seconds=60) if pending.last_sent_at else now
+    if pending.send_count >= 5 or pending.attempts >= 5:
+        available = max(available, pending.window_started_at + timedelta(hours=1))
+    return {'code_retry_seconds': max(0, math.ceil((available - now).total_seconds())),
+            'code_retry_email': pending.email}
 
 
 def redirect(url):
@@ -96,6 +109,7 @@ def start(request):
     if request.user.is_authenticated:
         return redirect('/app/cards')
     form = RegistrationForm(request.POST or None)
+    pending = None
     if request.method == 'POST' and form.is_valid():
         PendingRegistration.objects.filter(expires_at__lt=timezone.now() - timedelta(days=1)).delete()
         try:
@@ -136,7 +150,11 @@ def start(request):
                     return redirect(CODE_URL)
         except IntegrityError:
             form.add_error('email', 'Регистрация уже начата. Попробуйте ещё раз.')
-    return render(request, 'accounts/register.html', {'form': form}, status=422 if request.method == 'POST' else 200)
+    if pending is None:
+        token = pending_token(request)
+        pending = PendingRegistration.objects.filter(browser_token=token).first() if token else None
+    return render(request, 'accounts/register.html', {'form': form, **retry_context(pending)},
+                  status=422 if request.method == 'POST' else 200)
 
 
 def pending_token(request):
@@ -193,7 +211,7 @@ def confirm(request):
         login(request, user)
         messages.success(request, 'Почта подтверждена. Регистрация завершена.')
         return redirect('/app/cards')
-    return render(request, 'accounts/registration_code.html', {'form': form, 'pending': pending},
+    return render(request, 'accounts/registration_code.html', {'form': form, 'pending': pending, **retry_context(pending)},
                   status=422 if request.method == 'POST' else 200)
 
 

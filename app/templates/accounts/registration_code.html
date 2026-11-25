@@ -6,7 +6,7 @@
   <h1>Введите код из письма</h1>
   <p>Введите шестизначный код для <strong>{{ pending.email }}</strong>. Код действует 10 минут. Проверьте также папку «Спам».</p>
   <form method="post" class="stack">{% csrf_token %}{{ form.as_div }}<button class="button">Подтвердить и создать аккаунт</button></form>
-  <form method="post" action="/accounts/registration-code/resend" class="stack">{% csrf_token %}<p class="muted">Новое письмо можно запросить через минуту. Не более пяти писем в час.</p><button class="button secondary">Отправить код повторно</button></form>
+  <form method="post" action="/accounts/registration-code/resend" class="stack" data-code-request data-retry-seconds="{{ code_retry_seconds }}">{% csrf_token %}<p class="muted">Новое письмо можно запросить через минуту. Не более пяти писем в час.</p><button type="submit" class="button secondary" data-code-request-button {% if code_retry_seconds %}disabled{% endif %}>Отправить код повторно</button><noscript><p>Для повторной отправки обновите страницу после окончания минуты ожидания.</p></noscript></form>
   <p><a href="/accounts/register">Изменить почту или данные</a></p>
 </section>
 {% endblock %}
