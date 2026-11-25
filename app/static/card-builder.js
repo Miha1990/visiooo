@@ -127,7 +127,7 @@
       for(const item of found){const b=button('',()=>{chooser.close();editButton(choiceIndex,item.kind);},'builder-choice');b.append(image(item.kind),node('span',{},item.label));grid.append(b);}
     }
     const extras=[['carousel','Карусель фотографий'],['video','Видео'],['map','Адрес на карте']].filter(([key,label])=>(media.has(key)||sources.has(key))&&label.toLowerCase().includes(text));
-    if(!editingDaisy&&choiceGroup!=='social'&&choiceIndex<0){choices.append(node('h3',{},'Другие блоки'));for(const [key,label]of extras)choices.append(button(label,()=>{chooser.close();openMedia(key);},'builder-choice'));choices.append(button('Ромашка — контакты по кругу',()=>{chooser.close();daisySettings.showModal();},'builder-choice'));}
+    if(!editingDaisy&&choiceGroup!=='social'&&choiceIndex<0){choices.append(node('h3',{},'Другие блоки'));for(const [key,label]of [...extras,['daisy','Ромашка — контакты по кругу']]){const choice=button('',()=>{chooser.close();form.dispatchEvent(new CustomEvent('card:insert-block',{detail:{key}}));if(key==='daisy')daisySettings.showModal();else openMedia(key);},'builder-choice builder-example-choice');choice.append(node('strong',{},label));const example=window.CardBlockExamples?.create(key);if(example)choice.append(example);choices.append(choice);}}
     if(!choices.childElementCount)choices.append(node('p',{},'Ничего не найдено. Попробуйте другое название.'));
   }
   search.addEventListener('input',filter);
@@ -191,7 +191,7 @@
   topbar.append(back,save);editor.prepend(topbar);
   const toolbar=node('div',{class:'builder-toolbar'}),addField=button('+ Добавить поле',()=>choose(),'builder-add-row'),preview=button('Предпросмотр',()=>setView(editor.dataset.view==='preview'?'edit':'preview'));
   toolbar.append(addField);editor.append(toolbar);
-  function setView(view){editor.dataset.view=view;preview.textContent=view==='preview'?'Редактировать':'Предпросмотр';}
+  function setView(view){editor.dataset.view=view;preview.textContent=view==='preview'?'Редактировать':'Предпросмотр';form.dispatchEvent(new CustomEvent('card:editor-view',{detail:{view}}));}
   const more=node('div',{class:'builder-more'});more.append(preview,button('График и главное действие',()=>features.showModal()),button('Оформление и шаблон',()=>settings.showModal()),button('Опубликовать',()=>publish.showModal()));form.append(more);
   const returnToEdit=button('Вернуться к редактированию',()=>setView('edit'),'builder-preview-back');editor.querySelector('.preview-column')?.prepend(returnToEdit);
   for(const child of [...editor.children])if(![topbar,built,toolbar].includes(child)&&child.tagName!=='DIALOG'&&!child.classList.contains('editor-grid'))child.hidden=true;
@@ -199,4 +199,5 @@
   editor.classList.add('card-builder-active');
   if(errors.length)built.prepend(node('p',{class:'builder-error',role:'alert'},errors.join(' ')));
   setView(editor.dataset.view||'edit');persist();
+  window.CardBuilder={choose,openMedia,setView,profile:()=>profile.showModal(),daisy:()=>daisySettings.showModal(),features:()=>features.showModal()};
 })();

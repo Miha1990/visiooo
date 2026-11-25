@@ -13,6 +13,18 @@
     return [...card.querySelectorAll('[data-layout-block],[data-layout-button]')];
   }
   const keyFor=el=>el.hasAttribute('data-layout-button')?'button:'+el.dataset.layoutButton:el.dataset.layoutBlock;
+  function orderBlocks(card,state){
+    const order=state.layout.order,body=card.querySelector('.contact-body');
+    if(order?.length&&body){
+      const cover=card.querySelector(':scope>.contact-cover');if(cover)body.prepend(cover);
+      const avatar=card.querySelector(':scope>.contact-avatar');if(avatar){const wrap=node('div',{'data-layout-block':'avatar',class:'layout-avatar-wrap'});delete avatar.dataset.layoutBlock;avatar.before(wrap);wrap.append(avatar);body.prepend(wrap);}
+      const business=card.querySelector('[data-layout-block="business"]');if(business&&business.parentElement!==body)body.append(business);
+      const children=[...body.children],original=new Map(children.map((el,i)=>[el,i])),rank=el=>{const i=order.indexOf(el.dataset.layoutBlock);return i<0?order.length+original.get(el):i;};
+      children.sort((a,b)=>rank(a)-rank(b)).forEach((el,index)=>{if(body.children[index]!==el)body.insertBefore(el,body.children[index]||null);});
+    }
+    const buttons=state.layout.buttonOrder,grid=card.querySelector('.builder-contact-buttons');
+    if(buttons?.length&&grid){const children=[...grid.children],original=new Map(children.map((el,i)=>[el,i])),rank=el=>{const i=buttons.indexOf(Number(el.dataset.layoutButton));return i<0?buttons.length+original.get(el):i;};children.sort((a,b)=>rank(a)-rank(b)).forEach((el,index)=>{if(grid.children[index]!==el)grid.insertBefore(el,grid.children[index]||null);});}
+  }
   function dimensions(state,key,create=false){const [group,index]=key.split(':');const map=group==='button'?(create?state.layout.buttons??={}:state.layout.buttons):(create?state.layout.blocks??={}:state.layout.blocks);return create?map[index??key]??={}:map?.[index??key]||{};}
   function size(el,config,button){
     el.classList.toggle('has-custom-size',Object.keys(config).length>0);
@@ -50,17 +62,21 @@
   }
   function apply(card){
     let state=states.get(card);if(!state){state=read(card);states.set(card,state);}
-    const active=Boolean(Object.keys(state.layout.blocks||{}).length||Object.keys(state.layout.buttons||{}).length||state.layout.carousel);
+    const active=Boolean(Object.keys(state.layout.blocks||{}).length||Object.keys(state.layout.buttons||{}).length||state.layout.carousel||state.layout.order?.length||state.layout.buttonOrder?.length);
     card.classList.toggle('layout-custom',active);
     if(active&&card.dataset.canvasEnabled==='true'){card.dataset.previousCanvas='true';card.dataset.canvasEnabled='false';}
     else if(!active&&card.dataset.previousCanvas==='true'){card.dataset.canvasEnabled='true';delete card.dataset.previousCanvas;}
     for(const el of identify(card))size(el,dimensions(state,keyFor(el)),el.hasAttribute('data-layout-button'));
+    orderBlocks(card,state);
     const carousel=card.querySelector('[data-card-carousel]'),settings=state.layout.carousel;
     if(carousel){carousel.dataset.customSize=String(Boolean(settings));carousel.dataset.photoAspect=settings?.aspect||'custom';if(settings){carousel.dataset.visible=String(settings.visible||1);carousel.style.setProperty('--custom-slide-height',(settings.height||220)+'px');carousel.style.setProperty('--custom-slide-fit',settings.fit||'cover');}window.CardWidgets?.refresh(card);}
     renderDaisy(card,state.daisy);
     state.handles?.();
   }
-  window.CardLayout={refresh:apply,removeButton(form,index){const card=document.querySelector('.phone-preview .contact-card'),state=states.get(card);if(!state?.layout.buttons)return;const next={};for(const [key,value]of Object.entries(state.layout.buttons)){const i=Number(key);if(i!==index)next[i>index?i-1:i]=value;}state.layout.buttons=next;const input=form.elements.namedItem('layout_data');if(input)input.value=JSON.stringify(state.layout);},setDaisy(card,data){const state=states.get(card)||read(card);state.daisy=data;states.set(card,state);renderDaisy(card,data);}};
+  window.CardLayout={refresh:apply,removeButton(form,index){const card=document.querySelector('.phone-preview .contact-card'),state=states.get(card);if(!state)return;const next={};for(const [key,value]of Object.entries(state.layout.buttons||{})){const i=Number(key);if(i!==index)next[i>index?i-1:i]=value;}state.layout.buttons=next;if(state.layout.buttonOrder)state.layout.buttonOrder=state.layout.buttonOrder.filter(i=>i!==index).map(i=>i>index?i-1:i);const input=form.elements.namedItem('layout_data');if(input)input.value=JSON.stringify(state.layout);},setDaisy(card,data){const state=states.get(card)||read(card);state.daisy=data;states.set(card,state);renderDaisy(card,data);}};
+  window.CardLayout.get=card=>states.get(card)?.layout||{};
+  window.CardLayout.set=(card,layout)=>{const state=states.get(card)||read(card);state.layout=layout;states.set(card,state);apply(card);};
+  window.CardLayout.setEditing=(card,value)=>states.get(card)?.setEditing?.(value);
   document.querySelectorAll('.contact-card:has([data-card-layout])').forEach(apply);
   const form=document.getElementById('editor-form'),card=document.querySelector('.phone-preview .contact-card'),editor=document.querySelector('.editor');
   if(!form||!card||!form.elements.namedItem('layout_data'))return;
@@ -84,10 +100,11 @@
   action('Применить размер ко всем контактным кнопкам',()=>{if(!selected?.hasAttribute('data-layout-button')){description.textContent='Сначала выберите контактную кнопку в визитке.';return;}const config={...dimensions(state,keyFor(selected))};state.layout.buttons={};card.querySelectorAll('[data-layout-button]').forEach(el=>state.layout.buttons[el.dataset.layoutButton]={...config});persist();});
   for(const count of [1,2,3,4])action(count+' '+(count===1?'кнопка':'кнопки')+' в ряд',()=>{state.layout.buttons={};card.querySelectorAll('[data-layout-button]').forEach(el=>state.layout.buttons[el.dataset.layoutButton]={width:({1:100,2:50,3:33,4:25})[count],height:count===1?56:0,shape:count===1?'auto':'square',radius:14});persist();});
   action('Сбросить размеры выбранного блока',()=>{if(!selected)return;const key=keyFor(selected);if(key.startsWith('button:'))delete (state.layout.buttons||{})[key.split(':')[1]];else delete (state.layout.blocks||{})[key];if(key==='carousel')delete state.layout.carousel;persist();select(selected);});
-  action('Сбросить все размеры',()=>{state.layout={};persist();});
-  const toggle=node('button',{type:'button',class:'builder-preview-back','aria-pressed':'false'},'Настроить размеры блоков');
+  action('Сбросить все размеры',()=>{state.layout={...(state.layout.order?{order:state.layout.order}:{}),...(state.layout.buttonOrder?{buttonOrder:state.layout.buttonOrder}:{})};persist();});
+  const toggle=node('button',{type:'button',class:'builder-preview-back','data-size-mode':'','aria-pressed':'false'},'Настроить размеры блоков');
   editor.querySelector('.preview-column')?.prepend(toggle,panel);
   const setEditing=value=>{editing=value;card.classList.toggle('size-editing',value);panel.hidden=!value;toggle.setAttribute('aria-pressed',String(value));toggle.textContent=value?'Готово, посмотреть визитку':'Настроить размеры блоков';if(value)state.handles();else{card.querySelectorAll('.size-handle').forEach(e=>e.remove());card.querySelectorAll('[data-saved-href]').forEach(a=>{a.setAttribute('href',a.dataset.savedHref);delete a.dataset.savedHref;});card.querySelectorAll('.size-selected').forEach(e=>e.classList.remove('size-selected'));}};
+  state.setEditing=setEditing;
   toggle.addEventListener('click',()=>setEditing(!editing));
   function handle(el,photo=false){
     if(el.querySelector(':scope>.size-handle'))return;
@@ -101,6 +118,6 @@
     });
   }
   state.handles=()=>{if(!editing)return;for(const el of identify(card)){if(el.hidden||el.closest('[hidden]'))continue;if(el.matches('a[href]')){el.dataset.savedHref=el.getAttribute('href');el.removeAttribute('href');}handle(el);}const first=card.querySelector('[data-card-carousel] .carousel-slide');if(first)handle(first,true);};
-  card.addEventListener('click',event=>{if(!editing)return;const el=event.target.closest('[data-layout-button],[data-layout-block]');if(el){if(!event.target.closest('[data-daisy-toggle]')){event.preventDefault();event.stopPropagation();}select(el);}},{capture:true});
+  card.addEventListener('click',event=>{if(!editing||event.target.closest('[data-inline-edit],.block-move-grip'))return;const el=event.target.closest('[data-layout-button],[data-layout-block]');if(el){if(!event.target.closest('[data-daisy-toggle]')){event.preventDefault();event.stopPropagation();}select(el);}},{capture:true});
   form.addEventListener('input',event=>{if(event.target.name==='daisy_data'){try{state.daisy=JSON.parse(event.target.value||'{}');}catch{}}apply(card);});
 })();

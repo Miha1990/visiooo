@@ -1,8 +1,10 @@
 /* Sizes flow in rows instead of storing screen coordinates. */
 .card-logo-frame{position:absolute;top:14px;left:14px;width:52px;height:52px;z-index:3}.card-logo-frame>.card-logo{position:static;width:100%;height:100%;box-sizing:border-box}
+.contact-card.has-header .contact-cover>.card-logo-frame{position:absolute;top:14px;left:14px}
 .contact-card.layout-custom .contact-body{display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;align-items:flex-start;gap:12px!important}
 .contact-card.layout-custom .contact-body>*{min-width:0;max-width:100%;box-sizing:border-box;flex:0 0 100%}
 .contact-card.layout-custom .contact-body>[data-layout-block]{flex-basis:calc((100% + 12px)*var(--size-span,12)/12 - 12px);width:calc((100% + 12px)*var(--size-span,12)/12 - 12px)!important;height:auto!important;position:relative!important;left:auto!important;top:auto!important}
+.contact-card.layout-custom .contact-body>[data-layout-block=cover]{height:var(--size-height,var(--design-cover,170px))!important;overflow:hidden}.contact-card.layout-custom .contact-body>[data-layout-block=cover] .contact-cover{height:100%!important}
 .contact-card.layout-custom [data-layout-block=contacts]{min-width:min(100%,216px)!important}.contact-card.layout-custom [data-layout-block=video],.contact-card.layout-custom [data-layout-block=map]{min-width:min(100%,160px)!important}
 .contact-card .has-custom-size{min-height:var(--size-height,0);border-radius:var(--size-radius,0);box-sizing:border-box}
 .contact-card.layout-custom>[data-layout-block].has-custom-size{width:calc(100%*var(--size-span,12)/12)!important;margin-inline:auto}

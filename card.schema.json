@@ -13,6 +13,8 @@
   ],
   "properties": {
     "layout":{"type":"object","additionalProperties":false,"properties":{
+      "order":{"type":"array","maxItems":13,"uniqueItems":true,"items":{"enum":["cover","avatar","identity","bio","save","business","contacts","socials","carousel","video","document","map","daisy"]}},
+      "buttonOrder":{"type":"array","maxItems":30,"uniqueItems":true,"items":{"type":"integer","minimum":0,"maximum":29}},
       "blocks":{"type":"object","additionalProperties":false,"properties":{"cover":{"$ref":"#/$defs/size"},"logo":{"$ref":"#/$defs/size"},"avatar":{"$ref":"#/$defs/size"},"identity":{"$ref":"#/$defs/size"},"bio":{"$ref":"#/$defs/size"},"save":{"$ref":"#/$defs/size"},"business":{"$ref":"#/$defs/size"},"contacts":{"$ref":"#/$defs/size"},"socials":{"$ref":"#/$defs/size"},"carousel":{"$ref":"#/$defs/size"},"video":{"$ref":"#/$defs/size"},"document":{"$ref":"#/$defs/size"},"map":{"$ref":"#/$defs/size"},"daisy":{"$ref":"#/$defs/size"}}},
       "buttons":{"type":"object","maxProperties":30,"additionalProperties":false,"patternProperties":{"^(?:[0-9]|[12][0-9])$":{"$ref":"#/$defs/size"}}},
       "carousel":{"type":"object","additionalProperties":false,"properties":{"visible":{"enum":[1,1.5,2,2.5,3,4]},"height":{"type":"integer","minimum":80,"maximum":640},"fit":{"enum":["cover","contain"]},"aspect":{"enum":["custom","landscape","square","portrait"]}}}

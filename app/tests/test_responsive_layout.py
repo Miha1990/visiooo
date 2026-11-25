@@ -8,7 +8,8 @@ from tests import test_visual_editor as fixtures
 
 
 def sizes():
-    return {'blocks':{'identity':{'width':100,'height':0},'carousel':{'width':100,'height':240}},
+    return {'order':['cover','avatar','identity','bio','save','contacts','carousel','daisy'], 'buttonOrder':[2,0,1],
+            'blocks':{'identity':{'width':100,'height':0},'carousel':{'width':100,'height':240}},
             'buttons':{str(i):{'width':25,'shape':'square','radius':12} for i in range(4)},
             'carousel':{'visible':1,'height':240,'fit':'contain','aspect':'custom'}}
 
@@ -19,7 +20,8 @@ class LayoutSchemaTests(SimpleTestCase):
         self.assertFalse(list(VALIDATOR.iter_errors({**base,'layout':sizes()})))
         for layout in ({'blocks':{'identity':{'width':900}}}, {'blocks':{'identity':{'height':-1}}},
                        {'blocks':{'identity':{'position':'absolute'}}}, {'blocks':{'unknown':{'width':50}}},
-                       {'buttons':{'30':{'width':50}}}, {'carousel':{'visible':100}}, {'carousel':{'fit':'url(javascript:1)'}}):
+                       {'buttons':{'30':{'width':50}}}, {'carousel':{'visible':100}}, {'carousel':{'fit':'url(javascript:1)'}},
+                       {'order':['bio','bio']}, {'order':['unknown']}, {'buttonOrder':[0,0]}, {'buttonOrder':[30]}):
             self.assertTrue(list(VALIDATOR.iter_errors({**base,'layout':layout})),layout)
 
 

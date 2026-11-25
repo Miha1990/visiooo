@@ -1,6 +1,6 @@
 {% extends 'base.html' %}{% load static %}
 {% block title %}Редактор — Визитка{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="{% static 'card-builder.css' %}"><script src="{% static 'card-embeds.js' %}" defer></script><script src="{% static 'card-builder.js' %}" defer></script><script src="{% static 'client-preview.js' %}" defer></script><script src="{% static 'client-editor.js' %}" defer></script>{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'card-builder.css' %}"><link rel="stylesheet" href="{% static 'card-inline.css' %}"><script src="{% static 'card-block-examples.js' %}" defer></script><script src="{% static 'card-embeds.js' %}" defer></script><script src="{% static 'card-builder.js' %}" defer></script><script src="{% static 'client-preview.js' %}" defer></script><script src="{% static 'client-editor.js' %}" defer></script><script src="{% static 'card-inline.js' %}" defer></script>{% endblock %}
 {% block content %}
 <section class="shell editor" data-view="{{ initial_view|default:'edit' }}" data-current-address="{{ card.public_id }}" data-address-check="{% url 'card_address_available' card.pk %}">
   <a class="back-link" href="/app/cards">Мои визитки</a>
