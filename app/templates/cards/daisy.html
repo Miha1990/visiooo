@@ -1,5 +1,5 @@
 {% load card_tags %}{% daisy_buttons as petals %}{% if preview or petals %}
 <section class="contact-daisy" data-daisy data-layout-block="daisy" aria-label="Контакты по кругу" {% if not petals %}hidden{% endif %}>
-  <button type="button" class="daisy-center" data-daisy-toggle aria-expanded="false">{{ content.daisy.label|default:'Контакты' }}</button>
+  <button type="button" class="daisy-center" data-daisy-toggle aria-expanded="false"><svg class="daisy-center-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2ZM3 8h4M3 13h4M3 18h4M10 18c0-4 7-4 7 0M15.5 10a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"/></svg><span class="daisy-center-label">{{ content.daisy.label|default:'Контакты' }}</span></button>
   <div class="daisy-petals">{% for button in petals %}<a class="daisy-petal" href="{{ button.href }}" {% if button.external %}target="_blank" rel="noopener noreferrer"{% endif %}{% if button.download %} download{% if not button.value %} data-local-file{% endif %}{% endif %} aria-label="{{ button.label }}" tabindex="-1" aria-hidden="true"><img src="{{ button.icon }}" width="24" height="24" alt=""><span>{{ button.label }}</span></a>{% endfor %}</div>
 </section>{% endif %}

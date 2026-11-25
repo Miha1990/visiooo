@@ -1,5 +1,6 @@
 /* Responsive sizes, bounded to the card width; editor handles never reach public markup. */
 (() => {
+  const scriptUrl=document.currentScript?.src;
   const states=new WeakMap(),daisies=new WeakMap(),widths=[25,33,50,66,75,100],counts=[1,1.5,2,2.5,3,4];
   const labels={cover:'Обложка',logo:'Логотип',avatar:'Фото',identity:'Имя и информация',bio:'О себе',save:'Сохранение контакта',business:'График и статус',contacts:'Контакты',socials:'Соцсети',carousel:'Карусель',video:'Видео',document:'Файл',map:'Карта',daisy:'Ромашка'};
   const node=(tag,attrs={},text)=>{const e=document.createElement(tag);for(const [k,v]of Object.entries(attrs))e.setAttribute(k,v);if(text!==undefined)e.textContent=text;return e;};
@@ -51,8 +52,11 @@
     const el=card.querySelector('[data-daisy]');if(!el)return;
     const signature=JSON.stringify(data);if(el.dataset.signature===signature){setupDaisy(el);return;}
     el.dataset.signature=signature;const list=el.querySelector('.daisy-petals'),local=list.querySelector('[data-local-file]');if(local)card.dataset.localFileUrl=local.getAttribute('href');list.replaceChildren();
-    el.querySelector('[data-daisy-toggle]').textContent=data.label||'Контакты';
-    const base=new URL('icons/',document.querySelector('script[src*="card-layout.js"]')?.src||location.href);
+    const toggle=el.querySelector('[data-daisy-toggle]');
+    let caption=toggle.querySelector('.daisy-center-label');
+    if(!caption){toggle.replaceChildren();const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');svg.setAttribute('class','daisy-center-icon');const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d','M8 4h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2ZM3 8h4M3 13h4M3 18h4M10 18c0-4 7-4 7 0M15.5 10a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z');svg.append(path);caption=node('span',{class:'daisy-center-label'});toggle.append(svg,caption);}
+    caption.textContent=data.label||'Контакты';
+    const base=new URL('icons/',scriptUrl||location.href);
     for(const item of data.items||[]){const href=window.CardButtons?.href(item,card.dataset.localFileUrl||'');if(!href)continue;
       const a=node('a',{class:'daisy-petal',href,'aria-label':item.label,tabindex:'-1','aria-hidden':'true'});
       if(!href.startsWith('tel:')&&!href.startsWith('mailto:')){a.target='_blank';a.rel='noopener noreferrer';}if(item.kind==='file')a.download='';
