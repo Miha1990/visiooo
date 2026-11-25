@@ -9,7 +9,7 @@
   for(const [slot,title]of [['logo','Лого'],['header','Обложка'],['avatar','Фото']]){const button=node('button',{type:'button'},'+ '+title);button.addEventListener('click',()=>editor.querySelector(`[data-image-slot="${slot}"] input[type=file],.builder-image-${slot} input[type=file]`)?.click());actions.append(button);}
   const panel=editor.querySelector('.size-panel'),oldToggle=editor.querySelector('[data-size-mode]');
   host.append(actions,hint);if(panel)host.append(panel);host.append(preview,status);form.prepend(host);editor.classList.add('inline-builder');if(oldToggle)oldToggle.hidden=true;
-  const empty=new Map();let syncing=false;
+  const empty=new Map();let syncing=false,pendingContact=null;
   const input=name=>form.elements.namedItem(name),value=name=>input(name)?.value.trim()||'';
   function hasContent(key){if(key==='carousel')return Boolean(card.querySelector('.carousel-slide'));if(key==='video')return Boolean(window.CardEmbeds?.video(window.WebLinks.normalize(value('video_url')),window.WebLinks.normalize(value('video_player'))));if(key==='map')return Boolean(value('map_address'));if(key==='daisy'){try{return (JSON.parse(input('daisy_data').value||'{}').items||[]).length>0;}catch{return false;}}return true;}
   function persist(){const source=input('layout_data');source.value=JSON.stringify(layout.get(card));source.dispatchEvent(new Event('input',{bubbles:true}));}
@@ -26,11 +26,28 @@
       }
       block.hidden=false;
     }
-    const grid=card.querySelector('.contact-actions'),wrapper=grid?.closest('[data-design-block="contacts"]')||grid;
-    if(grid){grid.querySelectorAll('[data-empty-contact]').forEach(el=>el.remove());let count=0;try{count=JSON.parse(input('button_items').value||'[]').length;}catch{}
-      if(editing&&!count){for(let i=0;i<2;i++){const button=node('button',{type:'button','data-empty-contact':'','data-inline-edit':'contacts',class:'inline-add-contact','aria-label':'Добавить контакт'},'+');button.addEventListener('click',()=>api.choose());grid.append(button);}grid.hidden=false;wrapper.hidden=false;}else if(!count){grid.hidden=true;wrapper.hidden=true;}
-    }
+    contactSlots(editing);
   }
+  function contactSlots(editing=editor.dataset.view!=='preview'){
+    const grid=card.querySelector('.contact-actions');if(!grid)return;const wrapper=grid.closest('[data-design-block="contacts"]')||grid;
+    grid.querySelectorAll('[data-empty-contact]').forEach(el=>el.remove());let count=0;try{count=JSON.parse(input('button_items').value||'[]').length;}catch{}
+    if(!editing){if(!count){grid.hidden=true;wrapper.hidden=true;}return;}
+    if(count>=30)return;
+    const buttons=[...grid.querySelectorAll(':scope>[data-layout-button]')],last=buttons.at(-1),config=last?layout.get(card).buttons?.[last.dataset.layoutButton]||{}:{};
+    const computed=last?getComputedStyle(last):null,span=(computed?.gridColumnStart+' '+computed?.gridColumnEnd).match(/span\s+(\d+)/)?.[1]|| (card.classList.contains('layout-custom')?6:3);
+    for(let i=0;i<(buttons.length?1:2);i++){
+      const button=node('button',{type:'button','data-empty-contact':'','data-inline-edit':'contacts',class:'inline-add-contact','aria-label':'Добавить контакт или соцсеть',title:'Добавить контакт или соцсеть'},'+');
+      button.style.setProperty('--add-span',span);button.style.setProperty('--add-radius',computed?.borderRadius||'20px');
+      const height=last?.getBoundingClientRect().height;if(height)button.style.setProperty('--add-height',height+'px');
+      button.addEventListener('click',()=>{const width=config.width||Number(last?.dataset.sizeWidth)||50,shape=config.shape||(last?.classList.contains('has-custom-size')?'auto':'square');pendingContact={count,config:{...config,width,shape,...(shape==='auto'?{height:config.height||Math.round(height)||0}:{})}};api.choose();});grid.append(button);
+    }
+    grid.hidden=false;wrapper.hidden=false;
+  }
+  // Keep the new contact the same size as the empty tile the user tapped.
+  form.addEventListener('input',event=>{if(event.target.name!=='button_items'||!pendingContact)return;let items;try{items=JSON.parse(event.target.value);}catch{return;}if(items.length>pendingContact.count){const config=layout.get(card);config.buttons??={};for(let i=pendingContact.count;i<items.length;i++)config.buttons[i]={...pendingContact.config};input('layout_data').value=JSON.stringify(config);layout.set(card,config);}pendingContact=null;},true);
+  // A resize can change a tile without changing form fields until the gesture ends.
+  card.addEventListener('card:layout-applied',()=>contactSlots());
+  editor.addEventListener('close',()=>{setTimeout(()=>{if(!editor.querySelector('dialog[open]'))pendingContact=null;},0);},true);
   function edit(key,index){if(index!==undefined)api.choose('all',Number(index));else if(['identity','bio'].includes(key))api.profile();else if(['cover','avatar','logo'].includes(key))editor.querySelector(`.builder-image-${key==='cover'?'header':key} input[type=file]`)?.click();else if(key==='daisy')api.daisy();else if(['carousel','video','map','document'].includes(key))api.openMedia(key);else if(key==='business')api.features();else api.choose();}
   function keyFor(el){return el.hasAttribute('data-layout-button')?'button:'+el.dataset.layoutButton:el.dataset.layoutBlock;}
   function peers(el){return el.hasAttribute('data-layout-button')?[...el.parentElement.querySelectorAll(':scope>[data-layout-button]')]:[...card.querySelectorAll(':scope>[data-layout-block="cover"],:scope>[data-layout-block="avatar"],.contact-body>[data-layout-block]')];}

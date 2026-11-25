@@ -72,6 +72,7 @@
     if(carousel){carousel.dataset.customSize=String(Boolean(settings));carousel.dataset.photoAspect=settings?.aspect||'custom';if(settings){carousel.dataset.visible=String(settings.visible||1);carousel.style.setProperty('--custom-slide-height',(settings.height||220)+'px');carousel.style.setProperty('--custom-slide-fit',settings.fit||'cover');}window.CardWidgets?.refresh(card);}
     renderDaisy(card,state.daisy);
     state.handles?.();
+    card.dispatchEvent(new Event('card:layout-applied'));
   }
   window.CardLayout={refresh:apply,removeButton(form,index){const card=document.querySelector('.phone-preview .contact-card'),state=states.get(card);if(!state)return;const next={};for(const [key,value]of Object.entries(state.layout.buttons||{})){const i=Number(key);if(i!==index)next[i>index?i-1:i]=value;}state.layout.buttons=next;if(state.layout.buttonOrder)state.layout.buttonOrder=state.layout.buttonOrder.filter(i=>i!==index).map(i=>i>index?i-1:i);const input=form.elements.namedItem('layout_data');if(input)input.value=JSON.stringify(state.layout);},setDaisy(card,data){const state=states.get(card)||read(card);state.daisy=data;states.set(card,state);renderDaisy(card,data);}};
   window.CardLayout.get=card=>states.get(card)?.layout||{};
