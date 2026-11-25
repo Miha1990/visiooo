@@ -43,7 +43,7 @@
       const button=node('button',{type:'button','data-empty-contact':'','data-inline-edit':'contacts',class:'inline-add-contact','aria-label':'Добавить контакт или соцсеть',title:'Добавить контакт или соцсеть'},'+');
       button.style.setProperty('--add-span',span);button.style.setProperty('--add-radius',computed?.borderRadius||'20px');
       const height=last?.getBoundingClientRect().height;if(height)button.style.setProperty('--add-height',height+'px');
-      button.addEventListener('click',()=>{const width=config.width||Number(last?.dataset.sizeWidth)||50,shape=config.shape||(last?.classList.contains('has-custom-size')?'auto':'square');pendingContact={count,config:{...config,width,shape,...(shape==='auto'?{height:config.height||Math.round(height)||0}:{})}};api.choose();});grid.append(button);
+      button.addEventListener('click',()=>{const width=config.width||Number(last?.dataset.sizeWidth)||50,shape=config.shape||(computed?.aspectRatio==='auto'?'auto':'square');pendingContact={count,config:{...config,width,shape,...(shape==='auto'?{height:config.height||Math.round(height)||0}:{})}};api.choose();});grid.append(button);
     }
     grid.hidden=false;wrapper.hidden=false;
   }

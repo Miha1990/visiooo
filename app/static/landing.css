@@ -167,6 +167,8 @@
 .m-example-frame .social-icon img { width: 19px; height: 19px; }
 .m-example-open { display: flex; justify-content: space-between; gap: 15px; padding: 16px 3px; font-size: 13px; font-weight: 600; color: #2457db; }
 .m-examples-disclosure { max-width: 810px; margin: 25px auto 0; font-size: 11px; color: #596b72; text-align: center; }
+.m-live-examples{width:min(350px,100%);margin:auto;filter:drop-shadow(0 20px 32px #1a332914);text-align:left}.m-live-examples [data-demo-panel][hidden]{display:none!important}.m-live-examples .contact-card{border:1px solid #273c2912}.m-live-example-open{display:block;padding:14px 0 0;text-align:center;font:500 12px/1.5 'Segoe UI',system-ui,sans-serif;color:#435c50}.m-example-frame{border-radius:24px;border:0;box-shadow:0 16px 45px #17272d12}.m-example-frame .contact-body{padding-inline:22px}.m-examples-grid{gap:24px;align-items:start}.m-example-open{justify-content:center;color:#385445}
+.m-example-frame .contact-body [data-preview=name]{margin-bottom:0}
 @media(min-width:761px) and (max-width:1050px) { .m-examples-grid { grid-template-columns: 1fr 1fr; } .m-example:last-child { grid-column: 1 / -1; width: calc((100% - 24px)/2); margin: auto; } }
 @media(max-width:1000px) {
   .m-hero { gap: 25px; }

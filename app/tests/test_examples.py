@@ -20,6 +20,10 @@ class ExampleTests(SimpleTestCase):
                 self.assertContains(response, static(f'examples/{slug}-portrait.webp'))
                 self.assertContains(response, 'Демонстрационная визитка')
                 self.assertContains(response, f'/examples/{slug}/contact.vcf')
+                for block in ('carousel','video','document','map'):
+                    self.assertNotContains(response,f'data-design-block="{block}"')
+                self.assertNotContains(response,'contact-detail')
+                self.assertNotContains(response,'avatar-toggle-hint')
 
     def test_only_fixed_examples_are_exposed_and_get_is_required(self):
         for suffix in ['', '/qr.png', '/contact.vcf']:

@@ -37,7 +37,7 @@ class TemplateForm(forms.Form):
     saveLabel = forms.CharField(label='Кнопка сохранения контакта', max_length=60)
     phoneLabel = forms.CharField(label='Кнопка звонка', max_length=60)
     emailLabel = forms.CharField(label='Кнопка письма', max_length=60)
-    socialLabel = forms.CharField(label='Заголовок соцсетей', max_length=60)
+    socialLabel = forms.CharField(label='Заголовок соцсетей', max_length=60, required=False)
     allowAccent = forms.BooleanField(label='Клиент может менять акцентный цвет', required=False)
     allowFont = forms.BooleanField(label='Клиент может менять шрифт', required=False)
 
@@ -83,6 +83,8 @@ class TemplateForm(forms.Form):
             return data
         design = {key: data[key] for key in DEFAULT if key not in ('blocks','icons')}
         design['blocks'] = data['block_order'].split(',')
+        if self.item.draft.get('presetStyle'):
+            design['presetStyle'] = self.item.draft['presetStyle']
         design['icons'] = {role: str(data['icon_'+role].pk) for role, _ in ICON_ROLES if data.get('icon_'+role)}
         design['blockStyles'] = {}
         for key, _ in BLOCKS:

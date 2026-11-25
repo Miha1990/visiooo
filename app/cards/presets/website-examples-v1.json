@@ -1,0 +1,190 @@
+{
+  "designer": {
+    "blocks": [
+      "cover",
+      "avatar",
+      "identity",
+      "bio",
+      "save",
+      "contacts",
+      "socials",
+      "carousel",
+      "video",
+      "document",
+      "map"
+    ],
+    "hidden": [],
+    "accent": "#526C50",
+    "background": "#FFFFFF",
+    "text": "#233027",
+    "font": "ui",
+    "align": "left",
+    "buttonShape": "rounded",
+    "buttonStyle": "filled",
+    "buttonColumns": 1,
+    "iconPosition": "left",
+    "iconSize": 22,
+    "avatarShape": "circle",
+    "avatarSize": 96,
+    "coverHeight": 160,
+    "gap": 18,
+    "radius": 20,
+    "nameSize": 30,
+    "weight": 600,
+    "socialMode": "both",
+    "caption": "",
+    "saveLabel": "Сохранить контакт",
+    "phoneLabel": "Позвонить",
+    "emailLabel": "Написать",
+    "socialLabel": "Соцсети и сайт",
+    "icons": {},
+    "allowAccent": true,
+    "allowFont": false,
+    "sourceId": "75d4fb3d-5668-4a4f-92c2-a8070a95eb21",
+    "carousel": {
+      "photos": [],
+      "visible": 1,
+      "height": 220,
+      "autoplay": false,
+      "interval": 6
+    },
+    "blockStyles": {
+      "contacts": {
+        "align": "left",
+        "iconPosition": "left"
+      },
+      "socials": {
+        "align": "left",
+        "iconPosition": "left"
+      }
+    }
+  },
+  "photographer": {
+    "blocks": [
+      "cover",
+      "avatar",
+      "identity",
+      "bio",
+      "save",
+      "contacts",
+      "socials",
+      "carousel",
+      "video",
+      "document",
+      "map"
+    ],
+    "hidden": [],
+    "accent": "#286B76",
+    "background": "#F4F6F5",
+    "text": "#203437",
+    "font": "ui",
+    "align": "center",
+    "buttonShape": "pill",
+    "buttonStyle": "filled",
+    "buttonColumns": 1,
+    "iconPosition": "left",
+    "iconSize": 22,
+    "avatarShape": "circle",
+    "avatarSize": 112,
+    "coverHeight": 180,
+    "gap": 18,
+    "radius": 24,
+    "nameSize": 30,
+    "weight": 600,
+    "socialMode": "both",
+    "caption": "",
+    "saveLabel": "Сохранить контакт",
+    "phoneLabel": "Позвонить",
+    "emailLabel": "Написать",
+    "socialLabel": "Соцсети и сайт",
+    "icons": {},
+    "allowAccent": true,
+    "allowFont": false,
+    "sourceId": "75d4fb3d-5668-4a4f-92c2-a8070a95eb22",
+    "carousel": {
+      "photos": [],
+      "visible": 1,
+      "height": 220,
+      "autoplay": false,
+      "interval": 6
+    },
+    "blockStyles": {
+      "identity": {
+        "align": "center",
+        "iconPosition": "left"
+      },
+      "bio": {
+        "align": "center",
+        "iconPosition": "left"
+      },
+      "contacts": {
+        "align": "left",
+        "iconPosition": "left"
+      },
+      "socials": {
+        "align": "center",
+        "iconPosition": "left"
+      }
+    }
+  },
+  "property": {
+    "blocks": [
+      "cover",
+      "avatar",
+      "identity",
+      "bio",
+      "save",
+      "contacts",
+      "socials",
+      "carousel",
+      "video",
+      "document",
+      "map"
+    ],
+    "hidden": [],
+    "accent": "#695B4B",
+    "background": "#FFFFFF",
+    "text": "#302C28",
+    "font": "serif",
+    "align": "left",
+    "buttonShape": "rounded",
+    "buttonStyle": "outline",
+    "buttonColumns": 1,
+    "iconPosition": "left",
+    "iconSize": 22,
+    "avatarShape": "rounded",
+    "avatarSize": 88,
+    "coverHeight": 140,
+    "gap": 18,
+    "radius": 12,
+    "nameSize": 32,
+    "weight": 400,
+    "socialMode": "both",
+    "caption": "",
+    "saveLabel": "Сохранить контакт",
+    "phoneLabel": "Позвонить",
+    "emailLabel": "Написать",
+    "socialLabel": "Соцсети и сайт",
+    "icons": {},
+    "allowAccent": true,
+    "allowFont": false,
+    "sourceId": "75d4fb3d-5668-4a4f-92c2-a8070a95eb23",
+    "carousel": {
+      "photos": [],
+      "visible": 1,
+      "height": 220,
+      "autoplay": false,
+      "interval": 6
+    },
+    "blockStyles": {
+      "contacts": {
+        "align": "left",
+        "iconPosition": "left"
+      },
+      "socials": {
+        "align": "left",
+        "iconPosition": "left"
+      }
+    }
+  }
+}

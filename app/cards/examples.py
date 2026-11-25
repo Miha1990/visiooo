@@ -10,23 +10,23 @@ from .vcard import render_vcard
 
 
 EXAMPLES = [
-    {'slug': 'designer', 'label': 'Для творческих профессий', 'style': 'Классика · оливковый',
+    {'slug': 'designer', 'label': 'Для творческих профессий', 'style': 'Форма · светлый редакционный',
      'content': {'name': 'Александра Ким', 'title': 'Бренд-дизайнер', 'company': 'Студия Форма',
-                 'bio': 'Создаю айдентику с характером.\nПомогаю хорошим идеям стать заметными брендами.',
+                 'bio': 'Айдентика и сайты для брендов с характером.', 'emailLabel':'Обсудить проект',
                  'template': 'classic', 'accent': '#526c50', 'email': 'hello@forma.example',
-                 'links': [{'label': 'Портфолио и проекты', 'url': '#example-about'}],
+                 'links': [{'label': 'Портфолио', 'url': '#example-about'}],
                  'socials': {}, 'website': ''}},
-    {'slug': 'photographer', 'label': 'Для личного бренда', 'style': 'Профиль · морской',
-     'content': {'name': 'Марк Волков', 'title': 'Фотограф', 'company': 'Портреты · путешествия · истории',
-                 'bio': 'Сохраняю свет, настроение и настоящие эмоции.\nОткрыт к съёмкам и новым маршрутам.',
+    {'slug': 'photographer', 'label': 'Для личного бренда', 'style': 'Кадр · тёмный атмосферный',
+     'content': {'name': 'Марк Волков', 'title': 'Портретный фотограф', 'company': '',
+                 'bio': 'Живые портреты. Настоящие вы.', 'emailLabel':'Записаться',
                  'template': 'profile', 'accent': '#286b76', 'email': 'shoot@mark.example',
-                 'links': [{'label': 'Посмотреть серии', 'url': '#example-about'}],
+                 'links': [{'label': 'Смотреть съёмки', 'url': '#example-about'}],
                  'socials': {}, 'website': ''}},
-    {'slug': 'property', 'label': 'Для бизнеса и услуг', 'style': 'Минимализм · тёплый графит',
-     'content': {'name': 'Елена Морозова', 'title': 'Консультант по недвижимости', 'company': 'Дома, в которых хочется жить',
-                 'bio': 'Помогаю найти место для новой главы.\nОт первого просмотра до ключей от вашего дома.',
+    {'slug': 'property', 'label': 'Для бизнеса и услуг', 'style': 'Адрес · деловой минимализм',
+     'content': {'name': 'Елена Морозова', 'title': 'Эксперт по недвижимости', 'company': 'Москва и область',
+                 'bio': 'Найду ваш дом. Проведу сделку от просмотра до ключей.', 'emailLabel':'Обсудить покупку',
                  'template': 'minimal', 'accent': '#695b4b', 'email': 'home@elena.example',
-                 'links': [{'label': 'Подбор недвижимости', 'url': '#example-about'}],
+                 'links': [{'label': 'Посмотреть объекты', 'url': '#example-about'}],
                  'socials': {}, 'website': ''}},
 ]
 
@@ -37,11 +37,9 @@ def example_cards():
     for item in items:
         slug = item['slug']
         item['content']['design'] = definition(slug)
+        item['content']['accent'] = item['content']['design']['accent']
         item['assets'] = {'avatar': f'examples/{slug}-portrait.webp',
                           'header': f'examples/{slug}-cover.webp'}
-        # Separate background and header photos demonstrate the independent slots.
-        if slug == 'photographer':
-            item['assets']['background'] = 'examples/designer-cover.webp'
         for slot in item['assets']:
             item['content'][{'avatar': 'avatarAssetId', 'header': 'headerAssetId',
                               'background': 'backgroundAssetId'}[slot]] = 'example'
@@ -50,9 +48,8 @@ def example_cards():
         about = f'{settings.PUBLIC_BASE_URL}/examples/{slug}#example-about'
         for link in item['content']['links']:
             link['url'] = about
-        networks = ['telegram', 'instagram'] if slug != 'property' else ['telegram', 'avito', 'vk']
+        networks = ['telegram', 'instagram'] if slug == 'designer' else ['telegram', 'vk'] if slug == 'photographer' else ['telegram', 'avito']
         item['content']['socials'] = {network: about for network in networks}
-        item['content']['website'] = about
     return items
 
 

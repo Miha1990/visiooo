@@ -14,12 +14,18 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         from cards.builtin_templates import EXAMPLE_TEMPLATES, definition as example_definition
+        old_examples = json.loads((settings.BASE_DIR/'cards'/'presets'/'website-examples-v1.json').read_text(encoding='utf-8'))
         for position, (slug, (pk, name, description)) in enumerate(EXAMPLE_TEMPLATES.items(), 1):
             layout = example_definition(slug)
-            CardTemplate.objects.get_or_create(pk=pk, defaults={
+            item, created = CardTemplate.objects.get_or_create(pk=pk, defaults={
                 'name': name, 'description': description, 'category': 'Примеры с сайта',
                 'draft': layout, 'published': deepcopy(layout), 'published_version': 1,
                 'status': 'published', 'position': position})
+            if not created:
+                item = CardTemplate.objects.select_for_update().get(pk=pk)
+                if item.status == 'published' and item.draft == item.published == old_examples[slug]:
+                    item.name=name;item.description=description;item.draft=deepcopy(layout);item.published=deepcopy(layout)
+                    item.version+=1;item.published_version+=1;item.save()
         design = validate_design(definition())
         for pk, filename in PHOTO_ASSETS.items():
             TemplatePhoto.objects.get_or_create(pk=pk, defaults={

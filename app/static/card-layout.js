@@ -29,7 +29,8 @@
   function positionAvatar(card,state){
     const avatar=card.querySelector('.contact-body>[data-layout-block="avatar"]');if(!avatar)return;
     const previous=avatar.previousElementSibling,cover=previous?.dataset.layoutBlock==='cover'&&!previous.hidden?previous:null;
-    const photo=avatar.querySelector('.contact-avatar:not(.avatar-photo)')||avatar,amount=cover&&!avatar.hidden&&card.classList.contains('layout-custom')?state.layout.avatarOverlap??50:0;
+    const composed=['forma','estate'].includes(card.dataset.presetStyle)&&card.dataset.customGeometry!=='true';
+    const photo=avatar.querySelector('.contact-avatar:not(.avatar-photo)')||avatar,amount=cover&&!avatar.hidden&&!composed&&card.classList.contains('layout-custom')?state.layout.avatarOverlap??50:0;
     avatar.classList.toggle('avatar-on-cover',amount>0);avatar.style.setProperty('--avatar-overlap',Math.round(photo.getBoundingClientRect().height*amount/100)+'px');
     if(amount>0){const p=photo.getBoundingClientRect(),r=cover.getBoundingClientRect(),previousX=parseFloat(avatar.style.getPropertyValue('--avatar-offset-x'))||0,base=p.left-previousX;avatar.style.setProperty('--avatar-offset-x',Math.round(r.left+Math.max(0,r.width-p.width)*(state.layout.avatarX??50)/100-base)+'px');}else avatar.style.setProperty('--avatar-offset-x','0px');
     if(typeof ResizeObserver==='function'&&!state.avatarObserver){state.avatarObserver=new ResizeObserver(()=>positionAvatar(card,state));state.avatarObserver.observe(photo);state.avatarObserver.observe(avatar);if(cover)state.avatarObserver.observe(cover);}
@@ -75,6 +76,7 @@
     let state=states.get(card);if(!state){state=read(card);states.set(card,state);}
     const active=Boolean(Object.keys(state.layout.blocks||{}).length||Object.keys(state.layout.buttons||{}).length||state.layout.carousel||state.layout.order?.length||state.layout.buttonOrder?.length);
     card.classList.toggle('layout-custom',active);
+    card.dataset.customGeometry=String(Boolean(state.layout.order?.length||Object.keys(state.layout.blocks||{}).length));
     if(active&&card.dataset.canvasEnabled==='true'){card.dataset.previousCanvas='true';card.dataset.canvasEnabled='false';}
     else if(!active&&card.dataset.previousCanvas==='true'){card.dataset.canvasEnabled='true';delete card.dataset.previousCanvas;}
     identify(card);

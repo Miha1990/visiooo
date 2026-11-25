@@ -355,6 +355,7 @@
           "type": "string",
           "maxLength": 60
         },
+        "presetStyle":{"enum":["forma","frame","estate"]},
         "phoneLabel": {
           "type": "string",
           "maxLength": 60

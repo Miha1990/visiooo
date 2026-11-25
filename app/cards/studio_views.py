@@ -188,6 +188,7 @@ def catalog(request, pk):
             definition.update(sourceId=str(item.pk), sourceVersion=item.published_version, sourceName=item.name)
             content = deepcopy(card.draft)
             content.update(design=definition, accent=definition['accent'])
+            content.pop('layout', None)
             save_card(request.user, pk, int(request.POST.get('draft_version','0')), content)
         except (ValueError, ValidationError, Conflict) as error:
             messages.error(request, ' '.join(error.messages) if isinstance(error, ValidationError) else 'Черновик изменён. Обновите страницу и повторите выбор.')
