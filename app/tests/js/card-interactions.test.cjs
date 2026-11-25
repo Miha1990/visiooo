@@ -53,9 +53,10 @@ test('failed QR request returns to photo and allows retry', () => {
 function nfc({local = false, supported = true, write = async () => {}} = {}) {
   const ids = Object.fromEntries(['nfc-write', 'nfc-status', 'nfc-write-consent', 'nfc-cancel'].map(id => [id, element()]));
   ids['nfc-write'].dataset = {localOnly: String(local), url: 'https://cards.example.com/p/fixed-id'};
-  const window = {isSecureContext: true};
+  const window = {isSecureContext: true, addEventListener() {}};
   if (supported) window.NDEFReader = class {write(...args) {return write(...args);}};
-  vm.runInNewContext(source('physical.js'), {document: {getElementById: id => ids[id]},
+  vm.runInNewContext(source('physical.js'), {document: {getElementById: id => ids[id], querySelector: () => null, querySelectorAll: () => []},
+    sessionStorage: {getItem: key => key === 'physical-phone' ? 'android' : 'nfc', setItem() {}},
     window, AbortController, setTimeout: () => 1, clearTimeout: () => {}});
   return ids;
 }
@@ -76,7 +77,7 @@ test('NFC writes the exact stable URL as a URL record', async () => {
   assert.equal(message.records[0].recordType, 'url');
   assert.equal(message.records[0].data, 'https://cards.example.com/p/fixed-id');
   assert.equal(options.overwrite, true);
-  assert.match(ids['nfc-status'].textContent, /Ссылка записана/);
+  assert.match(ids['nfc-status'].textContent, /Готово/);
   assert.equal(ids['nfc-write'].disabled, false);
 });
 

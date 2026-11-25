@@ -1,35 +1,36 @@
 {% extends 'base.html' %}{% load static %}
 {% block title %}{{ item.label }} — QR / NFC{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'physical.css' %}"><script src="{% static 'physical.js' %}" defer></script>{% endblock %}
 {% block content %}
 <section class="shell dashboard">
   <a class="back-link" href="{% url 'physical_index' %}">Физические визитки</a>
   <h1>{{ item.label }}</h1>
+  {% include 'cards/physical_guide.html' %}
   <div class="physical-grid">
-    <div class="panel"><h2>Привязка</h2><p class="muted">Выберите, какую электронную визитку откроют QR и NFC этой карточки. Изменения привязки действуют сразу.</p>
+    <div class="panel"><h2>Электронная визитка</h2>
       {% if item.blocked %}<p class="notice">Физическая визитка заблокирована администратором.</p>{% endif %}
       <form method="post" class="stack">{% csrf_token %}{{ form.as_div }}<button class="button" {% if item.blocked %}disabled{% endif %}>Сохранить привязку</button></form>
-      <p class="muted micro">Снимите «Включить QR и NFC» или выберите «Без привязки», чтобы закрыть ссылку. Получатели увидят только опубликованную визитку с активным Профи.</p>
-      <details><summary>История привязки</summary><ul class="micro">{% for event in events %}<li>{{ event.created_at|date:'d.m.Y H:i' }} · {% if event.action == 'created' %}Создана{% elif event.action == 'bound' %}Привязана{% else %}Отключена{% endif %}{% if event.target_card and event.target_card.status != 'deleted' %} · {{ event.target_card.draft.name }}{% endif %}</li>{% endfor %}</ul></details>
+      <p class="muted micro">Для посетителей нужна опубликованная визитка и действующая подписка.</p>
     </div>
     <div class="panel share-panel">
-      <h2>QR для печати и ссылка для NFC</h2>
+      <div data-physical-qr hidden><h2>QR-код карточки</h2>
       <img class="physical-qr" src="{% url 'physical_qr' item.pk %}" alt="QR физической визитки" width="240" height="240">
       <p><a href="{% url 'physical_qr' item.pk %}" download="physical-card-qr.png">Скачать QR PNG</a></p>
+      </div>
+      <details class="physical-link-details"><summary>Ссылка карточки</summary>
       <label for="physical-url">Одна ссылка для QR и NFC</label><input id="physical-url" value="{{ physical_url }}" readonly>
       <div class="share-buttons"><button type="button" class="text-button" data-copy="physical-url">Копировать ссылку</button><a class="text-button" href="{{ physical_url }}" target="_blank" rel="noopener">Проверить ссылку</a></div>
       <p id="share-status" role="status" class="micro"></p>
+      </details>
       {% if local_only %}<p class="notice">Это локальная ссылка. Для QR и NFC, которые открываются на других телефонах, сначала нужен публичный домен сервиса.</p>{% endif %}
-      <div class="nfc-panel">
+      <div class="nfc-panel" data-physical-nfc hidden>
         <h3>Записать в NFC</h3>
-        <p class="micro muted">В поддерживаемом браузере на телефоне нажмите кнопку и приложите вашу NFC-карточку. Либо скопируйте ссылку и запишите её как URL с помощью приложения для NFC.</p>
         <label class="check-label"><input type="checkbox" id="nfc-write-consent"> Записать эту ссылку в мою NFC-метку, заменив предыдущую запись</label>
         <button type="button" class="button" id="nfc-write" data-url="{{ physical_url }}" data-local-only="{{ local_only|yesno:'true,false' }}">Записать ссылку в NFC</button>
         <button type="button" class="text-button" id="nfc-cancel" hidden>Отменить запись</button>
         <p id="nfc-status" role="status" class="micro muted"></p>
-        <p class="micro muted">Не блокируйте метку от перезаписи, пока не проверите NFC и напечатанный QR. Факт записи проверяется на самом телефоне.</p>
       </div>
     </div>
   </div>
 </section>
-<script src="{% static 'physical.js' %}" defer></script>
 {% endblock %}

@@ -1,13 +1,14 @@
-{% extends 'base.html' %}
+{% extends 'base.html' %}{% load static %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'physical.css' %}"><script src="{% static 'physical.js' %}" defer></script>{% endblock %}
 {% block title %}Физические визитки QR / NFC — Визитка{% endblock %}
 {% block content %}
 <section class="shell dashboard">
   <a class="back-link" href="{% url 'dashboard' %}">Мои визитки</a>
   <h1>Физические визитки<span class="blue">.</span></h1>
-  <p class="lead">Одна постоянная ссылка для QR на карточке и её NFC-чипа. Электронную визитку по этой ссылке можно менять здесь.</p>
+  {% include 'cards/physical_guide.html' %}
   <div class="physical-grid">
-    <div class="panel"><h2>Добавить QR / NFC</h2>
-      <p class="muted micro">Создайте ссылку перед печатью QR и записью NFC. Доступно до 20 физических визиток.</p>
+    <div class="panel"><h2>Новая карточка</h2>
+      <p class="muted micro">Выберите визитку, которую будет открывать карточка.</p>
       <form method="post" class="stack">{% csrf_token %}{{ form.as_div }}<button class="button">Создать привязку</button></form>
     </div>
     <div class="physical-list">
@@ -15,9 +16,9 @@
       <article class="panel"><h2>{{ item.label }}</h2>
         <p>{% if item.blocked %}<span class="status danger">Заблокирована</span>{% elif not item.enabled or not item.card or item.card.status == 'deleted' %}<span class="status">Отключена</span>{% else %}<span class="status success">Привязка включена</span>{% endif %}</p>
         <p class="muted">{% if item.card and item.card.status != 'deleted' %}Открывает: {{ item.card.draft.name }}{% else %}Выберите электронную визитку{% endif %}</p>
-        <a class="card-edit" href="{% url 'physical_edit' item.pk %}">QR, NFC и настройки</a>
+        <a class="card-edit" href="{% url 'physical_edit' item.pk %}">Открыть привязку</a>
       </article>
-    {% empty %}<div class="panel"><h2>Подготовьте свою первую карточку</h2><p class="muted">После создания скачайте QR и запишите ту же ссылку в NFC. Публикация электронной визитки и активный Профи нужны для доступа получателей.</p></div>{% endfor %}
+    {% empty %}<div class="panel"><h2>Здесь появятся ваши карточки</h2><p class="muted">Создайте первую привязку с помощью формы.</p></div>{% endfor %}
     </div>
   </div>
 </section>

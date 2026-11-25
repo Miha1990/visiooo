@@ -18,7 +18,7 @@ class PhysicalCardForm(forms.Form):
                             widget=forms.TextInput(attrs={'placeholder': 'Например, моя NFC-визитка'}))
     card = forms.ModelChoiceField(label='Электронная визитка', queryset=Card.objects.none(), required=False,
                                  empty_label='Без привязки — ссылка отключена')
-    enabled = forms.BooleanField(label='Включить QR и NFC', required=False, initial=True)
+    enabled = forms.BooleanField(label='Включить карточку', required=False, initial=True)
     version = forms.IntegerField(min_value=1, required=False, widget=forms.HiddenInput)
 
     def __init__(self, *args, workspace, **kwargs):
