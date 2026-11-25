@@ -8,7 +8,11 @@
   const host=node('section',{class:'inline-card-host','aria-label':'Редактирование блоков визитки'}),actions=node('div',{class:'inline-media-actions'}),hint=node('p',{class:'inline-edit-hint'},'Нажмите на блок, чтобы выбрать. Удерживайте и перетаскивайте, чтобы переместить. Тяните за края или уголки, чтобы изменить размер.'),status=node('p',{class:'inline-order-status',role:'status','aria-live':'polite'});
   for(const [slot,title]of [['logo','Лого'],['header','Обложка'],['avatar','Фото']]){const button=node('button',{type:'button'},'+ '+title);button.addEventListener('click',()=>editor.querySelector(`[data-image-slot="${slot}"] input[type=file],.builder-image-${slot} input[type=file]`)?.click());actions.append(button);}
   const panel=editor.querySelector('.size-panel'),oldToggle=editor.querySelector('[data-size-mode]');
-  host.append(actions,hint);if(panel)host.append(panel);host.append(preview,status);form.prepend(host);editor.classList.add('inline-builder');if(oldToggle)oldToggle.hidden=true;
+  const modes=node('div',{class:'inline-editor-modes',role:'group','aria-label':'Режим редактирования'});
+  editor.dataset.editMode='simple';
+  const advanced=()=>editor.dataset.editMode==='advanced';
+  for(const [mode,label]of [['simple','Простой'],['advanced','Продвинутый']]){const button=node('button',{type:'button','data-edit-mode':mode,'aria-pressed':String(mode==='simple')},label);button.addEventListener('click',()=>{endGesture();suppressClickUntil=0;editor.dataset.editMode=mode;status.textContent='';sync();});modes.append(button);}
+  host.append(modes,actions,hint);if(panel)host.append(panel);host.append(preview,status);form.prepend(host);editor.classList.add('inline-builder');if(oldToggle)oldToggle.hidden=true;
   const empty=new Map();let syncing=false,pendingContact=null;
   const input=name=>form.elements.namedItem(name),value=name=>input(name)?.value.trim()||'';
   function hasContent(key){if(key==='carousel')return Boolean(card.querySelector('.carousel-slide'));if(key==='video')return Boolean(window.CardEmbeds?.video(window.WebLinks.normalize(value('video_url')),window.WebLinks.normalize(value('video_player'))));if(key==='map')return Boolean(value('map_address'));if(key==='daisy'){try{return (JSON.parse(input('daisy_data').value||'{}').items||[]).length>0;}catch{return false;}}return true;}
@@ -67,7 +71,7 @@
   function locate(g){clearDrop();const list=peers(g.el);g.target=document.elementsFromPoint(g.x,g.y).map(el=>el.closest('[data-layout-button],[data-layout-block]')).find(el=>el&&el!==g.el&&list.includes(el))||null;if(g.target){const r=g.target.getBoundingClientRect();g.after=g.el.hasAttribute('data-layout-button')?g.x>r.x+r.width/2:g.y>r.y+r.height/2;if(g.key==='avatar'&&keyFor(g.target)==='cover'){const photo=g.el.querySelector('.contact-avatar:not(.avatar-photo)')||g.el,h=photo.getBoundingClientRect().height||88;g.overlap=Math.round(Math.max(10,Math.min(100,(r.bottom-g.y+h/2)/h*100)));}g.target.classList.add('block-drop-target');g.target.dataset.dropSide=g.after?'after':'before';}}
   function dragFrame(){const g=gesture;if(!g?.active)return;const speed=g.y<90?-10:g.y>innerHeight-90?10:0;if(speed)window.scrollBy({top:speed,behavior:'instant'});const bounds=card.getBoundingClientRect(),dx=Math.max(bounds.left-g.rect.left,Math.min(bounds.right-g.rect.right,g.x-g.startX));g.el.style.translate=`${dx}px ${g.y-g.startY+window.scrollY-g.scrollY}px`;locate(g);g.frame=requestAnimationFrame(dragFrame);}
   function beginGesture(event,x,y,id,touch){
-    if(editor.dataset.view==='preview'||event.target.closest('.size-handle,.inline-edit-block,.block-move-grip,input,textarea,select,[data-empty-contact]'))return;
+    if(!advanced()||editor.dataset.view==='preview'||event.target.closest('.size-handle,.inline-edit-block,.block-move-grip,input,textarea,select,[data-empty-contact]'))return;
     const el=event.target.closest('[data-layout-button],[data-layout-block]');if(!el||!peers(el).includes(el))return;endGesture();
     const g=gesture={el,key:keyFor(el),startX:x,startY:y,x,y,id,touch,active:false,target:null};
     g.timer=setTimeout(()=>{if(gesture!==g||!el.isConnected)return;g.active=true;g.rect=el.getBoundingClientRect();g.scrollY=window.scrollY;layout.select(card,el);el.classList.add('block-moving');card.classList.add('block-dragging');navigator.vibrate?.(15);status.textContent='Перетаскивайте блок на нужное место.';g.frame=requestAnimationFrame(dragFrame);},450);
@@ -84,7 +88,8 @@
   window.addEventListener('blur',()=>endGesture());window.addEventListener('pagehide',()=>endGesture());
   window.addEventListener('scroll',()=>{if(gesture&&!gesture.active)endGesture();},{passive:true});
   window.addEventListener('keydown',event=>{if(event.key==='Escape')endGesture();});
-  card.addEventListener('contextmenu',event=>{if(editor.dataset.view!=='preview'&&event.target.closest('[data-layout-block],[data-layout-button]'))event.preventDefault();});
+  card.addEventListener('contextmenu',event=>{if(advanced()&&editor.dataset.view!=='preview'&&event.target.closest('[data-layout-block],[data-layout-button]'))event.preventDefault();});
+  card.addEventListener('click',event=>{if(advanced()||editor.dataset.view==='preview'||event.target.closest('[data-inline-edit],input,textarea,select'))return;const block=event.target.closest('[data-layout-button],[data-layout-block]');if(!block)return;event.preventDefault();event.stopImmediatePropagation();edit(block.dataset.layoutBlock,block.dataset.layoutButton);},true);
   // Suppress the synthetic click after a hold, before the layout click handler sees it.
   form.addEventListener('click',event=>{if(Date.now()<suppressClickUntil&&card.contains(event.target)){event.preventDefault();event.stopImmediatePropagation();}},true);
   function grip(el){
@@ -102,10 +107,10 @@
     for(const el of card.querySelectorAll('[data-layout-block],[data-layout-button]')){
       if(el.hidden||el.closest('[hidden]'))continue;const key=keyFor(el);if(key==='logo')continue;
       if(!el.querySelector(':scope>.inline-edit-block')){const button=node('button',{type:'button',class:'inline-edit-block','data-inline-edit':key,'aria-label':'Изменить '+(labels[key]||'контакт')},'Изменить');button.addEventListener('click',event=>{event.stopPropagation();edit(el.dataset.layoutBlock,el.dataset.layoutButton);});el.append(button);}
-      if(peers(el).includes(el))grip(el);
+      if(advanced()&&peers(el).includes(el))grip(el);
     }
   }
-  function sync(){if(syncing)return;syncing=true;try{const editing=editor.dataset.view!=='preview';if(!editing)endGesture();layout.refresh(card);placeholders(editing);layout.setEditing(card,editing);controls(editing);actions.hidden=!editing;hint.hidden=!editing;if(panel&&!editing)panel.hidden=true;}finally{syncing=false;}}
+  function sync(){if(syncing)return;syncing=true;try{const editing=editor.dataset.view!=='preview',design=editing&&advanced();if(!design)endGesture();layout.refresh(card);placeholders(editing);layout.setEditing(card,design);card.classList.toggle('content-editing',editing&&!design);controls(editing);modes.hidden=!editing;actions.hidden=!editing;hint.hidden=!editing;hint.textContent=advanced()?'Нажмите на блок, чтобы выбрать. Удерживайте и перетаскивайте, чтобы переместить. Тяните за края или уголки, чтобы изменить размер.':'Нажмите на фото или блок, чтобы заполнить данные. Расположение и форма остаются как в шаблоне.';modes.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.editMode===editor.dataset.editMode)));if(panel&&!design)panel.hidden=true;}finally{syncing=false;}}
   form.addEventListener('card:insert-block',event=>insert(event.detail.key));form.addEventListener('card:editor-view',sync);form.addEventListener('input',sync);form.addEventListener('change',sync);
   const observer=new MutationObserver(()=>{if(!syncing)sync();});observer.observe(editor,{attributes:true,attributeFilter:['data-view']});
   sync();
