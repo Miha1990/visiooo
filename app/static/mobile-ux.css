@@ -1,0 +1,55 @@
+/* Shared mobile ergonomics. Card geometry remains owned by the chosen template. */
+@media(max-width:780px){
+  .header nav>a:not(.button){min-width:44px;min-height:44px;padding:6px 2px;justify-content:center;font-size:14px}
+  .auth-layout{padding:24px 0 36px;gap:20px}
+  .auth-layout>div:first-child>.eyebrow{display:none}
+  .auth-layout .page-title{font-size:32px;line-height:1.16;margin:0 0 12px;letter-spacing:-.035em}
+  .auth-layout>div>.lead{font-size:14px;line-height:1.6;margin:0;max-width:520px}
+  .auth-layout>.panel{padding:22px 20px;border-radius:20px}
+  .auth-layout .panel h2{font-size:24px;line-height:1.25;margin-bottom:10px}
+  .auth-layout .stack{gap:18px}.auth-layout .stack label{font-size:14px}
+  .auth-layout .stack>div{display:flex;flex-direction:column;gap:8px}
+  .auth-layout .stack>div>label{order:0}.auth-layout .stack>div>:is(input,.password-control){order:1}
+  .auth-layout .stack>div>.helptext{order:2}.auth-layout .stack>div>.errorlist{order:3}
+  .auth-layout .stack:has(input[name=password1]){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px}
+  .auth-layout .stack:has(input[name=password1])>*{grid-column:1/-1;min-width:0}
+  .auth-layout .stack:has(input[name=password1])>div:has(>input[name=first_name]),.auth-layout .stack:has(input[name=password1])>div:has(>input[name=last_name]){grid-column:span 1}
+  .auth-layout .stack .button{width:100%;min-height:50px}
+  .auth-layout .helptext{font-size:12px;line-height:1.55}
+  .auth-layout .auth-back a,.auth-layout>.panel>p>a{display:inline-flex;align-items:center;min-height:44px}
+  .stack input:not([type=checkbox]):not([type=radio]):not([type=hidden]),.stack select{min-height:48px}
+  .stack>div:has(input[type=checkbox]) label{display:inline;line-height:1.6;cursor:pointer}
+  .stack>div:has(input[type=checkbox]){padding:8px 0}
+  .stack input[type=checkbox]{width:20px;height:20px;margin-right:8px}
+  .stack .errorlist{font-size:13px;line-height:1.5;margin-top:8px}
+  .narrow.panel{width:calc(100% - 32px);margin:24px auto;padding:22px 20px;border-radius:20px;overflow-wrap:anywhere}
+  .narrow.panel h1{font-size:30px;line-height:1.18;letter-spacing:-.035em}
+  .narrow.panel input[autocomplete=one-time-code]{font-size:24px;text-align:center;letter-spacing:.25em;min-height:56px;padding-inline:12px}
+  .client-area .dashboard:not(.editor){padding-top:12px}
+  .client-area .dashboard:not(.editor)>h1,.client-area .page-heading h1{font-size:32px;line-height:1.16;letter-spacing:-.035em;margin-bottom:18px}
+  .client-area .dashboard:not(.editor)>.back-link{display:inline-flex;align-items:center;min-height:44px;margin-bottom:10px}
+  .client-area .dashboard:not(.editor) .panel h2{font-size:23px;line-height:1.25}
+  .client-cards-heading{gap:10px}.client-cards-heading h2{font-size:21px}
+  .m-theme-picker button{min-width:64px;min-height:44px;font-size:13px;padding:10px 14px}
+  .m-section-nav{flex-wrap:nowrap;justify-content:flex-start;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;padding-block:10px;scrollbar-width:thin}
+  .m-section-nav a{display:flex;align-items:center;min-height:44px;flex-shrink:0;padding:8px 12px;border-radius:10px;font-size:14px}
+  .m-section-nav a:focus-visible{outline-offset:-3px}.m-section-nav a:hover{background:#e8edf3}
+  .m-faq summary{min-height:52px;padding-block:16px;line-height:1.5}
+  .footer-documents a,.footer-documents .text-button{display:flex;align-items:center;min-height:44px;font-size:13px}
+  .builder-dialog[open],.client-dialog[open],.install-dialog[open]{position:fixed;top:calc(var(--mobile-viewport-top,0px) + var(--mobile-viewport-height,100dvh) - 12px);bottom:auto;left:0;right:0;translate:0 -100%;margin:0 auto;max-height:calc(var(--mobile-viewport-height,100dvh) - 24px);scroll-padding-block:76px 24px}
+  .builder-dialog{--dialog-padding:20px;padding:var(--dialog-padding)}
+  .builder-dialog-head{top:calc(-1 * var(--dialog-padding));margin:calc(-1 * var(--dialog-padding)) calc(-1 * var(--dialog-padding)) 20px;padding:12px var(--dialog-padding);border-bottom:1px solid #e4e9ed}
+  .builder-dialog .builder-search{top:70px}.builder-dialog .builder-close{min-width:64px;font-size:13px}
+  .builder-dialog .builder-choice{font-size:14px;min-height:56px}
+  .builder-dialog :is(input,textarea,select){scroll-margin-block:80px 24px}
+  html:has(dialog[open]){overflow-y:hidden}
+  html.keyboard-open .client-bottom-nav,html.keyboard-open .builder-toolbar,html.keyboard-open .install-banner{display:none!important}
+  html:has(.create-fixed){scroll-padding-bottom:calc(100px + env(safe-area-inset-bottom))}
+  html:has(.create-fixed):has(.card-primary-action:not([hidden])){scroll-padding-bottom:calc(170px + env(safe-area-inset-bottom))}
+}
+@media(max-width:360px){
+  .header nav{gap:8px}.auth-layout{width:calc(100% - 24px)}.auth-layout>.panel{padding:20px 16px}
+  .client-cards-heading{align-items:stretch;flex-direction:column}.client-cards-heading .button{width:100%}
+  .builder-topbar{gap:10px}.builder-topbar>a{min-width:44px}.builder-topbar>button{font-size:13px}
+  .builder-dialog{--dialog-padding:16px}
+}

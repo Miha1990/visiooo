@@ -12,7 +12,7 @@
 <script src="{% static 'auth-controls.js' %}" defer></script>
 <link rel="stylesheet" href="{% static 'create-fixed.css' %}">
 <link rel="stylesheet" href="{% static 'install.css' %}"><script src="{% static 'install.js' %}" defer></script>
-{% block extra_head %}{% endblock %}</head>
+{% block extra_head %}{% endblock %}<link rel="stylesheet" href="{% static 'mobile-ux.css' %}"><script src="{% static 'mobile-viewport.js' %}" defer></script></head>
 <body{% if client_area %} class="client-area"{% endif %}><a class="skip" href="#main">К содержимому</a>
 {% if client_area %}
 {% include 'cards/client_icons.html' %}
