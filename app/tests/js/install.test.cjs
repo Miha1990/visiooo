@@ -12,13 +12,17 @@ test('identifies mobile browsers before generic Chrome and Safari tokens',()=>{
 test('instructions match device and do not send Chrome on iPhone through Android menu',()=>{
  const safari=instructions(detect({userAgent:iphone+'Version/18 Safari/604'}));assert.match(safari.steps.join(' '),/Поделиться/);assert.match(safari.steps.join(' '),/На экран Домой/);
  const chrome=instructions(detect({userAgent:iphone+'CriOS/130 Safari/604'}));assert.match(chrome.steps[0],/справа/);assert.doesNotMatch(chrome.steps.join(' '),/Установить и создать/);
- const embedded=instructions(detect({userAgent:android+'Telegram'}));assert(embedded.copy);assert.match(embedded.steps[0],/браузере/);
- const firefox=instructions(detect({userAgent:iphone+'FxiOS/130 Safari/604'}));assert(firefox.copy);assert.match(firefox.steps[1],/Safari/);
+ const embedded=instructions(detect({userAgent:android+'Telegram'}));assert.match(embedded.steps[0],/браузере/);assert.match(embedded.steps[1],/Установить приложение/);
+ const firefox=instructions(detect({userAgent:iphone+'FxiOS/130 Safari/604'}));assert.match(firefox.steps[0],/Поделиться/);assert.match(firefox.steps[0],/Firefox/);
+ for(const ios of [true,false])for(const browser of ['safari','chrome','firefox','yandex','edge','opera','embedded','other']){
+  const info=instructions({ios,android:!ios,browser});assert.doesNotMatch([...info.steps,info.note].join(' '),/скопир|встав|следуйте инструкции/i);
+  assert.match(info.steps.join(' '),/экран|Домой|Установить/);
+ }
  for(const browser of ['yandex','samsung','chrome','firefox','edge','opera','other'])assert.equal(instructions({android:true,browser}).steps.length,3);
 });
 function setup({ua=iphone+'Version/18 Safari/604',standalone=false,saved=0,blocked=false,pathName='/app/cards'}={}){
  const el=()=>({hidden:true,open:false,disabled:false,textContent:'',events:{},addEventListener(k,f){this.events[k]=f;},replaceChildren(...items){this.items=items;},getBoundingClientRect(){return {left:0,top:0,right:400,bottom:600};}});
- const keys=['native','copy','status','browser','steps','note'],nodes=Object.fromEntries(keys.map(k=>[`[data-install-${k}]`,el()]));
+ const keys=['native','status','browser','steps','note'],nodes=Object.fromEntries(keys.map(k=>[`[data-install-${k}]`,el()]));
  const close=el(),dismiss=el(),launcher=el(),banner=el(),dialog=el();dialog.querySelector=k=>nodes[k];dialog.querySelectorAll=()=>[close];dialog.showModal=()=>{dialog.open=true;};dialog.close=()=>{dialog.open=false;dialog.events.close();};banner.querySelector=()=>dismiss;
  const docEvents={},winEvents={},timers=[],storage={'visiooo-install-later':String(saved)},media={matches:standalone,addEventListener:(k,f)=>docEvents[k]=f};
  const document={hidden:false,querySelector:k=>k==='[data-install-dialog]'?dialog:k==='[data-install-banner]'?banner:blocked?{}:null,querySelectorAll:()=>[launcher],createElement:el};

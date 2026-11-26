@@ -15,21 +15,22 @@
   }
   function instructions(device) {
     const names={safari:'Safari',chrome:'Chrome',yandex:'Яндекс Браузер',samsung:'Samsung Internet',edge:'Microsoft Edge',opera:'Opera',firefox:'Firefox',embedded:'Браузер внутри приложения',other:'Ваш браузер'};
-    const result={label:`${device.ios?'iPhone / iPad':device.android?'Android':'Компьютер'} · ${names[device.browser]}`,steps:[],note:'',copy:false};
+    const result={label:`${device.ios?'iPhone / iPad':device.android?'Android':'Компьютер'} · ${names[device.browser]}`,steps:[],note:''};
     if(device.browser==='embedded'){
-      result.steps=[`В меню приложения выберите «Открыть в ${device.ios?'Safari':'браузере'}».`,'Откройте «Установить приложение» на сайте и следуйте инструкции.'];
-      result.note='Если такого пункта нет, скопируйте адрес и откройте его в '+(device.ios?'Safari.':'Chrome.');result.copy=true;
-    }else if(device.ios&&['safari','chrome'].includes(device.browser)){
-      result.steps=['Нажмите «Поделиться» '+(device.browser==='chrome'?'справа от адресной строки.':'в меню или на панели браузера.'),'Выберите «На экран Домой».','Нажмите «Добавить».'];
-      result.note='Если есть переключатель «Открывать как веб-приложение», включите его. Если нужного пункта нет, откройте этот адрес в Safari.';
+      result.steps=device.ios
+        ? ['В меню приложения нажмите «Открыть в Safari» или «Открыть в браузере».','В открывшемся браузере нажмите «Поделиться».','Выберите «На экран Домой», затем «Добавить».']
+        : ['В меню приложения нажмите «Открыть в браузере».','В браузере откройте меню и выберите «Установить приложение» или «Добавить на главный экран».','Подтвердите установку.'];
+      result.note='Во встроенном браузере установка может быть недоступна. Пункт открытия во внешнем браузере находится в меню приложения.';
     }else if(device.ios){
-      result.steps=['Скопируйте адрес приложения.','Откройте его в Safari.','Нажмите «Поделиться», затем «На экран Домой» и «Добавить».'];result.copy=true;
+      const share={safari:'Нажмите «Поделиться» в меню или на панели Safari.',chrome:'Нажмите «Поделиться» справа от адресной строки Chrome.',firefox:'Нажмите значок «Поделиться» в адресной строке Firefox.',yandex:'Откройте меню Яндекс Браузера и нажмите «Поделиться».',edge:'Откройте меню Microsoft Edge и нажмите «Поделиться».',opera:'Откройте меню Opera и нажмите «Поделиться».'};
+      result.steps=[share[device.browser]||'Нажмите «Поделиться» в меню или на панели браузера.','Прокрутите список действий и выберите «На экран Домой».','Если есть «Открывать как веб-приложение», включите. Нажмите «Добавить».'];
+      result.note='Если пункта «На экран Домой» нет, прокрутите меню «Поделиться» до конца и проверьте «Править действия». Доступность зависит от версии браузера и iOS.';
     }else if(device.android){
       const menus={chrome:['Откройте меню Chrome рядом с адресной строкой.','Выберите «Установить и создать ярлык», затем «Установить».'],firefox:['Откройте меню Firefox.','Выберите «Добавить на домашний экран» или «Установить».'],samsung:['Откройте меню Samsung Internet — три полоски.','Выберите «Добавить страницу в», затем «Главный экран».'],yandex:['Откройте меню Яндекс Браузера.','Найдите «Добавить на главный экран» или «Установить приложение».'],edge:['Откройте меню Microsoft Edge.','Найдите «Добавить на телефон» или «Добавить на главный экран».'],opera:['Откройте меню Opera.','Найдите «Главный экран» или «Добавить на главный экран».']};
       result.steps=[...(menus[device.browser]||['Откройте меню браузера.','Найдите «Установить приложение» или «Добавить на главный экран».']),'Подтвердите добавление.'];
-      result.note='Название пункта зависит от версии браузера. Если его нет, откройте этот адрес в Chrome.';
+      result.note='Название пункта зависит от версии браузера: «Установить приложение», «На главный экран» или «Добавить ярлык».';
     }else{
-      result.steps=['Откройте сайт на телефоне.','Нажмите «Установить приложение» — появится инструкция для вашего браузера.'];result.copy=true;
+      result.steps=['На iPhone: нажмите «Поделиться», затем «На экран Домой» и «Добавить».','На Android: откройте меню браузера, выберите «Установить приложение» или «Добавить на главный экран» и подтвердите.'];
     }
     return result;
   }
@@ -37,7 +38,7 @@
   if(typeof document==='undefined')return;
   const dialog=document.querySelector('[data-install-dialog]'),banner=document.querySelector('[data-install-banner]');
   if(!dialog||!banner)return;
-  const device=detect(navigator),launchers=[...document.querySelectorAll('[data-install-open]')],native=dialog.querySelector('[data-install-native]'),copy=dialog.querySelector('[data-install-copy]'),status=dialog.querySelector('[data-install-status]');
+  const device=detect(navigator),launchers=[...document.querySelectorAll('[data-install-open]')],native=dialog.querySelector('[data-install-native]'),status=dialog.querySelector('[data-install-status]');
   const media=window.matchMedia('(display-mode: standalone)'),storageKey='visiooo-install-later';
   let deferred=null,installed=Boolean(navigator.standalone||media.matches),busy=false;
   const storeLater=()=>{try{localStorage.setItem(storageKey,String(Date.now()+7*86400000));}catch{}};
@@ -46,7 +47,7 @@
     const info=instructions(device);dialog.querySelector('[data-install-browser]').textContent=info.label;
     const steps=dialog.querySelector('[data-install-steps]');steps.replaceChildren(...info.steps.map(text=>{const li=document.createElement('li');li.textContent=text;return li;}));
     const note=dialog.querySelector('[data-install-note]');note.hidden=!info.note;note.textContent=info.note;
-    native.hidden=!deferred;copy.hidden=!info.copy;status.textContent='';
+    native.hidden=!deferred;status.textContent='';
   }
   function finish(){installed=true;deferred=null;banner.hidden=true;launchers.forEach(button=>button.hidden=true);if(dialog.open)dialog.close();}
   function open(){if(installed||typeof dialog.showModal!=='function')return;render();banner.hidden=true;if(!dialog.open)dialog.showModal();}
@@ -62,10 +63,6 @@
     try{await prompt.prompt();const choice=await prompt.userChoice;if(choice.outcome==='accepted')finish();else{storeLater();render();status.textContent='Вы можете установить приложение позже из меню браузера.';}}
     catch{render();status.textContent='Воспользуйтесь инструкцией выше.';}
     finally{busy=false;native.disabled=false;}
-  });
-  copy.addEventListener('click',async()=>{
-    const url=new URL('/app/cards',window.location.origin).href;
-    try{await navigator.clipboard.writeText(url);status.textContent='Адрес скопирован.';}catch{status.textContent=url;}
   });
   const autoPath=['/','/app/cards','/app/cards/'].includes(window.location.pathname);
   function offer(){
