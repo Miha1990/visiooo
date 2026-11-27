@@ -1,10 +1,13 @@
 {% extends 'base.html' %}{% load card_tags %}
 {% block title %}Мои визитки — Визитка{% endblock %}
+{% block client_appbar %}
+<header class="client-appbar client-card-appbar" aria-label="Мои визитки">
+  {% if cards|length > 1 %}<details class="client-card-switcher"><summary title="{{ card.draft.name }}"><span>{{ card.draft.name }}</span><span aria-hidden="true">⌄</span></summary><nav aria-label="Выбрать визитку">{% for item in cards %}<a href="{% url 'dashboard' %}?card={{ item.pk }}" {% if item.pk == card.pk %}aria-current="page"{% endif %}>{{ item.draft.name }}</a>{% endfor %}</nav></details>{% else %}<div class="client-card-title" title="{{ card.draft.name|default:'Мои визитки' }}">{{ card.draft.name|default:'Мои визитки' }}</div>{% endif %}
+  {% if can_create_card %}<form class="client-add-card" action="{% url 'dashboard' %}" method="post">{% csrf_token %}<button type="submit" aria-label="Создать визитку" title="Создать визитку"><span aria-hidden="true">+</span></button></form>{% elif not active_pro %}<a class="client-add-card" href="{% url 'subscription' %}" aria-label="Подключить Профи для создания до трёх визиток" title="До трёх визиток с Профи"><span aria-hidden="true">+</span></a>{% else %}<button class="client-add-card" type="button" disabled aria-label="Достигнут лимит: {{ card_limit }} визитки" title="Доступно до {{ card_limit }} визиток"><span aria-hidden="true">+</span></button>{% endif %}
+</header>
+{% endblock %}
 {% block content %}<section class="client-home" aria-label="Мои визитки">
-{% if not user.email_verified_at %}<div class="notice"><span>Подтвердите электронную почту перед публикацией.</span><form action="/accounts/resend" method="post">{% csrf_token %}<button class="text-button">Отправить ещё раз</button></form></div>{% endif %}
 {% if card %}
-<div class="client-cards-heading"><h2>Мои визитки</h2>{% include 'cards/create_action.html' %}</div>
-{% if cards|length > 1 %}<form method="get" class="client-card-picker"><label for="selected-card">Мои визитки</label><div><select id="selected-card" name="card">{% for item in cards %}<option value="{{ item.pk }}" {% if item.pk == card.pk %}selected{% endif %}>{{ item.draft.name }}</option>{% endfor %}</select><button type="submit">Выбрать</button></div></form>{% endif %}
 <article class="client-profile"><div class="client-cover">
 {% card_image 'logo' as logo_url %}{% if logo_url %}<img class="client-profile-logo" src="{{ logo_url }}" alt="Логотип {{ content.name }}">{% endif %}
 {% card_image 'header' as header_url %}{% if header_url %}<img class="client-cover-photo" src="{{ header_url }}" alt="">{% endif %}
@@ -21,6 +24,7 @@
 <a href="{% url 'physical_index' %}?card={{ card.pk }}"><svg aria-hidden="true"><use href="#client-nfc"/></svg><span>Привязать<br>QR / NFC</span></a>
 <a href="{% url 'client_analytics' %}?card={{ card.pk }}"><svg aria-hidden="true"><use href="#client-analytics"/></svg><span>Аналитика</span></a>
 </nav><p class="client-share-status" data-client-share-status role="status" aria-live="polite"></p>
+{% if not user.email_verified_at %}<div class="notice"><span>Подтвердите электронную почту перед публикацией.</span><form action="/accounts/resend" method="post">{% csrf_token %}<button class="text-button">Отправить ещё раз</button></form></div>{% endif %}
 {% if card.status != 'published' or not active_pro or card.blocked %}<p class="client-hint">QR-код и ссылка станут доступны посетителям после публикации с активной подпиской.</p>{% endif %}
 <p class="client-hint"><a href="{% url 'qr' card.pk %}" download="vizitka-qr.png">Скачать QR-код</a></p>
 <p class="client-hint"><a href="{% url 'delete' card.pk %}">Удалить визитку</a></p>

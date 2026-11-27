@@ -17,6 +17,38 @@ class ClientDashboardTests(TestCase):
         self.assertContains(response, f'/app/cards/{self.card.pk}/edit?view=preview')
         self.assertNotContains(response, '<footer class="footer">')
         self.assertNotContains(response, 'Основная навигация')
+        self.assertContains(response, 'client-card-appbar')
+        self.assertNotContains(response, 'Личный кабинет')
+        self.assertNotContains(response, 'client-cards-heading')
+        self.assertNotContains(response, 'client-card-picker')
+        self.assertContains(response, 'aria-label="Создать визитку"')
+
+    def test_header_switcher_selects_cards_and_paid_creation_is_limited_to_three(self):
+        second = create_card(self.user)
+        response = self.client.get('/app/cards', {'card':second.pk})
+        self.assertEqual(response.context['card'], second)
+        self.assertContains(response, 'client-card-switcher')
+        self.assertContains(response, f'/app/cards?card={self.card.pk}')
+        self.assertTrue(response.context['can_create_card'])
+        response = self.client.post('/app/cards')
+        self.assertEqual(response.status_code, 303)
+        self.assertIn('/edit', response['Location'])
+        response = self.client.get('/app/cards')
+        self.assertFalse(response.context['can_create_card'])
+        self.assertContains(response, 'Достигнут лимит: 3 визитки')
+        self.client.post('/app/cards')
+        self.assertEqual(self.space.card_set.exclude(status='deleted').count(), 3)
+
+    def test_free_account_header_offers_upgrade_and_cannot_create_second_card(self):
+        self.sub.status = 'expired'
+        self.sub.paid_until = None
+        self.sub.save()
+        response = self.client.get('/app/cards')
+        self.assertFalse(response.context['can_create_card'])
+        self.assertContains(response, 'Подключить Профи для создания до трёх визиток')
+        self.assertNotContains(response, 'aria-label="Создать визитку"')
+        self.client.post('/app/cards')
+        self.assertEqual(self.space.card_set.exclude(status='deleted').count(), 1)
 
     def test_selection_is_scoped_to_account_and_qr_is_private(self):
         other = User.objects.create_user('another@example.test', 'Another-password-39!')

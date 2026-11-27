@@ -131,6 +131,6 @@
     });
   }
   state.handles=()=>{if(!editing)return;for(const el of identify(card)){if(el.hidden||el.closest('[hidden]'))continue;if(el.matches('a[href]')){el.dataset.savedHref=el.getAttribute('href');el.removeAttribute('href');}for(const direction of ['se','nw','ne','sw','n','s','e','w'])handle(el,false,direction);radiusHandle(el);}const first=card.querySelector('[data-card-carousel] .carousel-slide');if(first)handle(first,true);};
-  card.addEventListener('click',event=>{if(!editing||event.target.closest('[data-inline-edit],.block-move-grip'))return;const el=event.target.closest('[data-layout-button],[data-layout-block]');if(el){if(!event.target.closest('[data-daisy-toggle]')){event.preventDefault();event.stopPropagation();}select(el);}},{capture:true});
+    card.addEventListener('click',event=>{if(!editing||event.target.closest('[data-inline-edit],[data-inline-media],.block-move-grip'))return;const el=event.target.closest('[data-layout-button],[data-layout-block]');if(el){if(!event.target.closest('[data-daisy-toggle]')){event.preventDefault();event.stopPropagation();}select(el);}},{capture:true});
   form.addEventListener('input',event=>{if(event.target.name==='daisy_data'){try{state.daisy=JSON.parse(event.target.value||'{}');}catch{}}apply(card);});
 })();

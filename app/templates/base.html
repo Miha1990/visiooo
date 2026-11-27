@@ -16,7 +16,7 @@
 <body{% if client_area %} class="client-area"{% endif %}><a class="skip" href="#main">К содержимому</a>
 {% if client_area %}
 {% include 'cards/client_icons.html' %}
-<header class="client-appbar"><a class="brand" href="{% url 'dashboard' %}"><img class="brand-mark" src="{% static 'brand/logo-mark-96.png' %}" width="32" height="32" alt="">визитка</a><span>Личный кабинет</span></header>
+{% block client_appbar %}<header class="client-appbar"><a class="brand" href="{% url 'dashboard' %}"><img class="brand-mark" src="{% static 'brand/logo-mark-96.png' %}" width="32" height="32" alt="">визитка</a><span>Личный кабинет</span></header>{% endblock %}
 {% else %}
 <header class="header"><a class="brand" href="/" aria-label="Визитка — главная"><img class="brand-mark" src="{% static 'brand/logo-mark-96.png' %}" width="37" height="37" alt="">визитка</a>
 {% if user.is_staff and perms.cards.change_cardtemplate %}<a href="/control/templates">Студия шаблонов</a>{% endif %}<nav aria-label="Основная навигация"><a href="/pricing">Тариф</a>{% if user.is_authenticated %}<a href="/app/subscription">Подписка</a><a href="/app/cards">Мои визитки</a><form action="/accounts/logout" method="post">{% csrf_token %}<button class="text-button">Выйти</button></form>{% else %}<a href="/accounts/login">Войти</a><a class="button small" href="/accounts/register">Создать визитку</a>{% endif %}</nav></header>

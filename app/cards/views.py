@@ -54,10 +54,13 @@ def dashboard(request):
         return redirect303('/app/cards')
     cards = list(Card.objects.filter(workspace=workspace).exclude(status='deleted').select_related('published_revision').order_by('-updated_at'))
     selected = next((card for card in cards if str(card.pk) == request.GET.get('card')), cards[0] if cards else None)
+    active_pro = active_subscription(workspace)
+    card_limit = 3 if active_pro else 1
     return render(request, 'cards/dashboard.html', {'cards': cards, 'card': selected,
         'content': selected.draft if selected else {}, 'preview': True,
         'public_url': public_url(selected) if selected else '',
-        'subscription': workspace.subscription, 'active_pro': active_subscription(workspace)})
+        'subscription': workspace.subscription, 'active_pro': active_pro,
+        'can_create_card': len(cards) < card_limit, 'card_limit': card_limit})
 
 
 @login_required
