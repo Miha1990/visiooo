@@ -31,10 +31,11 @@
     visibility('socials',card.dataset.buttonLayout!=='tiles'&&Boolean(card.querySelector('.social-links')?.childElementCount));
     visibility('carousel',Boolean(card.querySelector('.carousel-slide')));
     if(field('video_url')){
-      const url=window.WebLinks.normalize(value('video_url')),player=window.CardEmbeds.video(url,window.WebLinks.normalize(value('video_player')));
-      visibility('video',Boolean(player));
+      const videos=window.CardVideos?.fromForm(form),url=window.WebLinks.normalize(value('video_url')),player=window.CardEmbeds.video(url,window.WebLinks.normalize(value('video_player')));
+      visibility('video',videos?Boolean(videos.length):Boolean(player));
       const section=card.querySelector('[data-video-block]');
-      if(section){section.querySelector('[data-video-title]').textContent=value('video_title')||'Видео';embed(section.querySelector('[data-external-embed]'),player);const link=section.querySelector('[data-video-link]');link.hidden=!player;link.href=player?url:'#';}
+      if(section&&videos)window.CardVideos.render(section,videos);
+      else if(section){section.querySelector('[data-video-title]').textContent=value('video_title')||'Видео';embed(section.querySelector('[data-external-embed]'),player);const link=section.querySelector('[data-video-link]');link.hidden=!player;link.href=player?url:'#';}
     }
     if(field('map_address')){
       const address=value('map_address'),location={address};

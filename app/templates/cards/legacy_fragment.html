@@ -41,7 +41,7 @@
     </section>
     {% endwith %}{% endif %}
     {% if preview or content.galleryAssetIds %}<div data-content-block="carousel" {% if not content.galleryAssetIds %}hidden{% endif %}>{% include 'cards/carousel.html' %}</div>{% endif %}
-    {% if preview or content.video.url %}<div data-content-block="video" {% if not content.video.url %}hidden{% endif %}>{% include 'cards/media_blocks.html' with block='video' %}</div>{% endif %}
+    {% if preview or content.video.url or content.videos %}<div data-content-block="video" {% if not content.video.url and not content.videos %}hidden{% endif %}>{% include 'cards/media_blocks.html' with block='video' %}</div>{% endif %}
     {% if content.buttonLayout != 'tiles' %}{% if preview or content.document.assetId %}<div data-content-block="document" {% if not content.document.assetId %}hidden{% endif %}>{% include 'cards/media_blocks.html' with block='document' %}</div>{% endif %}{% endif %}
     {% if preview or content.map.address %}<div data-content-block="map" {% if not content.map.address %}hidden{% endif %}>{% include 'cards/media_blocks.html' with block='map' %}</div>{% endif %}
     {% include 'cards/daisy.html' %}

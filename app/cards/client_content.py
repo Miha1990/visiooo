@@ -29,7 +29,9 @@ def block_has_content(content, key):
     if key == 'socials': return False if content.get('buttonLayout') == 'tiles' else bool(content.get('socials') or content.get('website'))
     if key == 'carousel':
         return bool(content['galleryAssetIds'] if 'galleryAssetIds' in content else content.get('design', {}).get('carousel', {}).get('photos'))
-    if key == 'video': return bool(content.get('video', {}).get('url'))
+    if key == 'video':
+        from .blocks import video_items
+        return bool(video_items(content))
     if key == 'document': return content.get('buttonLayout') != 'tiles' and bool(content.get('document', {}).get('assetId'))
     if key == 'map': return bool(content.get('map', {}).get('address', '').strip())
     return True

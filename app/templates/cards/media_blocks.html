@@ -1,10 +1,15 @@
 {% load card_tags %}
 {% if block == 'video' %}
-{% video_player content as player_url %}
-<section class="card-media-block" data-video-block>
-  <h2 data-video-title>{{ content.video.title|default:'Видео' }}</h2>
-  {% include 'cards/embed.html' with embed_url=player_url embed_title='Видеоплеер' empty_label='Добавьте ссылку на видео' %}
-  <a data-video-link href="{{ content.video.url|default:'#' }}" target="_blank" rel="noopener noreferrer" {% if not player_url %}hidden{% endif %}>Открыть на сайте видеосервиса</a>
+{% card_videos content as videos %}
+<section class="card-media-block video-carousel" data-video-block aria-label="Видео">
+  <div class="video-track" data-video-track tabindex="0" aria-label="Пролистывание видео">
+  {% for video in videos %}<article class="video-slide" data-video-active="{% if forloop.first %}true{% else %}false{% endif %}" aria-label="Видео {{ forloop.counter }} из {{ videos|length }}">
+    <h2 data-video-title>{{ video.title|default:'Видео' }}</h2>
+    {% include 'cards/embed.html' with embed_url=video.player_url embed_title='Видеоплеер' empty_label='Откройте видео на сайте сервиса' video_inactive=forloop.counter0 %}
+    <a data-video-link href="{{ video.url }}" target="_blank" rel="noopener noreferrer">Открыть на сайте видеосервиса</a>
+  </article>{% empty %}<article class="video-slide" data-video-active="true"><h2 data-video-title>Видео</h2>{% include 'cards/embed.html' with embed_url='' embed_title='Видеоплеер' empty_label='Добавьте ссылку на видео' %}<a data-video-link hidden>Открыть на сайте видеосервиса</a></article>{% endfor %}
+  </div>
+  <div class="video-controls" {% if videos|length < 2 %}hidden{% endif %}><button type="button" data-video-prev aria-label="Предыдущее видео">←</button><span data-video-status role="status" aria-live="polite">1 / {{ videos|length }}</span><button type="button" data-video-next aria-label="Следующее видео">→</button></div>
 </section>
 {% elif block == 'document' %}
 {% document_url as pdf_url %}

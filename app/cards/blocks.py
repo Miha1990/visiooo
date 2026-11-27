@@ -1,9 +1,11 @@
 """Block policies and allowlisted third party embeds; never fetch user supplied URLs."""
 from copy import deepcopy
+import ipaddress
 import re
 import uuid
 from urllib.parse import urlsplit, parse_qs, urlencode
 from django.core.exceptions import ValidationError
+from django.core.validators import URLValidator
 from django.core.files.base import ContentFile
 from django.db import transaction
 from django.db.models import Sum
@@ -35,6 +37,8 @@ def parsed_url(value):
 
 def video_embed(value, override=''):
     url, host, query = parsed_url(value)
+    if override and host not in ('vk.com', 'm.vk.com', 'vkvideo.ru', 'dailymotion.com', 'dai.ly', 'geo.dailymotion.com'):
+        raise ValidationError('Дополнительная ссылка плеера доступна для ВК Видео и Dailymotion.')
     if host in ('youtube.com', 'm.youtube.com', 'youtu.be', 'youtube-nocookie.com'):
         video_id = url.path.strip('/') if host == 'youtu.be' else query.get('v', [''])[0]
         match = re.fullmatch(r'/(?:shorts|embed|live)/([\w-]{11})/?', url.path)
@@ -43,7 +47,7 @@ def video_embed(value, override=''):
             if override: raise ValidationError('Дополнительная ссылка плеера нужна только для ВК Видео.')
             return 'https://www.youtube-nocookie.com/embed/' + video_id
     elif host == 'rutube.ru':
-        match = re.fullmatch(r'/(?:video/(?:private/)?|play/embed/)([a-fA-F0-9]{32})/?', url.path)
+        match = re.fullmatch(r'/(?:video/(?:private/)?|shorts/|play/embed/)([a-fA-F0-9]{32})/?', url.path)
         if match:
             if override: raise ValidationError('Дополнительная ссылка плеера нужна только для ВК Видео.')
             result = 'https://rutube.ru/play/embed/' + match[1]
@@ -70,7 +74,59 @@ def video_embed(value, override=''):
             params = {'oid':oid,'id':video_id}
             if key: params['hash'] = key
             return 'https://vk.com/video_ext.php?' + urlencode(params)
-    raise ValidationError('Поддерживаются ссылки на отдельные видео Рутуб, ВК Видео и Ютуб.')
+    elif host in ('vimeo.com', 'player.vimeo.com'):
+        match = re.fullmatch(r'/(?:video/)?(\d{1,20})(?:/([A-Za-z0-9]{1,64}))?/?', url.path)
+        if match:
+            key = query.get('h', [match[2] or ''])[0]
+            if key and not re.fullmatch(r'[A-Za-z0-9]{1,64}', key):
+                raise ValidationError('Проверьте ключ доступа Vimeo.')
+            return 'https://player.vimeo.com/video/' + match[1] + ('?' + urlencode({'h':key}) if key else '')
+    elif host in ('ok.ru', 'm.ok.ru'):
+        match = re.fullmatch(r'/(?:video|videoembed)/(\d{1,20})/?', url.path)
+        if match: return 'https://ok.ru/videoembed/' + match[1]
+    elif host in ('tiktok.com', 'm.tiktok.com'):
+        match = re.fullmatch(r'/(?:@[^/]+/video/|player/v1/)(\d{1,30})/?', url.path)
+        if match: return 'https://www.tiktok.com/player/v1/' + match[1]
+    elif host in ('dailymotion.com', 'dai.ly', 'geo.dailymotion.com'):
+        player, provider, params = parsed_url(override or value)
+        match = re.fullmatch(r'/player/([A-Za-z0-9]{1,40})\.html', player.path)
+        video_id = params.get('video', [''])[0]
+        if provider == 'geo.dailymotion.com' and match and re.fullmatch(r'[A-Za-z0-9]{1,40}', video_id):
+            original = re.fullmatch(r'/(?:video/)?([A-Za-z0-9]{1,40})/?', url.path)
+            if override and (not original or original[1] != video_id):
+                raise ValidationError('Ссылка плеера относится к другому видео.')
+            return f'https://geo.dailymotion.com/player/{match[1]}.html?' + urlencode({'video':video_id})
+        if override: raise ValidationError('Скопируйте ссылку плеера Dailymotion с Player ID из кода встраивания.')
+        return ''
+    raise ValidationError('Проверьте ссылку на отдельное видео выбранного сервиса.')
+
+
+def video_items(content):
+    """Read older single-video cards without rewriting their published snapshots."""
+    return content['videos'] if 'videos' in content else ([content['video']] if content.get('video', {}).get('url') else [])
+
+
+def video_player_url(value, override=''):
+    """Embed known providers; other public HTTPS links open on the source website."""
+    url, host, _ = parsed_url(value)
+    URLValidator(schemes=['https'])(value)
+    if '.' not in host or host.endswith(('.local', '.localhost')):
+        raise ValidationError('Укажите публичную ссылку на видеосервис.')
+    try:
+        ipaddress.ip_address(host)
+    except ValueError:
+        pass
+    else:
+        raise ValidationError('Укажите адрес видеосервиса, а не IP-адрес.')
+    embedded_hosts = ('youtube.com', 'm.youtube.com', 'youtu.be', 'youtube-nocookie.com',
+        'rutube.ru', 'vk.com', 'm.vk.com', 'vkvideo.ru', 'vimeo.com', 'player.vimeo.com',
+        'ok.ru', 'm.ok.ru', 'tiktok.com', 'm.tiktok.com', 'dailymotion.com', 'dai.ly', 'geo.dailymotion.com')
+    if host in embedded_hosts:
+        # Short TikTok share links need a redirect; do not fetch user URLs on the server.
+        return video_embed(value, override)
+    if override:
+        raise ValidationError('Дополнительная ссылка плеера доступна для ВК Видео и Dailymotion.')
+    return ''
 
 
 def map_embed(location):

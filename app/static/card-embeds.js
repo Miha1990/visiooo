@@ -4,12 +4,13 @@
   function video(value,override=''){
     try{
       const [url,host]=parsed(value),path=url.pathname;
+      if(override&&!['vk.com','m.vk.com','vkvideo.ru','dailymotion.com','dai.ly','geo.dailymotion.com'].includes(host))return '';
       if(['youtube.com','m.youtube.com','youtu.be','youtube-nocookie.com'].includes(host)){
         const match=path.match(/^\/(?:shorts|embed|live)\/([\w-]{11})\/?$/),id=match?.[1]||(host==='youtu.be'?path.replace(/^\/|\/$/g,''):url.searchParams.get('v'));
         return !override&&/^[\w-]{11}$/.test(id||'')?`https://www.youtube-nocookie.com/embed/${id}`:'';
       }
       if(host==='rutube.ru'){
-        const match=path.match(/^\/(?:video\/(?:private\/)?|play\/embed\/)([a-fA-F0-9]{32})\/?$/),key=url.searchParams.get('p');
+        const match=path.match(/^\/(?:video\/(?:private\/)?|shorts\/|play\/embed\/)([a-fA-F0-9]{32})\/?$/),key=url.searchParams.get('p');
         return match&&!override&&(!key||/^[\w-]{1,200}$/.test(key))?`https://rutube.ru/play/embed/${match[1]}${key?'/?'+new URLSearchParams({p:key}):''}`:'';
       }
       if(['vk.com','m.vk.com','vkvideo.ru'].includes(host)){
@@ -19,6 +20,16 @@
         const oid=params.get('oid'),id=params.get('id'),hash=params.get('hash');
         if(!/^-?\d{1,20}$/.test(oid||'')||!/^\d{1,20}$/.test(id||'')||(hash&&!/^[\w-]{1,200}$/.test(hash))||(match&&(oid!==match[1]||id!==match[2])))return '';
         const clean=new URLSearchParams({oid,id});if(hash)clean.set('hash',hash);return `https://vk.com/video_ext.php?${clean}`;
+      }
+      if(['vimeo.com','player.vimeo.com'].includes(host)){
+        const match=path.match(/^\/(?:video\/)?(\d{1,20})(?:\/([A-Za-z0-9]{1,64}))?\/?$/),key=url.searchParams.get('h')||match?.[2]||'';
+        return match&&(!key||/^[A-Za-z0-9]{1,64}$/.test(key))?`https://player.vimeo.com/video/${match[1]}${key?'?'+new URLSearchParams({h:key}):''}`:'';
+      }
+      if(['ok.ru','m.ok.ru'].includes(host)){const match=path.match(/^\/(?:video|videoembed)\/(\d{1,20})\/?$/);return match?'https://ok.ru/videoembed/'+match[1]:'';}
+      if(['tiktok.com','m.tiktok.com'].includes(host)){const match=path.match(/^\/(?:@[^/]+\/video\/|player\/v1\/)(\d{1,30})\/?$/);return match?'https://www.tiktok.com/player/v1/'+match[1]:'';}
+      if(['dailymotion.com','dai.ly','geo.dailymotion.com'].includes(host)){
+        const [player,provider]=parsed(override||value),match=player.pathname.match(/^\/player\/([A-Za-z0-9]{1,40})\.html$/),id=player.searchParams.get('video'),original=path.match(/^\/(?:video\/)?([A-Za-z0-9]{1,40})\/?$/);
+        return provider==='geo.dailymotion.com'&&match&&/^[A-Za-z0-9]{1,40}$/.test(id||'')&&(!override||original?.[1]===id)?`https://geo.dailymotion.com/player/${match[1]}.html?`+new URLSearchParams({video:id}):'';
       }
     }catch{}return '';
   }
@@ -30,5 +41,6 @@
     }else params={text:location.address,z:16};
     return 'https://yandex.ru/map-widget/v1/?'+new URLSearchParams(params);
   }
-  const api={video,map};if(typeof module==='object')module.exports=api;else root.CardEmbeds=api;
+  function videoLink(value){try{const [url,host]=parsed(value);return host.includes('.')&&!host.endsWith('.local')&&!host.endsWith('.localhost')&&!/^[\d.]+$/.test(host)&&!host.includes(':')?url.href:'';}catch{return '';}}
+  const api={video,map,videoLink};if(typeof module==='object')module.exports=api;else root.CardEmbeds=api;
 })(typeof window==='object'?window:globalThis);

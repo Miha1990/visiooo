@@ -67,18 +67,32 @@
     const observer=typeof ResizeObserver==='function'?new ResizeObserver(position):null;observer?.observe(el);
     initialized.set(el,{destroy(){observer?.disconnect();el.removeEventListener('keydown',key);document.removeEventListener('click',outside);}});
   }
-  function refresh(root=document) {
-    const cards=root.matches?.('.contact-card')?[root]:[...root.querySelectorAll('.contact-card')];
-    cards.forEach(card=>{card.querySelectorAll('[data-external-embed]').forEach(box=>{
+  function videoCarousel(el){
+    initialized.get(el)?.destroy();
+    const track=el.querySelector('[data-video-track]'),slides=[...track.querySelectorAll('.video-slide')],controls=el.querySelector('.video-controls'),prev=el.querySelector('[data-video-prev]'),next=el.querySelector('[data-video-next]'),status=el.querySelector('[data-video-status]');
+    let active=-1;
+    const index=()=>Math.max(0,Math.min(slides.length-1,Math.round(track.scrollLeft/Math.max(1,track.clientWidth))));
+    const update=()=>{const current=index();if(current!==active){active=current;slides.forEach((slide,i)=>{slide.dataset.videoActive=String(i===active);slide.querySelectorAll('[data-external-embed]').forEach(renderEmbed);});}status.textContent=`${current+1} / ${slides.length}`;prev.disabled=current===0;next.disabled=current===slides.length-1;};
+    const move=delta=>track.scrollTo({left:Math.max(0,Math.min(slides.length-1,index()+delta))*track.clientWidth,behavior:reduced()?'auto':'smooth'});
+    const key=event=>{if(event.target!==track||!['ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();move(event.key==='ArrowLeft'?-1:1);};
+    prev.onclick=()=>move(-1);next.onclick=()=>move(1);controls.hidden=slides.length<2;
+    track.addEventListener('scroll',update);track.addEventListener('keydown',key);
+    const observer=typeof ResizeObserver==='function'?new ResizeObserver(()=>{track.scrollLeft=Math.max(0,active)*track.clientWidth;update();}):null;observer?.observe(track);
+    update();initialized.set(el,{destroy(){observer?.disconnect();track.removeEventListener('scroll',update);track.removeEventListener('keydown',key);}});
+  }
+  function renderEmbed(box){
       const url=box.dataset.embedUrl,previous=box.querySelector('iframe');
-      const allowed=/^https:\/\/(www\.youtube-nocookie\.com\/embed\/|rutube\.ru\/play\/embed\/|vk\.com\/video_ext\.php\?|yandex\.ru\/map-widget\/v1\/)/.test(url);
-      if(!allowed||box.closest('[hidden]')){previous?.remove();return;}
+      const allowed=/^https:\/\/(www\.youtube-nocookie\.com\/embed\/|rutube\.ru\/play\/embed\/|vk\.com\/video_ext\.php\?|player\.vimeo\.com\/video\/|ok\.ru\/videoembed\/|www\.tiktok\.com\/player\/v1\/|geo\.dailymotion\.com\/player\/|yandex\.ru\/map-widget\/v1\/)/.test(url);
+      if(!allowed||box.closest('[hidden], [data-video-active="false"]')){previous?.remove();return;}
       if(previous?.getAttribute('src')===url)return;
       previous?.remove();
       const iframe=document.createElement('iframe');iframe.src=url;iframe.title=box.dataset.embedTitle||'Встроенный сервис';
       iframe.allow='fullscreen; picture-in-picture; encrypted-media';iframe.allowFullscreen=true;iframe.loading='eager';iframe.referrerPolicy='strict-origin-when-cross-origin';
       const empty=box.querySelector('[data-embed-empty]');if(empty)empty.hidden=true;box.append(iframe);
-    });canvas(card);card.querySelectorAll('[data-card-carousel]').forEach(carousel);card.querySelectorAll('[data-contact-sun]').forEach(el=>sun(el,card.dataset.socialMode==='radial'));});
+  }
+  function refresh(root=document) {
+    const cards=root.matches?.('.contact-card')?[root]:[...root.querySelectorAll('.contact-card')];
+    cards.forEach(card=>{card.querySelectorAll('[data-external-embed]').forEach(renderEmbed);card.querySelectorAll('[data-video-block]').forEach(videoCarousel);canvas(card);card.querySelectorAll('[data-card-carousel]').forEach(carousel);card.querySelectorAll('[data-contact-sun]').forEach(el=>sun(el,card.dataset.socialMode==='radial'));});
   }
   window.CardWidgets={refresh};refresh();
 })();

@@ -120,9 +120,15 @@ def gallery_images(context):
 
 @register.simple_tag
 def video_player(content):
-    from cards.blocks import video_embed
-    video = content.get('video', {})
-    return video_embed(video['url'], video.get('embedUrl', '')) if video.get('url') else ''
+    from cards.blocks import video_items, video_player_url
+    videos = video_items(content)
+    return video_player_url(videos[0]['url'], videos[0].get('embedUrl', '')) if videos else ''
+
+
+@register.simple_tag
+def card_videos(content):
+    from cards.blocks import video_items, video_player_url
+    return [{**item, 'player_url': video_player_url(item['url'], item.get('embedUrl', ''))} for item in video_items(content)]
 
 
 @register.simple_tag

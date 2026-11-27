@@ -70,10 +70,11 @@ class CardForm(forms.Form):
     links = forms.CharField(label='Кнопки со ссылками', required=False, widget=LinkButtonsWidget,
                             help_text='До 10 кнопок. Ссылку можно вводить без https://, например google.com. На визитке видно только название кнопки.')
     video_url = WebLinkField(label='Ссылка на видео', required=False, max_length=2048, assume_scheme='https',
-        help_text='Рутуб, ВК Видео или Ютуб. Если оставить пустым, видеоблок не появится.')
+        help_text='YouTube, Рутуб, ВК Видео, Vimeo, ОК, TikTok, Dailymotion, Дзен, Twitch и другие сервисы. Если встроенный просмотр недоступен, видео откроется на сайте сервиса.')
+    video_items = forms.CharField(required=False, max_length=90000, widget=forms.HiddenInput)
     video_title = forms.CharField(label='Название видео', required=False, max_length=100)
-    video_player = WebLinkField(label='Ссылка плеера ВК (при необходимости)', required=False, max_length=2048, assume_scheme='https',
-        help_text='Если видео ВК не воспроизводится: «Поделиться → Экспортировать», скопируйте адрес src, включая hash, без HTML.')
+    video_player = WebLinkField(label='Ссылка плеера (при необходимости)', required=False, max_length=2048, assume_scheme='https',
+        help_text='Для ВК: «Поделиться → Экспортировать», адрес src с hash. Для Dailymotion: адрес src с Player ID из кода встраивания. Без HTML.')
     pdf_label = forms.CharField(label='Название кнопки PDF', required=False, max_length=100)
     map_address = forms.CharField(label='Адрес', required=False, max_length=300, help_text='Город, улица и дом. Пустой адрес скрывает карту.')
     map_latitude = forms.FloatField(label='Широта (необязательно)', required=False, min_value=-90, max_value=90)
@@ -130,13 +131,13 @@ class CardForm(forms.Form):
 
     @property
     def block_field_names(self):
-        return {'video':['video_url','video_title','video_player'], 'document':['pdf_label'],
+        return {'video':['video_url','video_title','video_player','video_items'], 'document':['pdf_label'],
                 'map':['map_address','map_latitude','map_longitude']}
 
     @property
     def content_fields(self):
         labels = {'video':'Видео', 'document':'PDF-файл', 'map':'Адрес на карте'}
-        return [{'key':key,'label':labels[key],'fields':[self[name] for name in names if name in self.fields]}
+        return [{'key':key,'label':labels[key],'fields':[self[name] for name in names if name in self.fields and not self[name].is_hidden]}
                 for key,names in self.block_field_names.items() if key in self.blocks]
 
     @property
@@ -234,13 +235,29 @@ class CardForm(forms.Form):
             content['motion'] = bool(data.get('motion'))
         if self.errors:
             return data
-        for key in ('galleryAssetIds','video','document','map','buttons','buttonLayout'):
+        for key in ('galleryAssetIds','video','videos','document','map','buttons','buttonLayout'):
             if self.card and key in self.card.draft:
                 content[key] = deepcopy(self.card.draft[key])
         if 'video' in self.blocks:
             content.pop('video', None)
+            content.pop('videos', None)
+            try:
+                extra = json.loads(data.get('video_items') or '[]')
+                if not isinstance(extra, list) or len(extra) > 19:
+                    raise ValueError
+                for item in extra:
+                    if not isinstance(item, dict) or not item.get('url'):
+                        raise ValueError
+                    item['url'] = self.fields['video_url'].clean(item['url'])
+                    item['embedUrl'] = self.fields['video_player'].clean(item.get('embedUrl', ''))
+                if extra and not data.get('video_url'):
+                    raise ValueError
+            except (ValueError, TypeError, ValidationError):
+                self.add_error(None, 'Проверьте ссылки карусели видео. Можно добавить до 20 роликов.')
+                return data
             if data.get('video_url'):
                 content['video'] = {'url':data['video_url'], 'title':data.get('video_title',''), 'embedUrl':data.get('video_player','')}
+                if extra: content['videos'] = [content['video'], *extra]
         if 'document' in self.blocks:
             if data.get('pdf_label') or content.get('document', {}).get('assetId'):
                 content.setdefault('document', {})['label'] = data.get('pdf_label','')
@@ -284,6 +301,10 @@ class CardForm(forms.Form):
         initial['card_address'] = card.public_id
         initial['layout_data'] = json.dumps(card.draft.get('layout', {}), ensure_ascii=False)
         initial['daisy_data'] = json.dumps(card.draft.get('daisy', {}), ensure_ascii=False)
+        from .blocks import video_items
+        videos = video_items(card.draft)
+        first_video = videos[0] if videos else {}
+        initial['video_items'] = json.dumps(videos[1:], ensure_ascii=False)
         business = card.draft.get('business', {})
         initial.update(work_status=business.get('status',''), work_timezone=business.get('timezone','Europe/Moscow'),
                        motion=card.draft.get('motion', True))
@@ -298,8 +319,8 @@ class CardForm(forms.Form):
             initial[key+'_label'] = card.draft.get(key+'Label') or card.draft.get('design', {}).get(key+'Label') or fallback
         initial['links'] = '\n'.join(f'{link["label"]} | {link["url"]}' for link in card.draft['links'])
         initial.update({f'social_{key}': url for key, url in card.draft.get('socials', {}).items()})
-        initial.update(video_url=card.draft.get('video',{}).get('url',''), video_title=card.draft.get('video',{}).get('title',''),
-                       video_player=card.draft.get('video',{}).get('embedUrl',''), pdf_label=card.draft.get('document',{}).get('label',''),
+        initial.update(video_url=first_video.get('url',''), video_title=first_video.get('title',''),
+                       video_player=first_video.get('embedUrl',''), pdf_label=card.draft.get('document',{}).get('label',''),
                        map_address=card.draft.get('map',{}).get('address',''), map_latitude=card.draft.get('map',{}).get('latitude'),
                        map_longitude=card.draft.get('map',{}).get('longitude'))
         return cls(data=data, initial=initial, card=card)

@@ -34,11 +34,13 @@ def validate_content(content, workspace=None):
         if clean_buttons(content['buttons']) != content['buttons']:
             raise ValidationError('Проверьте номера телефонов и ссылки в кнопках.')
     from .models import Asset
-    from .blocks import video_embed
-    video = content.get('video', {})
-    if video.get('url'):
-        video_embed(video['url'], video.get('embedUrl', ''))
-    elif video.get('embedUrl'):
+    from .blocks import video_items, video_player_url
+    for video in video_items(content):
+        if video.get('url'):
+            video_player_url(video['url'], video.get('embedUrl', ''))
+        else:
+            raise ValidationError('Укажите ссылку для каждого видео.')
+    if content.get('video', {}).get('embedUrl') and not content['video'].get('url'):
         raise ValidationError('Сначала укажите ссылку на видео.')
     location = content.get('map', {})
     if ('latitude' in location) != ('longitude' in location):

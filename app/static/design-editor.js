@@ -77,12 +77,10 @@
     const empty=node.querySelector('[data-embed-empty]');if(empty)empty.hidden=Boolean(url);
   }
   function renderMedia(){
-    const video=content.video||{},location=content.map||{},doc=content.document||{};
+    const location=content.map||{},doc=content.document||{};
     const videoNode=card.querySelector('[data-video-block]');
     if(videoNode){
-      videoNode.querySelector('[data-video-title]').textContent=video.title||'Видео';
-      const link=videoNode.querySelector('[data-video-link]');link.href=safeUrl(video.url);link.hidden=!video.url;
-      setEmbed(videoNode.querySelector('[data-external-embed]'),window.CardEmbeds.video(video.url||'',video.embedUrl||''));
+      window.CardVideos.render(videoNode,content.videos||(content.video?.url?[content.video]:[]));
     }
     const mapNode=card.querySelector('[data-map-block]');
     if(mapNode){mapNode.querySelector('[data-map-address]').textContent=location.address||'Укажите адрес';setEmbed(mapNode.querySelector('[data-external-embed]'),window.CardEmbeds.map(location));}
@@ -210,12 +208,18 @@
     }
     if(['video','document','map'].includes(selected)&&data.template)small('В шаблоне настраивается расположение и оформление. Видео, PDF и адрес клиент добавляет в своей визитке.');
     if(selected==='video'&&!data.template){
-      content.video??={};
-      control('Название видео',content.video.title||'',value=>content.video.title=value);
-      control('Ссылка на видео',content.video.url||'',value=>content.video.url=value,{type:'url'});
-      control('Ссылка плеера ВК (при необходимости)',content.video.embedUrl||'',value=>content.video.embedUrl=value,{type:'url'});
-      small('Рутуб, ВК Видео или Ютуб. Для ВК при ошибке плеера откройте «Поделиться → Экспортировать» и скопируйте адрес src из кода, включая hash. Размещение на других сайтах должно быть разрешено автором.');
-      button('Убрать видео',()=>{checkpoint();delete content.video;dirty=true;apply();inspectorContent();});
+      const videos=content.videos||(content.video?.url?[content.video]:[]);
+      const sync=()=>{if(videos.length){content.videos=videos;content.video={...videos[0]};}else{delete content.videos;delete content.video;}};
+      small('До 20 видео. YouTube, Рутуб, ВК Видео, Vimeo, ОК, TikTok и другие сервисы. Если встроенный просмотр недоступен, ролик откроется на сайте сервиса.');
+      videos.forEach((video,index)=>{
+        small(`Видео ${index+1}`);
+        control('Название видео',video.title||'',value=>{video.title=value;sync();});
+        control('Ссылка на видео',video.url||'',value=>{video.url=value;sync();},{type:'url'});
+        control('Ссылка плеера ВК / Dailymotion (при необходимости)',video.embedUrl||'',value=>{video.embedUrl=value;sync();},{type:'url'});
+        if(index>0)button('Переместить выше',()=>{checkpoint();[videos[index-1],videos[index]]=[videos[index],videos[index-1]];sync();dirty=true;apply();inspectorContent();});
+        button('Удалить видео',()=>{checkpoint();videos.splice(index,1);sync();dirty=true;apply();inspectorContent();});
+      });
+      if(videos.length<20)button('Добавить видео',()=>{checkpoint();videos.push({url:'',title:'',embedUrl:''});sync();dirty=true;apply();inspectorContent();});
     }
     if(selected==='document'&&!data.template){
       content.document??={};

@@ -158,24 +158,11 @@
       "maxItems": 100,
       "uniqueItems": true
     },
-    "video": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "url": {
-          "type": "string",
-          "maxLength": 2048
-        },
-        "embedUrl": {
-          "type": "string",
-          "maxLength": 2048
-        },
-        "title": {
-          "type": "string",
-          "maxLength": 100
-        }
-      }
+    "videos": {
+      "type": "array", "maxItems": 20,
+      "items": {"$ref": "#/$defs/videoItem"}
     },
+    "video": {"$ref": "#/$defs/videoItem"},
     "document": {
       "type": "object",
       "additionalProperties": false,
@@ -212,6 +199,14 @@
     }
   },
   "$defs": {
+    "videoItem": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "url": {"type": "string", "maxLength": 2048},
+        "embedUrl": {"type": "string", "maxLength": 2048},
+        "title": {"type": "string", "maxLength": 100}
+      }
+    },
     "size":{"type":"object","additionalProperties":false,"properties":{"width":{"enum":[25,33,50,66,75,100]},"height":{"type":"integer","minimum":0,"maximum":720},"radius":{"type":"integer","minimum":0,"maximum":180},"shape":{"enum":["auto","square","circle"]}}},
     "socialUrl": {
       "type": "string",

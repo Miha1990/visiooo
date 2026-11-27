@@ -38,6 +38,29 @@ test('external embeds load immediately, preserve an existing player and reject o
  hidden=false;box.dataset.embedUrl='https://evil.test/embed/anything';window.CardWidgets.refresh();assert.equal(frames.length,0);
  box.dataset.embedUrl='https://yandex.ru/map-widget/v1/?text=test';window.CardWidgets.refresh();assert.equal(frames.length,1);
 });
+
+test('video carousel supports arrows, keyboard and swipes and unloads inactive players',()=>{
+ const card=node(),section=node(),track=node(),prev=node(),next=node(),status=node(),controls=node();
+ track.clientWidth=320;track.scrollLeft=0;card.clientWidth=320;
+ const frames=[null,null,null],slides=frames.map((_,i)=>{
+  const slide=node(),box=node();slide.dataset.videoActive=String(i===0);
+  box.dataset.embedUrl='https://player.vimeo.com/video/'+(123+i);
+  box.closest=()=>slide.dataset.videoActive==='false'?slide:null;
+  box.querySelector=selector=>selector==='iframe'?frames[i]:null;
+  box.append=frame=>{frames[i]=frame;frame.remove=()=>{frames[i]=null;};};
+  slide.querySelectorAll=()=>[box];return slide;
+ });
+ track.querySelectorAll=()=>slides;track.scrollTo=({left})=>{track.scrollLeft=left;track.events.scroll();};
+ section.querySelector=selector=>({'[data-video-track]':track,'[data-video-prev]':prev,'[data-video-next]':next,'[data-video-status]':status,'.video-controls':controls})[selector];
+ card.querySelectorAll=selector=>selector==='[data-video-block]'?[section]:[];
+ const document={querySelectorAll:()=>[card],createElement:()=>({getAttribute(name){return this[name];}})},window={matchMedia:()=>({matches:true})};
+ vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../../static/card-widgets.js'),'utf8'),{document,window});
+ assert.equal(prev.disabled,true);assert.equal(status.textContent,'1 / 3');assert(frames[0]);assert.equal(frames[1],null);
+ next.onclick();assert.equal(status.textContent,'2 / 3');assert.equal(frames[0],null);assert(frames[1]);
+ track.events.keydown({target:track,key:'ArrowRight',preventDefault(){}});assert.equal(status.textContent,'3 / 3');assert.equal(next.disabled,true);assert.equal(frames[1],null);assert(frames[2]);
+ track.scrollLeft=0;track.events.scroll();assert.equal(status.textContent,'1 / 3');assert.equal(frames[2],null);
+ window.CardWidgets.refresh();next.onclick();assert.equal(status.textContent,'2 / 3');assert.equal(track.scrollLeft,320);
+});
 test('fractional carousel preserves the next-photo cue and wraps from its partial final position',()=>{
  const {gallery,track,next}=setup({peek:true});
  assert.equal(gallery.style.values['--slides-visible'],'2.5');
