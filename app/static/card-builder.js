@@ -187,7 +187,11 @@
   }
   form.addEventListener('input',draw);
   form.addEventListener('submit',event=>{if(!form.checkValidity()){event.preventDefault();const invalid=form.querySelector(':invalid');const d=invalid?.closest('dialog');if(d&&!d.open)d.showModal();invalid?.reportValidity();}else if(form.confirmAddress&&!form.confirmAddress())event.preventDefault();});
-  const topbar=node('nav',{class:'builder-topbar','aria-label':'Редактирование визитки'}),back=node('a',{href:'/app/cards'},'Назад'),save=node('button',{type:'submit',form:form.id,name:'save_and_close',value:'yes'},'Сохранить и закрыть');
+  const saveChoices=dialog('Сохранить визитку');saveChoices.classList.add('builder-save-choices');
+  const saveDraft=node('button',{type:'submit',form:form.id,name:'save_and_close',value:'yes',class:'button'},'Сохранить черновик');
+  saveChoices.append(node('p',{},'Черновик виден только вам. Публикация обновит визитку для посетителей, включая удаление фотографий.'),saveDraft,button('Опубликовать',()=>{saveChoices.close();publish.showModal();},'button'));
+  saveDraft.addEventListener('click',()=>saveChoices.close());
+  const topbar=node('nav',{class:'builder-topbar','aria-label':'Редактирование визитки'}),back=node('a',{href:'/app/cards','aria-label':'На главную'},'← На главную'),save=button('Сохранить и закрыть',()=>saveChoices.showModal());
   topbar.append(back,save);editor.prepend(topbar);
   const toolbar=node('div',{class:'builder-toolbar'}),addField=button('+ Добавить поле',()=>choose(),'builder-add-row'),preview=button('Предпросмотр',()=>setView(editor.dataset.view==='preview'?'edit':'preview'));
   toolbar.append(addField);editor.append(toolbar);

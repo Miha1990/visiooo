@@ -55,13 +55,13 @@
         <div class="panel avatar-panel image-panel" data-image-slot="{{ panel.target }}">
           <div class="panel-heading"><h2>{{ panel.label }}</h2><span class="muted micro">0{{ forloop.counter }} / ОФОРМЛЕНИЕ</span></div>
           <p class="muted micro">{{ panel.description }}</p>
-          {% if panel.asset_id %}
-            <img class="styling-thumbnail styling-{{ panel.target }}" src="{% url 'preview_asset' card.pk panel.asset_id %}" alt="{{ panel.label }} — текущее изображение" loading="lazy">
+          {% if panel.image_url %}
+            <img class="styling-thumbnail styling-{{ panel.target }}" src="{{ panel.image_url }}" alt="{{ panel.label }} — текущее изображение" loading="lazy">
           {% endif %}
           <form method="post" action="{% url 'upload_asset' %}" enctype="multipart/form-data" class="stack">
-            {% csrf_token %}{{ panel.form.as_div }}<button class="button">{% if panel.asset_id %}Заменить изображение{% else %}Загрузить изображение{% endif %}</button>
+            {% csrf_token %}{{ panel.form.as_div }}<button class="button">{% if panel.image_url %}Заменить изображение{% else %}Загрузить изображение{% endif %}</button>
           </form>
-          {% if panel.asset_id %}
+          {% if panel.image_url %}
           <form method="post" action="{% url 'remove_avatar' card.pk %}" class="avatar-remove">
             {% csrf_token %}<input type="hidden" name="draft_version" value="{{ card.draft_version }}"><input type="hidden" name="target" value="{{ panel.target }}"><button class="text-button">Убрать изображение</button>
           </form>
@@ -71,7 +71,7 @@
       </section>
       {% include 'cards/client_media.html' %}
       <div class="panel publish-panel" id="publish-card">
-        <h2>Готовы к знакомству?</h2><p class="muted">Сначала сохраните правки, затем опубликуйте. Черновик виден только вам.</p>
+        <h2>Готовы к знакомству?</h2><p class="muted">При публикации правки сохранятся автоматически. Посетители увидят обновлённую визитку, включая удаление фотографий. Черновик виден только вам.</p>
         {% if not active_pro %}<p class="notice">Для публикации нужен активный Профи. Оплатить подписку можно в разделе «Подписка».</p>{% endif %}
         <form method="post" action="{% url 'publish' card.pk %}" class="stack">
           {% csrf_token %}<input type="hidden" name="draft_version" value="{{ card.draft_version }}">

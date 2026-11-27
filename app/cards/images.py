@@ -1,3 +1,4 @@
+from copy import deepcopy
 from io import BytesIO
 import uuid
 import warnings
@@ -96,6 +97,8 @@ def remove_avatar(user, pk, version, target='avatar'):
         raise ValidationError('Некорректный тип фото.')
     Workspace.objects.select_for_update().get(pk=workspace_for(user).pk)
     card = own_card(user, pk)
-    content = dict(card.draft)
+    content = deepcopy(card.draft)
     content.pop(IMAGE_FIELDS[target], None)
+    # A removed upload must not reveal the template's original photo again.
+    content.get('design', {}).get('images', {}).pop(target, None)
     save_card(user, pk, version, content)

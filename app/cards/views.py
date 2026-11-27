@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import connection
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
+from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from accounts.views import redirect303
@@ -129,7 +130,12 @@ def edit(request, pk):
         if target != 'background' and ('avatar' if target == 'avatar' else 'cover') not in form.blocks:
             continue
         label, description = descriptions[target]
+        asset_id = card.draft.get(field)
+        shared_id = card.draft.get('design', {}).get('images', {}).get(target)
+        image_url = (reverse('preview_asset', args=[card.pk, asset_id]) if asset_id else
+                     reverse('template_photo', args=[shared_id]) if shared_id else '')
         image_panels.append({'target': target, 'label': label, 'description': description,
+            'image_url': image_url,
             'asset_id': card.draft.get(field),
             'form': AvatarUploadForm(auto_id=f'{target}_%s', initial={
                 'card_id': card.pk, 'draft_version': card.draft_version, 'target': target})})
@@ -224,6 +230,7 @@ def public(request, public_id):
     from config.seo import card_metadata
     card = public_card(public_id, workspace=getattr(request, 'domain_workspace', None))
     response = render(request, 'cards/public.html', {'card': card, 'content': card.published_revision.content,
+                      'owner_view': request.user.is_authenticated and card.workspace.owner_id == request.user.pk,
                       'seo': card_metadata(request, card),
                       'publication_conditions': card.published_revision.publication_conditions})
     from .analytics import record_view

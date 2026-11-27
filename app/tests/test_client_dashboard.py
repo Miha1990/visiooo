@@ -47,6 +47,18 @@ class ClientDashboardTests(TestCase):
         self.assertEqual(response.context['card_count'], 1)
         self.assertContains(response, 'Просмотры визиток')
 
+    def test_public_preview_has_home_arrow_only_for_card_owner(self):
+        publish_card(self.user, self.card.pk, self.card.draft_version)
+        url = f'/c/{self.card.public_id}'
+        response = self.client.get(url)
+        self.assertContains(response, '←</span> На главную')
+        self.assertContains(response, f'/app/cards?card={self.card.pk}')
+        self.assertNotContains(Client().get(url), 'owner-preview-nav')
+        other = User.objects.create_user('viewer@example.test', 'Viewer-password-39!')
+        visitor = Client()
+        visitor.force_login(other)
+        self.assertNotContains(visitor.get(url), 'owner-preview-nav')
+
     def test_empty_dashboard_still_allows_card_creation(self):
         self.card.status = 'deleted'; self.card.save()
         self.assertContains(self.client.get('/app/cards'), 'Ваша первая визитка')

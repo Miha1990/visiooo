@@ -67,6 +67,36 @@ class ImageTests(TestCase):
             self.assertNotIn('icc_profile', image.info)
         self.assertNotIn(b'Private image description', data)
 
+    def test_removing_photo_also_removes_template_fallback_and_publishes_absence(self):
+        from copy import deepcopy
+        from cards.designs import DEFAULT, editor_design
+        from cards.models import TemplatePhoto
+        shared = TemplatePhoto.objects.create(name='Фото шаблона', image=b'photo')
+        design = editor_design(deepcopy(DEFAULT))
+        design['images'] = {slot: str(shared.pk) for slot in ('avatar', 'header')}
+        save_card(self.user, self.card.pk, self.card.draft_version, {**self.card.draft, 'design': design})
+        self.card.refresh_from_db()
+        asset = self.upload()
+        publish_card(self.user, self.card.pk, self.card.draft_version)
+        template_url = reverse('template_photo', args=[shared.pk])
+        for slot in ('avatar', 'header'):
+            with self.subTest(slot=slot):
+                response = self.client.get(reverse('edit', args=[self.card.pk]))
+                panel = next(p for p in response.context['image_panels'] if p['target'] == slot)
+                self.assertTrue(panel['image_url'])
+                response = self.client.post(reverse('remove_avatar', args=[self.card.pk]), {
+                    'draft_version': self.card.draft_version, 'target': slot})
+                self.assertEqual(response.status_code, 303)
+                self.card.refresh_from_db()
+                self.assertNotIn(slot, self.card.draft['design']['images'])
+        self.assertNotContains(self.client.get(reverse('edit', args=[self.card.pk])), template_url)
+        # Draft removal leaves the previous publication intact until explicitly published.
+        self.assertContains(self.client.get(reverse('public', args=[self.card.public_id])), self.public_url(asset))
+        publish_card(self.user, self.card.pk, self.card.draft_version)
+        response = self.client.get(reverse('public', args=[self.card.public_id]))
+        self.assertNotContains(response, self.public_url(asset))
+        self.assertNotContains(response, template_url)
+
     def test_actual_format_validated_not_filename_or_mime(self):
         invalid = [SimpleUploadedFile('photo.png', b'<svg><script>alert(1)</script></svg>', content_type='image/png'),
                    photo('GIF'), SimpleUploadedFile('broken.jpg', b'\xff\xd8\xffbroken', content_type='image/jpeg')]

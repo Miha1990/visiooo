@@ -1,4 +1,5 @@
 /* Customer editor follows the card-shaped fields in the reference. */
+.builder-save-choices>.button{display:block;width:100%;margin-top:12px;min-height:44px}
 .client-area:has(.card-builder-active){background:#fff;padding-bottom:0}
 .client-area:has(.card-builder-active)>.client-appbar,.client-area:has(.card-builder-active)>.client-bottom-nav{display:none}
 .card-builder-active{width:min(540px,100%)!important;padding:82px 0 120px!important;color:#24282c}
