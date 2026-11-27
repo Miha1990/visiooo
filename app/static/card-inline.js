@@ -5,7 +5,7 @@
   const preview=editor.querySelector('.phone-preview'),card=preview?.querySelector('.contact-card');if(!card)return;
   const labels={cover:'Обложка',avatar:'Фото',identity:'Информация о себе',bio:'О себе',save:'Сохранение контакта',business:'График и статус',contacts:'Контакты',socials:'Соцсети',carousel:'Карусель',video:'Видео',document:'Файл',map:'Адрес',daisy:'Ромашка'};
   const node=(tag,attrs={},text)=>{const el=document.createElement(tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,v);if(text!==undefined)el.textContent=text;return el;};
-  const host=node('section',{class:'inline-card-host','aria-label':'Редактирование блоков визитки'}),actions=node('div',{class:'inline-media-actions'}),hint=node('p',{class:'inline-edit-hint'},'Нажмите на блок, чтобы выбрать. Удерживайте и перетаскивайте, чтобы переместить. Тяните за края или уголки, чтобы изменить размер.'),status=node('p',{class:'inline-order-status',role:'status','aria-live':'polite'});
+  const host=node('section',{class:'inline-card-host','aria-label':'Редактирование блоков визитки'}),actions=node('div',{class:'inline-media-actions'}),status=node('p',{class:'inline-order-status',role:'status','aria-live':'polite'});
   const upload=slot=>editor.querySelector(`[data-image-slot="${slot}"] input[type=file],.builder-image-${slot} input[type=file]`);
   for(const [slot,title]of [['logo','Лого'],['header','Обложка']]){if(!upload(slot))continue;const button=node('button',{type:'button','data-inline-media':slot,'aria-label':'Изменить '+title},'+ '+title);button.addEventListener('click',event=>{event.stopPropagation();upload(slot)?.click();});actions.append(button);}
   const cover=card.querySelector('.contact-cover'),coverBlock=cover?.closest('[data-layout-block="cover"]')||cover,photo=card.querySelector('.contact-avatar:not(.avatar-photo)'),avatarBlock=photo?.closest('[data-layout-block="avatar"]')||photo;
@@ -28,20 +28,20 @@
   editor.dataset.editMode='simple';
   const advanced=()=>editor.dataset.editMode==='advanced';
   for(const [mode,label]of [['simple','Простой'],['advanced','Продвинутый']]){const button=node('button',{type:'button','data-edit-mode':mode,'aria-pressed':String(mode==='simple')},label);button.addEventListener('click',()=>{endGesture();suppressClickUntil=0;editor.dataset.editMode=mode;status.textContent='';sync();});modes.append(button);}
-  host.append(modes,hint);if(tools)host.append(tools);host.append(preview,status);form.prepend(host);editor.classList.add('inline-builder');
+  host.append(modes);if(tools)host.append(tools);host.append(preview,status);form.prepend(host);editor.classList.add('inline-builder');
   const empty=new Map();let syncing=false,pendingContact=null;
   const input=name=>form.elements.namedItem(name),value=name=>input(name)?.value.trim()||'';
-  function hasContent(key){if(key==='carousel')return Boolean(card.querySelector('.carousel-slide'));if(key==='video')return Boolean(window.CardVideos?.fromForm(form).length);if(key==='map')return Boolean(value('map_address'));if(key==='daisy'){try{return (JSON.parse(input('daisy_data').value||'{}').items||[]).length>0;}catch{return false;}}return true;}
+  function hasContent(key){if(key==='carousel')return Boolean(card.querySelector('.carousel-slide'));if(key==='video')return Boolean(window.CardVideos?.fromForm(form).length);if(key==='business')return Boolean(value('work_status')||Array.from({length:7},(_,day)=>value(`work_${day}_open`)&&value(`work_${day}_close`)).some(Boolean));if(key==='map')return Boolean(value('map_address'));if(key==='daisy'){try{return (JSON.parse(input('daisy_data').value||'{}').items||[]).length>0;}catch{return false;}}return true;}
   function persist(){const source=input('layout_data');source.value=JSON.stringify(layout.get(card));source.dispatchEvent(new Event('input',{bubbles:true}));}
   function insert(key){const config=layout.get(card);const known=['cover','avatar','identity','bio','business','save','contacts','socials','carousel','video','document','map','daisy'];config.order=config.order||known.filter(item=>card.querySelector(`[data-layout-block="${item}"]:not([hidden])`));if(!config.order.includes(key))config.order.push(key);layout.set(card,config);persist();sync();}
   function restore(key){const entry=empty.get(key);if(!entry)return;entry.demo.remove();entry.children.forEach(([child,hidden])=>child.hidden=hidden);delete entry.block.dataset.editorExample;empty.delete(key);}
   function placeholders(editing){
     const requested=layout.get(card).order||[];
-    for(const key of ['carousel','video','map','daisy']){
+    for(const key of ['carousel','video','map','daisy','business']){
       const filled=hasContent(key),block=card.querySelector(`[data-layout-block="${key}"]`);if(!block)continue;
       if(!editing||filled||!requested.includes(key)){restore(key);if(!filled)block.hidden=true;continue;}
       if(!empty.has(key)){
-        const children=[...block.children].filter(child=>!child.matches('.size-handle,.block-move-grip,.inline-edit-block')).map(child=>[child,child.hidden]);children.forEach(([child])=>child.hidden=true);
+        const children=key==='business'?[]:[...block.children].filter(child=>!child.matches('.size-handle,.block-move-grip,.inline-edit-block')).map(child=>[child,child.hidden]);children.forEach(([child])=>child.hidden=true);
         const demo=node('div',{class:'inline-empty-block'}),example=window.CardBlockExamples.create(key);if(example)demo.append(example);demo.append(node('p',{},'Пример: '+labels[key]+'. Добавьте свои данные.'));block.append(demo);empty.set(key,{block,demo,children});block.dataset.editorExample='true';
       }
       block.hidden=false;
@@ -127,7 +127,7 @@
       if(advanced()&&peers(el).includes(el))grip(el);
     }
   }
-  function sync(){if(syncing)return;syncing=true;try{const editing=editor.dataset.view!=='preview',design=editing&&advanced();if(!design)endGesture();layout.refresh(card);mediaControls(editing);placeholders(editing);layout.setEditing(card,design);card.classList.toggle('content-editing',editing&&!design);controls(editing);modes.hidden=!editing;hint.hidden=!editing;hint.textContent=advanced()?'Удерживайте блок или фото и перетаскивайте. Аватар можно наложить на обложку. Синие точки меняют размер, жёлтая — скругление.':'Нажмите на фото или блок, чтобы заполнить данные. Расположение и форма остаются как в шаблоне.';modes.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.editMode===editor.dataset.editMode)));}finally{syncing=false;}}
+  function sync(){if(syncing)return;syncing=true;try{const editing=editor.dataset.view!=='preview',design=editing&&advanced();if(!design)endGesture();layout.refresh(card);mediaControls(editing);placeholders(editing);layout.setEditing(card,design);card.classList.toggle('content-editing',editing&&!design);controls(editing);modes.hidden=!editing;modes.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.editMode===editor.dataset.editMode)));}finally{syncing=false;}}
   form.addEventListener('card:insert-block',event=>insert(event.detail.key));form.addEventListener('card:editor-view',sync);form.addEventListener('input',sync);form.addEventListener('change',sync);
   const observer=new MutationObserver(()=>{if(!syncing)sync();});observer.observe(editor,{attributes:true,attributeFilter:['data-view']});
   sync();

@@ -36,6 +36,18 @@ class CardFeaturesTests(TestCase):
                 'work_status':'Принимаю заказы', 'work_timezone':'Europe/Moscow', 'work_0_open':'09:00',
                 'work_0_close':'19:00', 'action_kind':'phone', 'action_target':'89289091817', 'motion':'on', **values}
 
+    def test_work_schedule_is_a_separate_block_with_saved_order(self):
+        import json
+        form = CardForm.for_card(self.card, self.data(layout_data=json.dumps({'order':['identity','business','contacts']})))
+        self.assertTrue(form.is_valid(), form.errors)
+        save_card(self.user, self.card.pk, self.card.draft_version, form.content)
+        self.card.refresh_from_db()
+        self.assertIn('business', self.card.draft['layout']['order'])
+        publish_card(self.user, self.card.pk, self.card.draft_version)
+        response = Client().get(f'/c/{self.card.public_id}')
+        self.assertContains(response, 'data-layout-block="business"', count=1)
+        self.assertContains(response, '09:00–19:00')
+
     def test_form_validation_snapshot_publication_and_both_templates(self):
         form = CardForm.for_card(self.card, self.data())
         self.assertTrue(form.is_valid(), form.errors)

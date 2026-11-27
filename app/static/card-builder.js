@@ -38,8 +38,13 @@
   const saveTemplate=editor.querySelector('form[action*="/templates/from-card/"]');if(saveTemplate)settings.append(saveTemplate);
   const publish=dialog('Публикация визитки');const publishPanel=editor.querySelector('#publish-card');if(publishPanel)publish.append(publishPanel);
   const danger=editor.querySelector('.danger-zone');if(danger)settings.append(danger);
-  const featureFields=sourceBox.querySelector('[data-card-feature-fields]'),features=dialog('График, главная кнопка и анимация',form);
-  if(featureFields){featureFields.open=true;features.append(featureFields,button('Готово',()=>{if(features.querySelector(':invalid'))features.querySelector(':invalid').reportValidity();else features.close();},'button'));}
+  const featureFields=sourceBox.querySelector('[data-card-feature-fields]'),features=dialog('График работы',form),featureSettings=dialog('Главная кнопка и анимация',form);
+  if(featureFields){
+    for(const name of ['action_kind','action_label','action_target','motion']){const input=field(name);if(input)featureSettings.append(input.closest('div'));}
+    featureFields.querySelectorAll('h3').forEach(heading=>{if(!heading.textContent.startsWith('График'))heading.remove();});
+    featureSettings.append(button('Готово',()=>{const invalid=featureSettings.querySelector(':invalid');if(invalid)invalid.reportValidity();else featureSettings.close();},'button'));
+    featureFields.open=true;features.append(featureFields,button('Готово',()=>{if(features.querySelector(':invalid'))features.querySelector(':invalid').reportValidity();else features.close();},'button'));
+  }
   const actionKind=field('action_kind'),actionTarget=field('action_target');
   const actionHint=()=>{const phone=actionKind.value==='phone';actionTarget.type=phone?'tel':'text';actionTarget.inputMode=phone?'tel':'url';actionTarget.placeholder=phone?'+7 (928) 909-18-17':'t.me/username или example.com/booking';};
   actionKind?.addEventListener('change',actionHint);if(actionKind&&actionTarget)actionHint();
@@ -126,8 +131,9 @@
       const grid=node('div',{class:group==='Соцсети и мессенджеры'?'builder-choice-socials':'builder-choice-list'});choices.append(node('h3',{},group),grid);
       for(const item of found){const b=button('',()=>{chooser.close();editButton(choiceIndex,item.kind);},'builder-choice');b.append(image(item.kind),node('span',{},item.label));grid.append(b);}
     }
-    const extras=[['carousel','Карусель фотографий'],['video','Видео'],['map','Адрес на карте']].filter(([key,label])=>(media.has(key)||sources.has(key))&&label.toLowerCase().includes(text));
-    if(!editingDaisy&&choiceGroup!=='social'&&choiceIndex<0){choices.append(node('h3',{},'Другие блоки'));for(const [key,label]of [...extras,['daisy','Ромашка — контакты по кругу']]){const choice=button('',()=>{chooser.close();form.dispatchEvent(new CustomEvent('card:insert-block',{detail:{key}}));if(key==='daisy')daisySettings.showModal();else openMedia(key);},'builder-choice builder-example-choice');choice.append(node('strong',{},label));const example=window.CardBlockExamples?.create(key);if(example)choice.append(example);choices.append(choice);}}
+    const extras=[['carousel','Карусель фотографий'],['video','Видео'],['map','Адрес на карте'],['business','График работы']].filter(([key,label])=>(media.has(key)||sources.has(key)||key==='business'&&featureFields)&&label.toLowerCase().includes(text));
+    if(!editingDaisy&&choiceGroup!=='social'&&choiceIndex<0){choices.append(node('h3',{},'Другие блоки'));for(const [key,label]of [...extras,['daisy','Ромашка — контакты по кругу']]){const choice=button('',()=>{chooser.close();form.dispatchEvent(new CustomEvent('card:insert-block',{detail:{key}}));if(key==='daisy')daisySettings.showModal();else if(key==='business')features.showModal();else openMedia(key);},'builder-choice builder-example-choice');choice.append(node('strong',{},label));const example=window.CardBlockExamples?.create(key);if(example)choice.append(example);choices.append(choice);}choices.append(button('Оформление и настройки',()=>{chooser.close();settings.showModal();},'builder-choice'));}
+    if(!editingDaisy&&choiceGroup!=='social'&&choiceIndex<0&&featureFields)choices.append(button('Главная кнопка и анимация',()=>{chooser.close();featureSettings.showModal();},'builder-choice'));
     if(!choices.childElementCount)choices.append(node('p',{},'Ничего не найдено. Попробуйте другое название.'));
   }
   search.addEventListener('input',filter);
@@ -137,12 +143,17 @@
   const daisySection=node('section',{class:'builder-palette'});daisySection.append(node('h2',{},'Ромашка'),button('Настроить контакты по кругу',()=>daisySettings.showModal(),'builder-content-row'));form.append(daisySection);
   function drawDaisy(){daisyGrid.replaceChildren();daisy.items.forEach((item,index)=>{const b=button('',()=>{daisySettings.close();choose('all',index,true);},'builder-choice');b.append(image(item.kind),node('span',{},item.label));daisyGrid.append(b);});}
   const palette=node('section',{class:'builder-palette','aria-label':'Цветовая гамма'}),accent=field('accent');
-  palette.append(node('h2',{},'Цветовая гамма'),node('p',{},'Выберите цвет кнопок визитки.'));
+  palette.append(node('h2',{},'Цветовая гамма'));
   const swatches=node('div',{class:'builder-swatches'});
   const colors=[['#315948','Лесной'],['#2457db','Синий'],['#683db0','Фиолетовый'],['#a02c49','Ягодный'],['#985222','Терракотовый'],['#263342','Графитовый']];
-  const paint=()=>{built.style.setProperty('--builder-accent',accent.value);swatches.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.color===accent.value.toLowerCase())));};
+  const paint=()=>{built.style.setProperty('--builder-accent',accent.value);swatches.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.classList.contains('builder-swatch-custom')?!colors.some(([color])=>color===accent.value.toLowerCase()):b.dataset.color===accent.value.toLowerCase())));};
   for(const [color,name]of colors){const b=button('',()=>{accent.value=color;accent.dispatchEvent(new Event('input',{bubbles:true}));},'builder-swatch');b.dataset.color=color;b.style.background=color;b.setAttribute('aria-label',name);swatches.append(b);}
-  palette.append(swatches);if(accent){const wrapper=accent.closest('div');wrapper.querySelector('label')?.replaceChildren(document.createTextNode('Свой цвет'));palette.append(wrapper);accent.addEventListener('input',paint);paint();}
+  palette.append(swatches);if(accent){
+    const wrapper=accent.closest('div');wrapper.hidden=true;palette.append(wrapper);
+    const custom=button('',null,'builder-swatch builder-swatch-custom');custom.setAttribute('aria-label','Свой цвет');custom.setAttribute('aria-haspopup','dialog');swatches.append(custom);
+    const picker=window.CardColorPicker?.create(custom,accent,editor);custom.addEventListener('click',()=>{if(picker)picker.open();else accent.click();});
+    accent.addEventListener('input',paint);paint();
+  }
   const address=field('card_address'),addressSection=node('section',{class:'builder-address'}),availability=node('p',{'aria-live':'polite',class:'builder-address-status'});
   let checkTimer,checkSerial=0;
   addressSection.append(node('h2',{},'Назначить ссылку'));
@@ -194,9 +205,8 @@
   const topbar=node('nav',{class:'builder-topbar','aria-label':'Редактирование визитки'}),back=node('a',{href:'/app/cards','aria-label':'На главную'},'← На главную'),save=button('Сохранить и закрыть',()=>saveChoices.showModal());
   topbar.append(back,save);editor.prepend(topbar);
   const toolbar=node('div',{class:'builder-toolbar'}),addField=button('+ Добавить поле',()=>choose(),'builder-add-row'),preview=button('Предпросмотр',()=>setView(editor.dataset.view==='preview'?'edit':'preview'));
-  toolbar.append(addField);editor.append(toolbar);
+  toolbar.append(preview);editor.append(toolbar);form.append(addField);
   function setView(view){editor.dataset.view=view;preview.textContent=view==='preview'?'Редактировать':'Предпросмотр';form.dispatchEvent(new CustomEvent('card:editor-view',{detail:{view}}));}
-  const more=node('div',{class:'builder-more'});more.append(preview,button('График и главное действие',()=>features.showModal()),button('Оформление и шаблон',()=>settings.showModal()),button('Опубликовать',()=>publish.showModal()));form.append(more);
   const returnToEdit=button('Вернуться к редактированию',()=>setView('edit'),'builder-preview-back');editor.querySelector('.preview-column')?.prepend(returnToEdit);
   for(const child of [...editor.children])if(![topbar,built,toolbar].includes(child)&&child.tagName!=='DIALOG'&&!child.classList.contains('editor-grid'))child.hidden=true;
   const oldColumn=editor.querySelector('.editor-form-column');if(oldColumn)oldColumn.hidden=true;

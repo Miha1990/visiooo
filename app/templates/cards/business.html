@@ -1,5 +1,5 @@
 {% load card_tags %}{% if preview or content.business.status or content.business.hours %}{% business_info content as work %}
-<section class="work-summary" data-work-summary {% if not work.status and not work.hours %}hidden{% endif %} aria-label="Статус и график работы">
+<section class="work-summary" data-work-summary data-layout-block="business" {% if not work.status and not work.hours %}hidden{% endif %} aria-label="Статус и график работы">
   {{ content.business|json_script }}
   <p class="work-status" data-work-status {% if not work.status %}hidden{% endif %}>{{ work.status }}</p>
   <details data-work-hours {% if not work.hours %}hidden{% endif %}><summary>График работы</summary><p class="work-zone" data-work-zone>Часовой пояс: {{ work.zone }}</p><dl data-work-days>{% for day in work.hours %}<div><dt>{{ day.name }}</dt><dd>{{ day.time }}</dd></div>{% endfor %}</dl></details>

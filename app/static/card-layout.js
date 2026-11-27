@@ -14,6 +14,8 @@
   }
   const keyFor=el=>el.hasAttribute('data-layout-button')?'button:'+el.dataset.layoutButton:el.dataset.layoutBlock;
   function orderBlocks(card,state){
+    const nestedBusiness=card.querySelector('[data-work-summary]'),identity=nestedBusiness?.closest('[data-design-block="identity"]');
+    if(identity)identity.after(nestedBusiness);
     const order=state.layout.order,body=card.querySelector('.contact-body');
     if(order?.length&&body){
       const cover=card.querySelector(':scope>.contact-cover');if(cover)body.prepend(cover);

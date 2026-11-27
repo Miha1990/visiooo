@@ -6,6 +6,9 @@
     if(key==='carousel'){
       const strip=document.createElement('div');strip.className='example-photo-strip';
       for(const file of ['designer-cover.webp','property-cover.webp','photographer-cover.webp','designer-cover.webp']){const image=document.createElement('img');image.src=new URL('examples/'+file,base).href;image.alt='';image.loading='lazy';strip.append(image);}box.append(strip);
+    }else if(key==='business'){
+      box.append(Object.assign(document.createElement('strong'),{textContent:'График работы'}));
+      for(const text of ['Пн–Пт  09:00–18:00','Сб–Вс  Выходной'])box.append(Object.assign(document.createElement('p'),{textContent:text}));
     }else if(key==='video'){
       const play=document.createElement('span');play.className='example-play';play.textContent='▶';const label=document.createElement('span');label.textContent='Карусель видео · ссылки на видеосервисы';box.append(play,label);
     }else if(key==='map'){
