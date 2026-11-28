@@ -1,0 +1,27 @@
+{% extends 'admin/base_site.html' %}{% load static %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'admin/css/forms.css' %}">{% endblock %}
+{% block breadcrumbs %}<div class="breadcrumbs"><a href="{% url 'admin:index' %}">Начало</a> &rsaquo; {% if has_view_permission %}<a href="{% url 'admin:cards_physicalcard_changelist' %}">Физические визитки</a> &rsaquo; {% endif %}Выпуск ссылок NFC / QR</div>{% endblock %}
+{% block content %}
+<div id="content-main">
+  <p>Каждой карте нужна отдельная ссылка. Запишите её в NFC как URL-запись и используйте ту же ссылку в QR на этой карте. Клиент откроет ссылку, войдёт и выберет свою визитку.</p>
+  <form method="post">{% csrf_token %}
+    {{ form.non_field_errors }}
+    <fieldset class="module aligned">
+      {% for field in form %}<div class="form-row">{{ field.errors }}<div>{{ field.label_tag }}{{ field }}{% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}</div></div>{% endfor %}
+    </fieldset>
+    <div class="submit-row"><input type="submit" value="Выпустить ссылки" class="default"></div>
+  </form>
+  <h2>Неактивированные карты</h2>
+  <p><a href="{% url 'physical_stock_csv' %}">Скачать ссылки CSV</a></p>
+  <div class="results" style="overflow-x:auto"><table id="result_list">
+    <thead><tr><th>Карта</th><th>Ссылка для NFC и QR</th><th>QR-код</th><th>Статус</th></tr></thead>
+    <tbody>{% for entry in stock %}<tr>
+      <th>{{ entry.item.label }}</th>
+      <td><input type="text" value="{{ entry.url }}" readonly aria-label="Ссылка карты {{ entry.item.label }}" style="min-width:260px;width:100%;box-sizing:border-box"></td>
+      <td><a href="{% url 'physical_stock_qr' entry.item.pk %}" download>Скачать PNG</a></td>
+      <td>{% if entry.item.blocked or not entry.item.enabled %}Активация отключена{% else %}Ожидает клиента{% endif %}</td>
+    </tr>{% empty %}<tr><td colspan="4">Нет заготовок. Выпустите ссылки с помощью формы выше.</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <p class="paginator">{% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">Назад</a>{% endif %} Страница {{ page.number }} из {{ page.paginator.num_pages }} {% if page.has_next %}<a href="?page={{ page.next_page_number }}">Далее</a>{% endif %}</p>
+</div>
+{% endblock %}

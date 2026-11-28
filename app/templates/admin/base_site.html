@@ -2,4 +2,5 @@
 {% load static %}
 {% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title }}{% endblock %}
 {% block extrahead %}{{ block.super }}{% include 'brand/icons.html' %}{% endblock %}
+{% block nav-global %}{% if user.is_staff and perms.cards.add_physicalcard %}<a href="{% url 'admin:cards_physicalcard_add' %}">Выпустить карты NFC / QR</a>{% endif %}{% endblock %}
 {% block branding %}<div id="site-name"><a href="{% url 'admin:index' %}"><img src="{% static 'brand/logo-mark-96.png' %}" width="32" height="32" alt="" style="vertical-align:middle;border-radius:8px;margin-right:10px">{{ site_header }}</a></div>{% if user.is_anonymous %}{% include 'admin/color_theme_toggle.html' %}{% endif %}{% endblock %}

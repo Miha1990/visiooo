@@ -1,0 +1,4 @@
+{% extends 'admin/change_list.html' %}
+{% block object-tools-items %}
+{% if has_add_permission %}<li><a href="{% url 'admin:cards_physicalcard_add' %}" class="addlink">Выпустить ссылки NFC / QR</a></li>{% endif %}
+{% endblock %}
