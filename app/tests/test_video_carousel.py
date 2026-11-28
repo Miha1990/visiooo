@@ -50,6 +50,32 @@ class VideoCarouselTests(TestCase):
                     'video_items':json.dumps(extra), **changes})
         return data
 
+    def test_builder_keeps_player_size_and_multiple_videos_after_reopening_and_publishing(self):
+        extra = [{'url': 'https://vkvideo.ru/clip-243793209_456239017?sh=4', 'title': 'Вертикальный клип',
+                  'embedUrl': 'https://vk.ru/video_ext.php?oid=-243793209&id=456239017&hash=18d01ce3990d425a'},
+                 {'url': 'https://vimeo.com/123456789', 'title': 'Третий ролик', 'embedUrl': ''}]
+        layout = {'blocks': {'video': {'width': 75, 'height': 240}}}
+        url = f'/app/cards/{self.card.pk}/edit'
+        response = self.client.post(url, self.payload(extra, builder_mode='tiles', button_items='[]', layout_data=json.dumps(layout)))
+        self.assertEqual(response.status_code, 303)
+        self.card.refresh_from_db()
+        self.assertEqual(self.card.draft['layout'], layout)
+        restored = CardForm.for_card(self.card)
+        self.assertEqual(json.loads(restored['layout_data'].value()), layout)
+        self.assertEqual(json.loads(restored['video_items'].value()), extra)
+        # Saving again from the restored editor retains every slide and its player URL.
+        data = {name: restored[name].value() or '' for name in restored.fields}
+        data['builder_mode'] = 'tiles'
+        self.assertEqual(self.client.post(url, data).status_code, 303)
+        self.card.refresh_from_db()
+        publish_card(self.user, self.card.pk, self.card.draft_version)
+        self.card.refresh_from_db()
+        response = Client().get(f'/c/{self.card.public_id}')
+        self.assertContains(response, 'class="video-slide"', count=3)
+        self.assertContains(response, 'data-video-aspect="9/16"', count=1)
+        self.assertEqual(self.card.published_revision.content['layout'], layout)
+        self.assertEqual(self.card.published_revision.content['videos'][1:], extra)
+
     def test_save_preview_publish_remove_and_keep_previous_publication(self):
         extra = [{'url':'vimeo.com/123456789', 'title':'Второй ролик'},
                  {'url':'https://dzen.ru/video/watch/abc', 'title':'Третий ролик'}]

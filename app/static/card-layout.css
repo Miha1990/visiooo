@@ -14,7 +14,7 @@
 .contact-card [data-layout-block=cover].has-custom-size .contact-cover{border-radius:var(--size-radius,0)}.contact-cover.has-custom-size{overflow:hidden}.card-logo-frame.has-custom-size>.card-logo{border-radius:inherit}
 .contact-card [data-layout-block=avatar].has-custom-size,.contact-card [data-layout-block=avatar].has-custom-size .contact-avatar{height:var(--size-height,120px)!important;width:100%;min-height:44px;max-width:100%;border-radius:var(--size-radius,50%)}
 .contact-card [data-layout-block=logo].has-custom-size{width:calc(100%*var(--size-span,3)/12);height:var(--size-height,52px);object-fit:contain}
-.contact-card.layout-custom [data-layout-block=video] iframe,.contact-card.layout-custom [data-layout-block=map] iframe{min-height:var(--size-height,220px)}
+.contact-card.layout-custom [data-layout-block=map] iframe{min-height:var(--size-height,220px)}
 .contact-card.layout-custom[data-button-layout=tiles] .builder-contact-buttons{grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:8px!important}
 .contact-card.layout-custom[data-button-layout=tiles] .builder-contact-buttons>.builder-contact-button{grid-column:span var(--button-span,4)!important;min-height:max(44px,var(--size-height,0px))!important;height:auto!important;aspect-ratio:1;border-radius:var(--size-radius,14px)!important;padding:8px!important;font-size:12px!important}
 .contact-card.layout-custom[data-button-layout=tiles] .builder-contact-button.has-custom-size[data-size-shape=auto]{aspect-ratio:auto!important;flex-direction:row!important}

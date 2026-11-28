@@ -36,6 +36,8 @@ test('external embeds load immediately, preserve an existing player and reject o
  window.CardWidgets.refresh();assert.equal(frames[0],first);
  hidden=true;window.CardWidgets.refresh();assert.equal(frames.length,0);
  hidden=false;box.dataset.embedUrl='https://evil.test/embed/anything';window.CardWidgets.refresh();assert.equal(frames.length,0);
+ box.dataset.embedUrl='https://vk.ru/video_ext.php?oid=-243793209&id=456239017&hash=18d01ce3990d425a';window.CardWidgets.refresh();assert.equal(frames.length,1);
+ box.dataset.embedUrl='https://vk.ru.evil.test/video_ext.php?oid=-243793209&id=456239017';window.CardWidgets.refresh();assert.equal(frames.length,0);
  box.dataset.embedUrl='https://yandex.ru/map-widget/v1/?text=test';window.CardWidgets.refresh();assert.equal(frames.length,1);
 });
 

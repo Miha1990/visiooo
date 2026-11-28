@@ -82,7 +82,7 @@
   }
   function renderEmbed(box){
       const url=box.dataset.embedUrl,previous=box.querySelector('iframe');
-      const allowed=/^https:\/\/(www\.youtube-nocookie\.com\/embed\/|rutube\.ru\/play\/embed\/|vk\.com\/video_ext\.php\?|player\.vimeo\.com\/video\/|ok\.ru\/videoembed\/|www\.tiktok\.com\/player\/v1\/|geo\.dailymotion\.com\/player\/|yandex\.ru\/map-widget\/v1\/)/.test(url);
+      const allowed=/^https:\/\/(www\.youtube-nocookie\.com\/embed\/|rutube\.ru\/play\/embed\/|vk\.(?:com|ru)\/video_ext\.php\?|player\.vimeo\.com\/video\/|ok\.ru\/videoembed\/|www\.tiktok\.com\/player\/v1\/|geo\.dailymotion\.com\/player\/|yandex\.ru\/map-widget\/v1\/)/.test(url);
       if(!allowed||box.closest('[hidden], [data-video-active="false"]')){previous?.remove();return;}
       if(previous?.getAttribute('src')===url)return;
       previous?.remove();

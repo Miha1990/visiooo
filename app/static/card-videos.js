@@ -24,6 +24,24 @@
   window.CardVideos={fromForm,render};
   const form=document.getElementById('editor-form'),source=form?.elements.namedItem('video_items'),first=form?.elements.namedItem('video_url');if(!source||!first)return;
   const fieldset=first.closest('fieldset');if(!fieldset)return;
+  const layoutSource=form.elements.namedItem('layout_data');
+  if(layoutSource){
+    const sizing=node('fieldset',{class:'video-player-sizing'}),width=node('select',{id:'video-player-width'}),height=node('input',{id:'video-player-height',type:'range',min:120,max:720,step:10}),heightValue=node('output',{for:height.id,'aria-live':'polite'});
+    for(const percent of [25,33,50,66,75,100])width.append(node('option',{value:percent},percent+'%'));
+    let layout;try{layout=JSON.parse(layoutSource.value||'{}');}catch{layout={};}
+    const initial=layout.blocks?.video||{};width.value=String(initial.width||100);height.value=String(initial.height||320);heightValue.textContent=height.value+' px';
+    function resize(){
+      let config;try{config=JSON.parse(layoutSource.value||'{}');}catch{config={};}
+      config.blocks??={};config.blocks.video={...config.blocks.video,width:Number(width.value),height:Number(height.value)};
+      layoutSource.value=JSON.stringify(config);heightValue.textContent=height.value+' px';
+      const card=document.querySelector('.phone-preview .contact-card');if(card)window.CardLayout?.set(card,config);
+      layoutSource.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+    width.addEventListener('change',resize);height.addEventListener('input',resize);
+    form.addEventListener('input',event=>{if(event.target!==layoutSource)return;try{const current=JSON.parse(layoutSource.value||'{}').blocks?.video||{};width.value=String(current.width||100);height.value=String(current.height||320);heightValue.textContent=height.value+' px';}catch{}});
+    sizing.append(node('legend',{},'Размер видеоплеера'),node('label',{for:width.id},'Ширина блока'),width,node('label',{for:height.id},'Высота плеера'),height,heightValue);
+    fieldset.prepend(sizing);
+  }
   let extra;try{extra=JSON.parse(source.value||'[]');if(!Array.isArray(extra))return;}catch{return;}
   window.CardVideos.clear=()=>assign([]);
   const fields={url:first,title:form.elements.namedItem('video_title'),embedUrl:form.elements.namedItem('video_player')};

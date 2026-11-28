@@ -42,7 +42,9 @@
 .video-carousel{min-width:0;max-width:100%}.video-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:thin;max-width:100%;border-radius:var(--frame-radius,12px)}
 .video-slide{flex:0 0 100%;width:100%;min-width:0;box-sizing:border-box;scroll-snap-align:start;scroll-snap-stop:always}.video-slide h2{overflow-wrap:anywhere}.video-slide>[data-video-link]{display:inline-block;min-height:44px;padding:10px 0;box-sizing:border-box;overflow-wrap:anywhere}
 .video-slide .card-embed{width:100%;min-width:0;max-width:100%}.video-slide [data-embed-empty]{max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:center}
-.video-slide[data-video-aspect="9/16"] .card-embed{aspect-ratio:9/16;min-height:0;position:relative}
-.video-slide[data-video-aspect="9/16"] .card-embed iframe{position:absolute;inset:0;width:100%;height:100%;min-height:0}
+.video-slide .card-embed{height:var(--video-player-height,auto);min-height:0;position:relative;margin-inline:auto}
+.video-slide .card-embed iframe{position:absolute;inset:0;width:100%;height:100%;min-height:0}
+.video-slide[data-video-aspect="9/16"] .card-embed{width:min(100%,calc(var(--video-player-height,320px)*9/16));height:auto;aspect-ratio:9/16;min-height:0}
+.video-player-sizing{display:grid;gap:8px;margin-bottom:16px}.video-player-sizing input[type=range]{width:100%;min-height:44px;padding:0;accent-color:var(--accent,#315948)}.video-player-sizing output{font-size:14px;font-variant-numeric:tabular-nums}
 .video-controls{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:8px}.video-controls[hidden]{display:none}.video-controls button{min-width:44px;min-height:44px;border:1px solid currentColor;border-radius:12px;color:inherit;background:transparent;font:inherit;cursor:pointer}.video-controls button:disabled{opacity:.35;cursor:default}
 .video-editor-row{border:1px solid #dfe2e4;border-radius:12px;padding:14px;margin-bottom:16px;min-width:0}.video-editor-row input{max-width:100%;box-sizing:border-box}.video-editor-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.video-editor-actions button{min-width:44px;min-height:44px}
