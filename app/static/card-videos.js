@@ -19,7 +19,7 @@
       const link=node('a',{'data-video-link':'',target:'_blank',rel:'noopener noreferrer'},'Открыть на сайте видеосервиса');link.hidden=!item.url;if(item.url)link.href=item.url;slide.append(link);return slide;
     });
     track.replaceChildren(...slides);track.scrollLeft=0;
-    section.querySelector('.video-controls').hidden=videos.length<2;
+    track.dataset.videoMultiple=String(videos.length>1);
   }
   window.CardVideos={fromForm,render};
   const form=document.getElementById('editor-form'),source=form?.elements.namedItem('video_items'),first=form?.elements.namedItem('video_url');if(!source||!first)return;

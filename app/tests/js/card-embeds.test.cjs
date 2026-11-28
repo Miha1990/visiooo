@@ -12,7 +12,7 @@ test('VK clips use portrait proportions while ordinary videos keep landscape pro
 test('live preview gives each video slide its own aspect ratio',()=>{
  const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
  const createElement=()=>({attrs:{},children:[],setAttribute(key,value){this.attrs[key]=value;},append(...children){this.children.push(...children);}});
- const track={replaceChildren(...children){this.children=children;}},controls={};
+ const track={dataset:{},replaceChildren(...children){this.children=children;}},controls={};
  const section={dataset:{},querySelector:selector=>selector==='[data-video-track]'?track:controls};
  const window={CardEmbeds:embeds};
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../../static/card-videos.js'),'utf8'),{window,document:{createElement,getElementById:()=>null}});
