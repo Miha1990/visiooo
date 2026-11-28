@@ -1,0 +1,35 @@
+{% extends 'base.html' %}{% load static %}
+{% block title %}Выпуск карт NFC / QR — Визитка{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'physical.css' %}">{% endblock %}
+{% block content %}
+<section class="shell dashboard">
+  <a href="{% url 'physical_index' %}">Физические визитки</a>
+  <h1>Выпуск карт NFC / QR</h1>
+  <div class="panel">
+    <h2>Подготовить карты для клиентов</h2>
+    <ol class="physical-steps">
+      <li>Выпустите отдельную ссылку для каждой физической карты.</li>
+      <li>Запишите ссылку в NFC как URL-запись. Для QR на этой же карте используйте точно такую же ссылку.</li>
+      <li>Клиент открывает NFC или сканирует QR камерой iPhone, входит в аккаунт и выбирает свою визитку.</li>
+      <li>После подтверждения карта закрепляется за клиентом. Эта же ссылка начинает открывать его визитку.</li>
+    </ol>
+    <p class="muted micro">Каждая ссылка предназначена для одной карты. До передачи клиенту не активируйте её в своём аккаунте.</p>
+    <form method="post" class="stack">{% csrf_token %}{{ form.as_div }}<button class="button">Выпустить ссылки</button></form>
+  </div>
+  <h2>Неактивированные карты</h2>
+  <p><a href="{% url 'physical_stock_csv' %}" class="button small">Скачать список ссылок CSV</a></p>
+  <div class="physical-stock">
+    {% for entry in stock %}<article class="panel">
+      <h3>{{ entry.item.label }}</h3>
+      {% if entry.item.blocked or not entry.item.enabled %}<p class="notice">Активация отключена</p>{% endif %}
+      <label for="stock-url-{{ entry.item.pk }}">Ссылка для NFC и QR</label>
+      <input class="physical-stock-url" id="stock-url-{{ entry.item.pk }}" value="{{ entry.url }}" readonly>
+      <div class="share-buttons"><button type="button" class="text-button" data-copy="stock-url-{{ entry.item.pk }}">Копировать ссылку</button><a href="{% url 'physical_stock_qr' entry.item.pk %}" download>Скачать QR PNG</a></div>
+    </article>{% empty %}<p>Нет заготовок. Выпустите новую партию карт с помощью формы выше.</p>{% endfor %}
+  </div>
+  <p id="share-status" role="status" aria-live="polite"></p>
+  {% if page.has_previous %}<a href="?page={{ page.previous_page_number }}">Предыдущие карты</a>{% endif %}
+  <span>Страница {{ page.number }} из {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a href="?page={{ page.next_page_number }}">Следующие карты</a>{% endif %}
+</section>
+{% endblock %}

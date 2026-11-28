@@ -15,6 +15,18 @@ from accounts.models import LegalAcceptance, PendingRegistration, User
 @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
                    SECURE_SSL_REDIRECT=False, ALLOWED_HOSTS=['testserver'])
 class RegistrationCodeTests(TestCase):
+    def test_registration_returns_to_scanned_physical_card(self):
+        from cards.models import PhysicalCard
+        stock = PhysicalCard.objects.create(label='Новая NFC-карта')
+        url = f'/activate/{stock.public_id}'
+        self.assertEqual(self.client.get(url).status_code, 200)
+        self.start()
+        response = self.client.post('/accounts/registration-code', {'code': self.code()})
+        self.assertEqual(response['Location'], url)
+        self.assertContains(self.client.get(url), 'Создать визитку и привязать карту')
+        stock.refresh_from_db()
+        self.assertIsNone(stock.workspace_id)
+
     def setUp(self):
         cache.clear()
         self.data = {'email': 'NEW@example.test', 'first_name': 'Анна', 'last_name': 'Иванова',

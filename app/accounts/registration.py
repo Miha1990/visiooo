@@ -210,6 +210,10 @@ def confirm(request):
         request.session.pop(SESSION_KEY, None)
         login(request, user)
         messages.success(request, 'Почта подтверждена. Регистрация завершена.')
+        activation = request.session.pop('physical_activation', None)
+        if activation:
+            from django.urls import reverse
+            return redirect(reverse('physical_activate', args=[activation]))
         return redirect('/app/cards')
     return render(request, 'accounts/registration_code.html', {'form': form, 'pending': pending, **retry_context(pending)},
                   status=422 if request.method == 'POST' else 200)

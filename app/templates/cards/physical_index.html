@@ -5,6 +5,8 @@
 <section class="shell dashboard">
   <a class="back-link" href="{% url 'dashboard' %}">Мои визитки</a>
   <h1>Физические визитки<span class="blue">.</span></h1>
+  {% if user.is_staff and perms.cards.add_physicalcard %}<p><a href="{% url 'physical_issue' %}" class="button">Выпустить карты для клиентов</a></p>{% endif %}
+  <div class="panel"><h2>Уже есть карта с NFC и QR?</h2><p>Отсканируйте QR на карте камерой телефона и откройте ссылку. Для новой карты нашего сервиса появится страница активации: войдите и выберите свою электронную визитку. NFC перезаписывать не нужно.</p><p class="muted micro">Если QR открывает другой сервис, привязка настраивается у его поставщика. Форма ниже создаёт новую ссылку, которую нужно записать в NFC или разместить на карте в виде нового QR.</p></div>
   {% include 'cards/physical_guide.html' %}
   <div class="physical-grid">
     <div class="panel"><h2>Новая карточка</h2>

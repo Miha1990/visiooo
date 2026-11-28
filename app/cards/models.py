@@ -147,7 +147,7 @@ class Asset(models.Model):
 class PhysicalCard(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, verbose_name='Идентификатор')
     public_id = models.CharField(max_length=40, unique=True, default=public_id, editable=False, verbose_name='Публичный идентификатор')
-    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, verbose_name='Личный кабинет')
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Личный кабинет')
     card = models.ForeignKey(Card, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Электронная визитка')
     label = models.CharField(max_length=100, verbose_name='Название')
     enabled = models.BooleanField(default=True, verbose_name='Включена')
@@ -168,7 +168,8 @@ class PhysicalCardEvent(models.Model):
     physical_card = models.ForeignKey(PhysicalCard, on_delete=models.CASCADE, related_name='events', verbose_name='Физическая визитка')
     actor = models.ForeignKey('accounts.User', on_delete=models.SET_NULL, null=True, verbose_name='Пользователь')
     action = models.CharField(max_length=20, verbose_name='Действие', choices=[
-        ('created', 'Создана'), ('bound', 'Привязана'), ('disabled', 'Отключена')])
+        ('created', 'Создана'), ('bound', 'Привязана'), ('disabled', 'Отключена'),
+        ('issued', 'Выпущена заготовка'), ('activated', 'Активирована владельцем')])
     target_card = models.ForeignKey(Card, on_delete=models.SET_NULL, null=True, verbose_name='Электронная визитка')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата события')
 

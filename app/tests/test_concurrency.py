@@ -15,6 +15,29 @@ from cards.services import create_card, save_card, Conflict
 
 @skipUnless(connection.vendor == 'postgresql', 'Requires PostgreSQL row locks')
 class ConcurrentRequestsTests(TransactionTestCase):
+    def test_two_customers_cannot_activate_the_same_physical_card(self):
+        from cards.models import PhysicalCard
+        from cards.physical import activate_physical
+        other = User.objects.create_user('parallel-physical@example.test', 'Other-Password-948!')
+        workspace = Workspace.objects.create(owner=other)
+        Membership.objects.create(user=other, workspace=workspace)
+        targets = [create_card(self.user), create_card(other)]
+        stock = PhysicalCard.objects.create(label='Unclaimed card')
+
+        def operation(user, index):
+            owner = user if index == 0 else User.objects.get(pk=other.pk)
+            try:
+                activate_physical(owner, stock.public_id, targets[index])
+                return 'activated'
+            except Conflict:
+                return 'conflict'
+
+        self.assertCountEqual(self.parallel(operation), ['activated', 'conflict'])
+        stock.refresh_from_db()
+        self.assertIn(stock.workspace_id, (self.workspace.pk, workspace.pk))
+        self.assertEqual(stock.card.workspace_id, stock.workspace_id)
+        self.assertEqual(stock.events.filter(action='activated').count(), 1)
+
     def setUp(self):
         self.user = User.objects.create_user('parallel@example.test', 'Parallel-927!')
         self.workspace = Workspace.objects.create(owner=self.user)

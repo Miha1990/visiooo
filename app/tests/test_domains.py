@@ -24,6 +24,16 @@ from domains.worker import process_one, inspect_active
 @override_settings(CUSTOM_DOMAINS_ENABLED=True, DOMAIN_IPV4='8.8.8.8',
                    PUBLIC_BASE_URL='https://platform.example.com', ALLOWED_HOSTS=['testserver', 'localhost'])
 class DomainTests(TestCase):
+    def test_unclaimed_physical_cards_cannot_be_activated_on_customer_domains(self):
+        from cards.models import PhysicalCard
+        binding = self.binding(live=True)
+        stock = PhysicalCard.objects.create(label='Заготовка NFC')
+        browser = Client()
+        for path in (f'/p/{stock.public_id}', f'/activate/{stock.public_id}', '/control/physical-cards'):
+            self.assertEqual(browser.get(path, HTTP_HOST=binding.hostname).status_code, 404)
+        stock.refresh_from_db()
+        self.assertIsNone(stock.workspace_id)
+
     @classmethod
     def setUpTestData(cls):
         cls.user = User.objects.create_user('domain@example.test', 'DomainPassword-392!', email_verified_at=timezone.now())

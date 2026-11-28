@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Активация карты NFC / QR — Визитка{% endblock %}
+{% block content %}
+<section class="shell narrow panel">
+  {% if already_activated %}
+    <h1>Карта уже активирована</h1>
+    <p>Карта закреплена за владельцем. Изменить её привязку можно только из его личного кабинета.</p>
+    <a class="button" href="{% url 'physical_index' %}">Мои физические карты</a>
+  {% else %}
+    <h1>Привязать карту к визитке</h1>
+    <p>Вы открыли ссылку физической карты. После активации её NFC и QR будут открывать выбранную электронную визитку.</p>
+    {% if user.is_authenticated %}
+      <form method="post" class="stack">{% csrf_token %}
+        {% if has_cards %}{{ form.as_div }}{% else %}{{ form.non_field_errors }}<p>У вас ещё нет электронной визитки. Создадим черновик и привяжем к нему карту. Затем вы сможете заполнить и опубликовать визитку.</p>{% endif %}
+        <p class="muted micro">Активируйте свою карту: она закрепится за вашим аккаунтом. В дальнейшем выбранную визитку можно менять в разделе «Физические визитки».</p>
+        <button class="button">{% if has_cards %}Привязать карту{% else %}Создать визитку и привязать карту{% endif %}</button>
+      </form>
+    {% else %}
+      <p>Войдите в аккаунт, где создана ваша визитка, или зарегистрируйтесь. Привязка выполняется после выбора визитки и подтверждения.</p>
+      <p><a class="button" href="{% url 'login' %}?next={{ activation_path|urlencode }}">Войти и привязать карту</a></p>
+      <p><a href="/accounts/register">Создать аккаунт</a></p>
+    {% endif %}
+  {% endif %}
+</section>
+{% endblock %}
