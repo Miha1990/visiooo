@@ -14,7 +14,7 @@
         return match&&!override&&(!key||/^[\w-]{1,200}$/.test(key))?`https://rutube.ru/play/embed/${match[1]}${key?'/?'+new URLSearchParams({p:key}):''}`:'';
       }
       if(['vk.com','m.vk.com','vk.ru','m.vk.ru','vkvideo.ru'].includes(host)){
-        const match=path.match(/^\/video(-?\d{1,20})_(\d{1,20})\/?$/);if(!match&&path!=='/video_ext.php')return '';
+        const match=path.match(/^\/(?:video|clip)(-?\d{1,20})_(\d{1,20})\/?$/);if(!match&&path!=='/video_ext.php')return '';
         let playerHost=host,params=match?new URLSearchParams({oid:match[1],id:match[2]}):url.searchParams;
         if(override){const [player,provider]=parsed(override);if(!['vk.com','vk.ru','vkvideo.ru'].includes(provider)||player.pathname!=='/video_ext.php')return '';params=player.searchParams;playerHost=provider;}
         const oid=params.get('oid'),id=params.get('id'),hash=params.get('hash');

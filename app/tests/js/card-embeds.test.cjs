@@ -1,6 +1,17 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const embeds=require('../../static/card-embeds.js');
+test('VK clip share links embed and validate the matching player',()=>{
+ for(const domain of ['vkvideo.ru','vk.com','vk.ru','m.vk.com','m.vk.ru']){
+  const clip=`https://${domain}/clip-243793209_456239017?sh=4`;
+  const player='https://vk.ru/video_ext.php?oid=-243793209&id=456239017&hash=18d01ce3990d425a';
+  const expectedDomain=['vk.ru','m.vk.ru'].includes(domain)?'vk.ru':'vk.com';
+  assert.equal(embeds.video(clip),`https://${expectedDomain}/video_ext.php?oid=-243793209&id=456239017`);
+  assert.equal(embeds.video(clip,player),player);
+  assert.equal(embeds.video(clip,player.replace('id=456239017','id=1')),'');
+ }
+ for(const url of ['https://vkvideo.ru/clips-243793209_456239017','https://vkvideo.ru/clip-243793209_bad','https://vkvideo.ru.evil.test/clip-243793209_456239017'])assert.equal(embeds.video(url),'');
+});
 test('normalizes supported video URLs without arbitrary iframe sources',()=>{
  assert.equal(embeds.video('https://youtu.be/dQw4w9WgXcQ'),'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ');
  assert.equal(embeds.video('https://rutube.ru/video/'+ 'a'.repeat(32)+'/'),'https://rutube.ru/play/embed/'+ 'a'.repeat(32));

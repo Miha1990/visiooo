@@ -57,7 +57,7 @@ def video_embed(value, override=''):
                 result += '/?' + urlencode({'p':key})
             return result
     elif host in ('vk.com', 'm.vk.com', 'vk.ru', 'm.vk.ru', 'vkvideo.ru'):
-        match = re.fullmatch(r'/video(-?\d{1,20})_(\d{1,20})/?', url.path)
+        match = re.fullmatch(r'/(?:video|clip)(-?\d{1,20})_(\d{1,20})/?', url.path)
         if url.path == '/video_ext.php' or match:
             if override:
                 player, player_host, params = parsed_url(override)

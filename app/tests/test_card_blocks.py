@@ -12,6 +12,18 @@ layout = fixtures.layout
 
 
 class EmbedParsingTests(SimpleTestCase):
+    def test_vk_clip_share_links_and_matching_player(self):
+        for domain in ('vkvideo.ru', 'vk.com', 'vk.ru', 'm.vk.com', 'm.vk.ru'):
+            with self.subTest(domain=domain):
+                clip = f'https://{domain}/clip-243793209_456239017?sh=4'
+                expected_domain = 'vk.ru' if domain in ('vk.ru', 'm.vk.ru') else 'vk.com'
+                self.assertEqual(video_player_url(clip),
+                                 f'https://{expected_domain}/video_ext.php?oid=-243793209&id=456239017')
+                player = 'https://vk.ru/video_ext.php?oid=-243793209&id=456239017&hash=18d01ce3990d425a'
+                self.assertEqual(video_player_url(clip, player), player)
+                with self.assertRaises(ValidationError):
+                    video_player_url(clip, player.replace('id=456239017', 'id=1'))
+
     def test_vk_ru_player_and_video_links(self):
         player = 'https://vk.ru/video_ext.php?oid=-243793209&id=456239017&hash=18d01ce3990d425a&hd=4&autoplay=1'
         expected = 'https://vk.ru/video_ext.php?oid=-243793209&id=456239017&hash=18d01ce3990d425a'
