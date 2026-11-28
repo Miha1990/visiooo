@@ -107,6 +107,17 @@ def video_items(content):
     return content['videos'] if 'videos' in content else ([content['video']] if content.get('video', {}).get('url') else [])
 
 
+def video_aspect(value):
+    """VK clip URLs identify portrait videos without fetching third-party content."""
+    try:
+        url, host, _ = parsed_url(value)
+        if host in ('vk.com', 'm.vk.com', 'vk.ru', 'm.vk.ru', 'vkvideo.ru') and re.fullmatch(r'/clip(-?\d{1,20})_(\d{1,20})/?', url.path):
+            return '9/16'
+    except ValidationError:
+        pass
+    return '16/9'
+
+
 def video_player_url(value, override=''):
     """Embed known providers; other public HTTPS links open on the source website."""
     url, host, _ = parsed_url(value)

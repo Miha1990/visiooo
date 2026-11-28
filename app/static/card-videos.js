@@ -13,7 +13,7 @@
     const videos=items.map(clean).filter(item=>window.CardEmbeds.videoLink(item.url)),signature=JSON.stringify(videos);
     if(section.dataset.videoContent===signature)return;section.dataset.videoContent=signature;
     const slides=(videos.length?videos:[{url:'',title:'',embedUrl:''}]).map((item,index)=>{
-      const slide=node('article',{class:'video-slide','data-video-active':String(index===0),'aria-label':`Видео ${index+1} из ${Math.max(1,videos.length)}`});
+      const slide=node('article',{class:'video-slide','data-video-aspect':window.CardEmbeds.videoAspect(item.url),'data-video-active':String(index===0),'aria-label':`Видео ${index+1} из ${Math.max(1,videos.length)}`});
       slide.append(node('h2',{'data-video-title':''},item.title||'Видео'));
       const player=item.url?window.CardEmbeds.video(item.url,item.embedUrl):'',box=node('div',{class:'card-embed','data-external-embed':'','data-embed-url':player,'data-embed-title':'Видеоплеер'}),empty=node('p',{'data-embed-empty':''},item.url?'Откройте видео на сайте сервиса':'Добавьте ссылку на видео');empty.hidden=Boolean(player);box.append(empty);slide.append(box);
       const link=node('a',{'data-video-link':'',target:'_blank',rel:'noopener noreferrer'},'Открыть на сайте видеосервиса');link.hidden=!item.url;if(item.url)link.href=item.url;slide.append(link);return slide;

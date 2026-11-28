@@ -127,8 +127,9 @@ def video_player(content):
 
 @register.simple_tag
 def card_videos(content):
-    from cards.blocks import video_items, video_player_url
-    return [{**item, 'player_url': video_player_url(item['url'], item.get('embedUrl', ''))} for item in video_items(content)]
+    from cards.blocks import video_items, video_player_url, video_aspect
+    return [{**item, 'player_url': video_player_url(item['url'], item.get('embedUrl', '')),
+             'aspect': video_aspect(item['url'])} for item in video_items(content)]
 
 
 @register.simple_tag

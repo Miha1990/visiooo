@@ -1,6 +1,25 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const embeds=require('../../static/card-embeds.js');
+test('VK clips use portrait proportions while ordinary videos keep landscape proportions',()=>{
+ for(const domain of ['vkvideo.ru','vk.com','vk.ru','m.vk.com','m.vk.ru']){
+  assert.equal(embeds.videoAspect(`https://${domain}/clip-243793209_456239017?sh=4`),'9/16');
+  assert.equal(embeds.videoAspect(`https://${domain}/video-243793209_456239017`),'16/9');
+ }
+ assert.equal(embeds.videoAspect('https://vkvideo.ru.evil.test/clip-243793209_456239017'),'16/9');
+});
+
+test('live preview gives each video slide its own aspect ratio',()=>{
+ const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+ const createElement=()=>({attrs:{},children:[],setAttribute(key,value){this.attrs[key]=value;},append(...children){this.children.push(...children);}});
+ const track={replaceChildren(...children){this.children=children;}},controls={};
+ const section={dataset:{},querySelector:selector=>selector==='[data-video-track]'?track:controls};
+ const window={CardEmbeds:embeds};
+ vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../../static/card-videos.js'),'utf8'),{window,document:{createElement,getElementById:()=>null}});
+ window.CardVideos.render(section,[{url:'https://vkvideo.ru/clip-243793209_456239017?sh=4'},{url:'https://vkvideo.ru/video-243793209_456239017'}]);
+ assert.equal(track.children[0].attrs['data-video-aspect'],'9/16');
+ assert.equal(track.children[1].attrs['data-video-aspect'],'16/9');
+});
 test('VK clip share links embed and validate the matching player',()=>{
  for(const domain of ['vkvideo.ru','vk.com','vk.ru','m.vk.com','m.vk.ru']){
   const clip=`https://${domain}/clip-243793209_456239017?sh=4`;

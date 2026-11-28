@@ -42,5 +42,9 @@
     return 'https://yandex.ru/map-widget/v1/?'+new URLSearchParams(params);
   }
   function videoLink(value){try{const [url,host]=parsed(value);return host.includes('.')&&!host.endsWith('.local')&&!host.endsWith('.localhost')&&!/^[\d.]+$/.test(host)&&!host.includes(':')?url.href:'';}catch{return '';}}
-  const api={video,map,videoLink};if(typeof module==='object')module.exports=api;else root.CardEmbeds=api;
+  function videoAspect(value){
+    try{const [url,host]=parsed(value);if(['vk.com','m.vk.com','vk.ru','m.vk.ru','vkvideo.ru'].includes(host)&&/^\/clip(-?\d{1,20})_(\d{1,20})\/?$/.test(url.pathname))return '9/16';}catch{}
+    return '16/9';
+  }
+  const api={video,map,videoLink,videoAspect};if(typeof module==='object')module.exports=api;else root.CardEmbeds=api;
 })(typeof window==='object'?window:globalThis);

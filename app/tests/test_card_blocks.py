@@ -12,6 +12,17 @@ layout = fixtures.layout
 
 
 class EmbedParsingTests(SimpleTestCase):
+    def test_portrait_vk_clip_and_landscape_video_render_independently(self):
+        from django.template.loader import render_to_string
+        content = {'videos': [
+            {'url': 'https://vkvideo.ru/clip-243793209_456239017?sh=4', 'title': 'Клип'},
+            {'url': 'https://vkvideo.ru/video-243793209_456239017', 'title': 'Видео'},
+        ]}
+        html = render_to_string('cards/media_blocks.html', {'block': 'video', 'content': content})
+        self.assertEqual(html.count('data-video-aspect="9/16"'), 1)
+        self.assertEqual(html.count('data-video-aspect="16/9"'), 1)
+        self.assertIn('video_ext.php?oid=-243793209', html)
+
     def test_vk_clip_share_links_and_matching_player(self):
         for domain in ('vkvideo.ru', 'vk.com', 'vk.ru', 'm.vk.com', 'm.vk.ru'):
             with self.subTest(domain=domain):
