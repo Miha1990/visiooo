@@ -20,6 +20,35 @@ class ButtonBuilderTests(TestCase):
         data.update(builder_mode='tiles', button_items=json.dumps(buttons))
         return data
 
+    def test_removed_media_stays_published_until_next_publication(self):
+        upload=fixtures.VisualEditorTests.upload
+        self.assertEqual(upload(self,'gallery',photo()).status_code,200)
+        self.assertEqual(upload(self,'pdf',SimpleUploadedFile('price.pdf',b'%PDF-1.4\n%%EOF')).status_code,200)
+        self.card.refresh_from_db()
+        publish_card(self.user,self.card.pk,self.card.draft_version)
+        self.card.refresh_from_db()
+        old=deepcopy(self.card.published_revision.content)
+        data=self.payload([])
+        data['removed_blocks']=json.dumps(['carousel','document'])
+        response=self.client.post(f'/app/cards/{self.card.pk}/edit',data)
+        self.assertEqual(response.status_code,303)
+        self.card.refresh_from_db()
+        self.assertNotIn('galleryAssetIds',self.card.draft)
+        self.assertNotIn('document',self.card.draft)
+        self.assertEqual(self.card.published_revision.content,old)
+        publish_card(self.user,self.card.pk,self.card.draft_version)
+        self.card.refresh_from_db()
+        self.assertNotIn('galleryAssetIds',self.card.published_revision.content)
+        self.assertNotIn('document',self.card.published_revision.content)
+
+    def test_invalid_removed_blocks_cannot_delete_other_card_data(self):
+        for removed in ('["name"]','{}','null','[[]]','broken'):
+            with self.subTest(removed=removed):
+                data=self.payload([])
+                data['removed_blocks']=removed
+                form=CardForm.for_card(self.card,data)
+                self.assertFalse(form.is_valid())
+
     def test_builder_saves_order_titles_and_destinations_then_publishes_without_duplicates(self):
         buttons=[{'kind':'phone','label':'Позвонить','value':'89289091817'},
                  {'kind':'vk','label':'Мой VK','value':'vk.com/person'},

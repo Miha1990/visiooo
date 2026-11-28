@@ -28,6 +28,7 @@ class WebLinkField(forms.URLField):
 
 
 class CardForm(forms.Form):
+    removed_blocks = forms.CharField(required=False, max_length=200, widget=forms.HiddenInput)
     layout_data = forms.CharField(required=False, max_length=12000, widget=forms.HiddenInput)
     daisy_data = forms.CharField(required=False, max_length=20000, widget=forms.HiddenInput)
     work_status = forms.CharField(label='Статус вручную', required=False, max_length=120,
@@ -290,7 +291,14 @@ class CardForm(forms.Form):
             if self.data.get('builder_mode') == 'tiles':
                 from .button_builder import clean_buttons, apply_buttons
                 content = apply_buttons(content, clean_buttons(data.get('button_items') or '[]'))
+            removed = json.loads(data.get('removed_blocks') or '[]')
+            if not isinstance(removed, list) or any(key not in ('carousel', 'document') for key in removed):
+                raise ValidationError('Недопустимый блок для удаления.')
+            for key in removed:
+                content.pop('galleryAssetIds' if key == 'carousel' else key, None)
             self.content = validate_content(content, workspace=self.card.workspace if self.card else None)
+        except (ValueError, TypeError, RecursionError):
+            self.add_error('removed_blocks', 'Не удалось прочитать удалённые блоки.')
         except ValidationError as error:
             self.add_error(None, error)
         return data

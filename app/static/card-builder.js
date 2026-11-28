@@ -11,6 +11,8 @@
   const node=(tag,attrs={},text)=>{const el=document.createElement(tag);for(const [key,value]of Object.entries(attrs))el.setAttribute(key,value);if(text!==undefined)el.textContent=text;return el;};
   const button=(text,fn,cls='')=>{const el=node('button',{type:'button',class:cls},text);if(fn)el.addEventListener('click',fn);return el;};
   const field=name=>form.elements.namedItem(name);
+  const removedSource=field('removed_blocks');
+  let removed;try{removed=new Set(JSON.parse(removedSource?.value||'[]'));}catch{removed=new Set();}
   const iconBase=new URL('icons/',document.querySelector('script[src*="card-builder."]').src).href;
   const image=kind=>node('img',{src:iconBase+(types.get(kind)?.icon||'link')+'.svg',width:28,height:28,alt:''});
   const built=node('div',{class:'builder-editor'}),cover=node('div',{class:'builder-cover'}),identity=button('',()=>profile.showModal(),'builder-identity'),tiles=node('div',{class:'builder-tiles'}),rows=node('div',{class:'builder-rows'});
@@ -68,7 +70,7 @@
     const hidden=node('div',{class:'builder-upload-fields'});while(upload.firstChild)hidden.append(upload.firstChild);upload.append(hidden,label);cover.append(upload);
     input.addEventListener('change',()=>{if(input.files.length)upload.requestSubmit();});
   }
-  const chooser=dialog('Добавить блок'),search=node('input',{type:'search',placeholder:'Поиск по реквизитам','aria-label':'Поиск по реквизитам',class:'builder-search'}),choices=node('div');chooser.append(search,choices);
+  const chooser=dialog('Добавить блок'),search=node('input',{type:'search',placeholder:'Поиск блоков','aria-label':'Поиск блоков',class:'builder-search'}),choices=node('div');chooser.append(search,choices);
   const edit=dialog('Настройка кнопки',form),caption=node('input',{type:'text',maxlength:80,id:'builder-button-caption'}),target=node('input',{type:'text',maxlength:2048,id:'builder-button-target'}),targetLabel=node('label',{for:target.id},'URL'),error=node('p',{class:'builder-error',role:'alert'});
   const prefix=node('span',{class:'builder-target-prefix'}),targetRow=node('div',{class:'builder-target-row'}),targetHint=node('p',{class:'builder-target-hint'}),extension=node('input',{type:'text',inputmode:'numeric',maxlength:8,pattern:'[0-9]{0,8}',placeholder:'Добавочный номер',id:'builder-button-extension'}),extensionBox=node('div');
   targetRow.append(prefix,target);extensionBox.append(node('label',{for:extension.id},'Добавочный номер'),extension);
@@ -120,10 +122,9 @@
     fileUpload.hidden=kind!=='file'||!media.has('document');edit.showModal();
   }
   let choiceGroup='all',choiceIndex=-1;
-  function choose(group='all',index=-1,inDaisy=false){editingDaisy=inDaisy;choiceGroup=group;choiceIndex=index;search.value='';filter();chooser.showModal();search.focus();}
+  function choose(group='all',index=-1,inDaisy=false){editingDaisy=inDaisy;if(index>=0){editButton(index);return;}choiceGroup=group;choiceIndex=index;search.value='';filter();chooser.showModal();search.focus();}
   function filter(){
     const text=search.value.toLowerCase().trim();choices.replaceChildren();
-    if(choiceIndex>=0&&!text){const current=activeItems()[choiceIndex];choices.append(button('Редактировать «'+current.label+'»',()=>{chooser.close();editButton(choiceIndex);},'builder-choice builder-current-choice'),node('p',{class:'builder-replace-hint'},'Или выберите другой тип блока. Замена сохранится после нажатия «Готово».'));}
     for(const group of ['Реквизиты','Дополнительный контент','Соцсети и мессенджеры']){
       if(choiceGroup==='social'&&group!=='Соцсети и мессенджеры')continue;
       if(choiceGroup==='primary'&&group==='Соцсети и мессенджеры')continue;
@@ -134,6 +135,12 @@
     const extras=[['carousel','Карусель фотографий'],['video','Видео'],['map','Адрес на карте'],['business','График работы']].filter(([key,label])=>(media.has(key)||sources.has(key)||key==='business'&&featureFields)&&label.toLowerCase().includes(text));
     if(!editingDaisy&&choiceGroup!=='social'&&choiceIndex<0){choices.append(node('h3',{},'Другие блоки'));for(const [key,label]of [...extras,['daisy','Ромашка — контакты по кругу']]){const choice=button('',()=>{chooser.close();form.dispatchEvent(new CustomEvent('card:insert-block',{detail:{key}}));if(key==='daisy')daisySettings.showModal();else if(key==='business')features.showModal();else openMedia(key);},'builder-choice builder-example-choice');choice.append(node('strong',{},label));const example=window.CardBlockExamples?.create(key);if(example)choice.append(example);choices.append(choice);}choices.append(button('Оформление и настройки',()=>{chooser.close();settings.showModal();},'builder-choice'));}
     if(!editingDaisy&&choiceGroup!=='social'&&choiceIndex<0&&featureFields)choices.append(button('Главная кнопка и анимация',()=>{chooser.close();featureSettings.showModal();},'builder-choice'));
+    if(!editingDaisy&&choiceGroup!=='social'&&choiceIndex<0){
+      for(const [slot,label]of [['avatar','Фото профиля'],['header','Обложка'],['logo','Логотип']]){
+        const input=cover.querySelector('.builder-image-'+slot+' input[type=file]');
+        if(input&&label.toLowerCase().includes(text))choices.append(button(label,()=>{chooser.close();input.click();},'builder-choice'));
+      }
+    }
     if(!choices.childElementCount)choices.append(node('p',{},'Ничего не найдено. Попробуйте другое название.'));
   }
   search.addEventListener('input',filter);
@@ -179,7 +186,7 @@
     }
     tiles.replaceChildren();rows.replaceChildren();socialGrid.replaceChildren();
     const primary=items.map((item,index)=>({item,index})).filter(({item})=>types.get(item.kind)?.group!=='Соцсети и мессенджеры');
-    for(let i=0;i<Math.max(2,primary.length);i++){
+    for(let i=0;i<primary.length;i++){
       const entry=primary[i],item=entry?.item,b=button('',()=>choose('all',entry?.index??-1),item?'builder-filled-button':'builder-add-button');
       b.setAttribute('aria-label',item?'Изменить: '+item.label:'Добавить контакт или ссылку');
       if(item)b.append(image(item.kind),node('span',{},item.label));else b.append(node('span',{'aria-hidden':'true'},'+'));
@@ -190,7 +197,8 @@
       tile.setAttribute('aria-label','Изменить: '+item.label);face.append(image(item.kind));
       tile.append(face,node('span',{class:'builder-social-name'},item.label),node('span',{class:'builder-social-value'},item.value.replace(/^https?:\/\//,'')));socialGrid.append(tile);
     });
-    const addSocial=button('+',()=>choose('social'),'builder-social-add');addSocial.setAttribute('aria-label','Добавить соцсеть или мессенджер');socialGrid.append(addSocial);
+    socials.hidden=!socialGrid.childElementCount;
+    daisySection.hidden=!daisy.items.length;
     for(const [key,label]of [['carousel','Карусель фотографий'],['video','Видео'],['map','Карта']]){
       const filled=key==='carousel'?Boolean(media.get(key)?.querySelector('figure')):Boolean(field(key==='video'?'video_url':'map_address')?.value.trim());
       if(filled)rows.append(button(label,()=>openMedia(key),'builder-content-row'));
@@ -204,7 +212,7 @@
   saveDraft.addEventListener('click',()=>saveChoices.close());
   const topbar=node('nav',{class:'builder-topbar','aria-label':'Редактирование визитки'}),back=node('a',{href:'/app/cards','aria-label':'На главную'},'← На главную'),save=button('Сохранить и закрыть',()=>saveChoices.showModal());
   topbar.append(back,save);editor.prepend(topbar);
-  const toolbar=node('div',{class:'builder-toolbar'}),addField=button('+ Добавить поле',()=>choose(),'builder-add-row'),preview=button('Предпросмотр',()=>setView(editor.dataset.view==='preview'?'edit':'preview'));
+  const toolbar=node('div',{class:'builder-toolbar'}),addField=button('+ Добавить блок',()=>choose(),'builder-add-row'),preview=button('Предпросмотр',()=>setView(editor.dataset.view==='preview'?'edit':'preview'));
   toolbar.append(preview);editor.append(toolbar);form.append(addField);
   function setView(view){editor.dataset.view=view;preview.textContent=view==='preview'?'Редактировать':'Предпросмотр';form.dispatchEvent(new CustomEvent('card:editor-view',{detail:{view}}));}
   const returnToEdit=button('Вернуться к редактированию',()=>setView('edit'),'builder-preview-back');editor.querySelector('.preview-column')?.prepend(returnToEdit);
@@ -213,5 +221,31 @@
   editor.classList.add('card-builder-active');
   if(errors.length)built.prepend(node('p',{class:'builder-error',role:'alert'},errors.join(' ')));
   setView(editor.dataset.view||'edit');persist();
-  window.CardBuilder={choose,openMedia,setView,profile:()=>profile.showModal(),daisy:()=>daisySettings.showModal(),features:()=>features.showModal()};
+  function removeBlock(key,index){
+    if(['cover','avatar','logo'].includes(key)){
+      styling?.querySelector(`[data-image-slot="${key==='cover'?'header':key}"] .avatar-remove`)?.requestSubmit();return;
+    }
+    if(index!==undefined){
+      const i=Number(index);if(!Number.isInteger(i)||i<0||i>=items.length)return;
+      window.CardLayout?.removeButton(form,i);items.splice(i,1);
+    }else if(key==='daisy'){daisy.items=[];daisySettings.close();}
+    else if(key==='carousel'||key==='document'){
+      removed.add(key);if(removedSource)removedSource.value=JSON.stringify([...removed]);
+      const card=editor.querySelector('.contact-card');
+      if(key==='carousel'){card?.querySelectorAll('.carousel-slide').forEach(el=>el.remove());media.get(key)?.querySelectorAll('figure').forEach(el=>el.remove());}
+      else{card?.querySelector('[data-document-link]')?.removeAttribute('href');for(let i=items.length-1;i>=0;i--)if(items[i].kind==='file'&&!items[i].value){window.CardLayout?.removeButton(form,i);items.splice(i,1);}}
+    }else{
+      const names=key==='video'?['video_url','video_title','video_player']:key==='map'?['map_address','map_latitude','map_longitude']:key==='bio'?['bio']:key==='primaryAction'?['action_kind','action_label','action_target']:key==='business'?['work_status',...Array.from({length:7},(_,day)=>[`work_${day}_open`,`work_${day}_close`]).flat()]:[];
+      for(const name of names){const input=field(name);if(input)input.value='';}
+      if(key==='video'){if(field('video_items'))field('video_items').value='[]';window.CardVideos?.clear();}
+    }
+    const card=editor.querySelector('.contact-card'),layout=window.CardLayout?.get(card);
+    if(layout&&index===undefined){if(layout.order)layout.order=layout.order.filter(item=>item!==key);if(layout.blocks)delete layout.blocks[key];if(key==='carousel')delete layout.carousel;field('layout_data').value=JSON.stringify(layout);window.CardLayout.set(card,layout);}
+    for(const d of [sources.get(key),media.get(key),key==='business'?features:null,key==='primaryAction'?featureSettings:null])d?.close();
+    persist();form.dispatchEvent(new Event('input',{bubbles:true}));
+  }
+  for(const [key,d]of [...sources,...media,['business',features],['daisy',daisySettings]])d.append(button('Удалить блок',()=>removeBlock(key),'builder-remove'));
+  featureSettings.append(button('Удалить главную кнопку',()=>removeBlock('primaryAction'),'builder-remove'));
+  form.addEventListener('card:saved',()=>{removed.clear();if(removedSource)removedSource.value='[]';});
+  window.CardBuilder={choose,openMedia,setView,removeBlock,isRemoved:key=>removed.has(key),profile:()=>profile.showModal(),daisy:()=>daisySettings.showModal(),features:()=>features.showModal()};
 })();

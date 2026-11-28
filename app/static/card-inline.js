@@ -1,4 +1,4 @@
-/* Edit the real card, with editor-only placeholders and pointer/keyboard ordering. */
+/* Edit existing card blocks, with pointer/keyboard ordering and deletion. */
 (() => {
   const editor=document.querySelector('.card-builder-active'),form=document.getElementById('editor-form'),api=window.CardBuilder,layout=window.CardLayout;
   if(!editor||!form||!api||!layout)return;
@@ -7,7 +7,7 @@
   const node=(tag,attrs={},text)=>{const el=document.createElement(tag);for(const [k,v]of Object.entries(attrs))el.setAttribute(k,v);if(text!==undefined)el.textContent=text;return el;};
   const host=node('section',{class:'inline-card-host','aria-label':'Редактирование блоков визитки'}),actions=node('div',{class:'inline-media-actions'}),status=node('p',{class:'inline-order-status',role:'status','aria-live':'polite'});
   const upload=slot=>editor.querySelector(`[data-image-slot="${slot}"] input[type=file],.builder-image-${slot} input[type=file]`);
-  for(const [slot,title]of [['logo','Лого'],['header','Обложка']]){if(!upload(slot))continue;const button=node('button',{type:'button','data-inline-media':slot,'aria-label':'Изменить '+title},'+ '+title);button.addEventListener('click',event=>{event.stopPropagation();upload(slot)?.click();});actions.append(button);}
+  for(const [slot,title]of [['logo','Лого'],['header','Обложка']]){if(!upload(slot)||!editor.querySelector('.builder-image-'+slot+' img'))continue;const button=node('button',{type:'button','data-inline-media':slot,'aria-label':'Изменить '+title},'Изменить '+title);button.addEventListener('click',event=>{event.stopPropagation();upload(slot)?.click();});actions.append(button);}
   const cover=card.querySelector('.contact-cover'),coverBlock=cover?.closest('[data-layout-block="cover"]')||cover,photo=card.querySelector('.contact-avatar:not(.avatar-photo)'),avatarBlock=photo?.closest('[data-layout-block="avatar"]')||photo;
   const coverWasHidden=Boolean(coverBlock?.hidden),avatarWasHidden=Boolean(avatarBlock?.hidden);
   const photoEdit=node('button',{type:'button',class:'inline-avatar-edit','data-inline-media':'avatar','aria-label':'Изменить фото',title:'Изменить фото'});
@@ -16,7 +16,7 @@
   if(cover)cover.append(actions);if(photo&&upload('avatar'))card.append(photoEdit);
   function mediaControls(editing){
     actions.hidden=!editing;photoEdit.hidden=!editing;
-    for(const [block,wasHidden]of [[coverBlock,coverWasHidden],[avatarBlock,avatarWasHidden]])if(block&&wasHidden&&block.dataset.templateHidden!=='true')block.hidden=!editing;
+    for(const [block,wasHidden]of [[coverBlock,coverWasHidden],[avatarBlock,avatarWasHidden]])if(block&&wasHidden&&block.dataset.templateHidden!=='true')block.hidden=true;
     if(!photo||!photoEdit.isConnected)return;
     photoEdit.hidden=!editing||Boolean(photo.closest('[hidden]'));
     const bounds=card.getBoundingClientRect(),rect=photo.getBoundingClientRect(),scale=bounds.width/Math.max(1,card.offsetWidth);
@@ -29,45 +29,20 @@
   const advanced=()=>editor.dataset.editMode==='advanced';
   for(const [mode,label]of [['simple','Простой'],['advanced','Продвинутый']]){const button=node('button',{type:'button','data-edit-mode':mode,'aria-pressed':String(mode==='simple')},label);button.addEventListener('click',()=>{endGesture();suppressClickUntil=0;editor.dataset.editMode=mode;status.textContent='';sync();});modes.append(button);}
   host.append(modes);if(tools)host.append(tools);host.append(preview,status);form.prepend(host);editor.classList.add('inline-builder');
-  const empty=new Map();let syncing=false,pendingContact=null;
+  let syncing=false;
   const input=name=>form.elements.namedItem(name),value=name=>input(name)?.value.trim()||'';
-  function hasContent(key){if(key==='carousel')return Boolean(card.querySelector('.carousel-slide'));if(key==='video')return Boolean(window.CardVideos?.fromForm(form).length);if(key==='business')return Boolean(value('work_status')||Array.from({length:7},(_,day)=>value(`work_${day}_open`)&&value(`work_${day}_close`)).some(Boolean));if(key==='map')return Boolean(value('map_address'));if(key==='daisy'){try{return (JSON.parse(input('daisy_data').value||'{}').items||[]).length>0;}catch{return false;}}return true;}
+  function hasContent(key){if(api.isRemoved(key))return false;if(key==='carousel')return Boolean(card.querySelector('.carousel-slide'));if(key==='video')return Boolean(window.CardVideos?.fromForm(form).length);if(key==='business')return Boolean(value('work_status')||Array.from({length:7},(_,day)=>value(`work_${day}_open`)&&value(`work_${day}_close`)).some(Boolean));if(key==='map')return Boolean(value('map_address'));if(key==='daisy'){try{return (JSON.parse(input('daisy_data').value||'{}').items||[]).length>0;}catch{return false;}}return true;}
   function persist(){const source=input('layout_data');source.value=JSON.stringify(layout.get(card));source.dispatchEvent(new Event('input',{bubbles:true}));}
   function insert(key){const config=layout.get(card);const known=['cover','avatar','identity','bio','business','save','contacts','socials','carousel','video','document','map','daisy'];config.order=config.order||known.filter(item=>card.querySelector(`[data-layout-block="${item}"]:not([hidden])`));if(!config.order.includes(key))config.order.push(key);layout.set(card,config);persist();sync();}
-  function restore(key){const entry=empty.get(key);if(!entry)return;entry.demo.remove();entry.children.forEach(([child,hidden])=>child.hidden=hidden);delete entry.block.dataset.editorExample;empty.delete(key);}
-  function placeholders(editing){
-    const requested=layout.get(card).order||[];
-    for(const key of ['carousel','video','map','daisy','business']){
-      const filled=hasContent(key),block=card.querySelector(`[data-layout-block="${key}"]`);if(!block)continue;
-      if(!editing||filled||!requested.includes(key)){restore(key);if(!filled)block.hidden=true;continue;}
-      if(!empty.has(key)){
-        const children=key==='business'?[]:[...block.children].filter(child=>!child.matches('.size-handle,.block-move-grip,.inline-edit-block')).map(child=>[child,child.hidden]);children.forEach(([child])=>child.hidden=true);
-        const demo=node('div',{class:'inline-empty-block'}),example=window.CardBlockExamples.create(key);if(example)demo.append(example);demo.append(node('p',{},'Пример: '+labels[key]+'. Добавьте свои данные.'));block.append(demo);empty.set(key,{block,demo,children});block.dataset.editorExample='true';
-      }
-      block.hidden=false;
+  function placeholders(){
+    for(const key of ['carousel','video','map','daisy','business','document']){
+      const block=card.querySelector(`[data-layout-block="${key}"]`);
+      if(block&&!hasContent(key))block.hidden=true;
     }
-    contactSlots(editing);
+    const grid=card.querySelector('.contact-actions');
+    grid?.querySelectorAll('[data-empty-contact]').forEach(el=>el.remove());
+    if(grid&&!grid.querySelector('[data-layout-button]')){grid.hidden=true;const wrapper=grid.closest('[data-design-block="contacts"]');if(wrapper)wrapper.hidden=true;}
   }
-  function contactSlots(editing=editor.dataset.view!=='preview'){
-    const grid=card.querySelector('.contact-actions');if(!grid)return;const wrapper=grid.closest('[data-design-block="contacts"]')||grid;
-    grid.querySelectorAll('[data-empty-contact]').forEach(el=>el.remove());let count=0;try{count=JSON.parse(input('button_items').value||'[]').length;}catch{}
-    if(!editing){if(!count){grid.hidden=true;wrapper.hidden=true;}return;}
-    if(count>=30)return;
-    const buttons=[...grid.querySelectorAll(':scope>[data-layout-button]')],last=buttons.at(-1),config=last?layout.get(card).buttons?.[last.dataset.layoutButton]||{}:{};
-    const computed=last?getComputedStyle(last):null,span=(computed?.gridColumnStart+' '+computed?.gridColumnEnd).match(/span\s+(\d+)/)?.[1]|| (card.classList.contains('layout-custom')?6:3);
-    for(let i=0;i<(buttons.length?1:2);i++){
-      const button=node('button',{type:'button','data-empty-contact':'','data-inline-edit':'contacts',class:'inline-add-contact','aria-label':'Добавить контакт или соцсеть',title:'Добавить контакт или соцсеть'},'+');
-      button.style.setProperty('--add-span',span);button.style.setProperty('--add-radius',computed?.borderRadius||'20px');
-      const height=last?.getBoundingClientRect().height;if(height)button.style.setProperty('--add-height',height+'px');
-      button.addEventListener('click',()=>{const width=config.width||Number(last?.dataset.sizeWidth)||50,shape=config.shape||(computed?.aspectRatio==='auto'?'auto':'square');pendingContact={count,config:{...config,width,shape,...(shape==='auto'?{height:config.height||Math.round(height)||0}:{})}};api.choose();});grid.append(button);
-    }
-    grid.hidden=false;wrapper.hidden=false;
-  }
-  // Keep the new contact the same size as the empty tile the user tapped.
-  form.addEventListener('input',event=>{if(event.target.name!=='button_items'||!pendingContact)return;let items;try{items=JSON.parse(event.target.value);}catch{return;}if(items.length>pendingContact.count){const config=layout.get(card);config.buttons??={};for(let i=pendingContact.count;i<items.length;i++)config.buttons[i]={...pendingContact.config};input('layout_data').value=JSON.stringify(config);layout.set(card,config);}pendingContact=null;},true);
-  // A resize can change a tile without changing form fields until the gesture ends.
-  card.addEventListener('card:layout-applied',()=>contactSlots());
-  editor.addEventListener('close',()=>{setTimeout(()=>{if(!editor.querySelector('dialog[open]'))pendingContact=null;},0);},true);
   function edit(key,index){if(index!==undefined)api.choose('all',Number(index));else if(['identity','bio'].includes(key))api.profile();else if(['cover','avatar','logo'].includes(key))editor.querySelector(`.builder-image-${key==='cover'?'header':key} input[type=file]`)?.click();else if(key==='daisy')api.daisy();else if(['carousel','video','map','document'].includes(key))api.openMedia(key);else if(key==='business')api.features();else api.choose();}
   card.addEventListener('card:edit-block',event=>edit(event.detail.key,event.detail.index));
   function keyFor(el){return el.hasAttribute('data-layout-button')?'button:'+el.dataset.layoutButton:el.dataset.layoutBlock;}
@@ -88,7 +63,7 @@
   function locate(g){clearDrop();const list=peers(g.el);g.target=document.elementsFromPoint(g.x,g.y).map(el=>el.closest('[data-layout-button],[data-layout-block]')).find(el=>el&&el!==g.el&&list.includes(el))||null;if(g.target){const r=g.target.getBoundingClientRect();g.after=g.el.hasAttribute('data-layout-button')?g.x>r.x+r.width/2:g.y>r.y+r.height/2;if(g.key==='avatar'&&keyFor(g.target)==='cover'){const photo=g.el.querySelector('.contact-avatar:not(.avatar-photo)')||g.el,p=photo.getBoundingClientRect(),h=p.height||88;g.overlap=Math.round(Math.max(10,Math.min(100,(r.bottom-g.y+h/2)/h*100)));g.avatarX=Math.round(Math.max(0,Math.min(100,(g.x-r.left-p.width/2)/Math.max(1,r.width-p.width)*100)));}g.target.classList.add('block-drop-target');g.target.dataset.dropSide=g.after?'after':'before';}}
   function dragFrame(){const g=gesture;if(!g?.active)return;const speed=g.y<90?-10:g.y>innerHeight-90?10:0;if(speed)window.scrollBy({top:speed,behavior:'instant'});const bounds=card.getBoundingClientRect(),r=g.photoRect||g.rect,dx=Math.max(bounds.left-r.left,Math.min(bounds.right-r.right,g.x-g.startX));g.el.style.translate=`${dx}px ${g.y-g.startY+window.scrollY-g.scrollY}px`;locate(g);g.frame=requestAnimationFrame(dragFrame);}
   function beginGesture(event,x,y,id,touch){
-    if(!advanced()||editor.dataset.view==='preview'||event.target.closest('.size-handle,.inline-edit-block,.block-move-grip,input,textarea,select,[data-empty-contact],[data-inline-media]'))return;
+    if(!advanced()||editor.dataset.view==='preview'||event.target.closest('.size-handle,.inline-edit-block,.inline-remove-block,.block-move-grip,input,textarea,select,[data-empty-contact],[data-inline-media]'))return;
     const el=event.target.closest('[data-layout-button],[data-layout-block]');if(!el||!peers(el).includes(el))return;endGesture();
     const g=gesture={el,key:keyFor(el),startX:x,startY:y,x,y,id,touch,active:false,target:null};
     g.timer=setTimeout(()=>{if(gesture!==g||!el.isConnected)return;g.active=true;g.rect=el.getBoundingClientRect();if(g.key==='avatar')g.photoRect=(el.querySelector('.contact-avatar:not(.avatar-photo)')||el).getBoundingClientRect();g.scrollY=window.scrollY;layout.select(card,el);el.classList.add('block-moving');card.classList.add('block-dragging');navigator.vibrate?.(15);status.textContent='Перетаскивайте блок на нужное место.';g.frame=requestAnimationFrame(dragFrame);},450);
@@ -120,12 +95,23 @@
     });
   }
   function controls(editing){
-    card.querySelectorAll('[data-inline-edit].inline-edit-block,.block-move-grip').forEach(node=>node.remove());if(!editing)return;
+    card.querySelectorAll('[data-inline-edit].inline-edit-block,.inline-remove-block,.block-move-grip').forEach(node=>node.remove());if(!editing)return;
     for(const el of card.querySelectorAll('[data-layout-block],[data-layout-button]')){
-      if(el.hidden||el.closest('[hidden]'))continue;const key=keyFor(el);if(['logo','cover','avatar'].includes(key)){if(key!=='logo'&&advanced()&&peers(el).includes(el))grip(el);continue;}
+      if(el.hidden||el.closest('[hidden]'))continue;const key=keyFor(el);if(['logo','cover','avatar'].includes(key)){
+        const slot=key==='cover'?'header':key;
+        if(editor.querySelector(`[data-image-slot="${slot}"] .avatar-remove`))addRemove(el,key);
+        if(key!=='logo'&&advanced()&&peers(el).includes(el))grip(el);continue;
+      }
       if(!(advanced()&&(el.hasAttribute('data-layout-button')||['cover','avatar'].includes(key)))&&!el.querySelector(':scope>.inline-edit-block')){const button=node('button',{type:'button',class:'inline-edit-block','data-inline-edit':key,'aria-label':'Изменить '+(labels[key]||'контакт')},'Изменить');button.addEventListener('click',event=>{event.stopPropagation();edit(el.dataset.layoutBlock,el.dataset.layoutButton);});el.append(button);}
+      if(el.hasAttribute('data-layout-button')||['bio','business','carousel','video','map','document','daisy'].includes(key)){
+        addRemove(el,key);
+      }
       if(advanced()&&peers(el).includes(el))grip(el);
     }
+  }
+  function addRemove(el,key){
+    const remove=node('button',{type:'button',class:'inline-remove-block','data-inline-edit':key,'aria-label':'Удалить '+(labels[key]||'контакт'),title:'Удалить блок'},'×');
+    remove.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();api.removeBlock(el.dataset.layoutBlock,el.dataset.layoutButton);status.textContent='Блок удалён. Сохраните визитку.';});el.append(remove);
   }
   function sync(){if(syncing)return;syncing=true;try{const editing=editor.dataset.view!=='preview',design=editing&&advanced();if(!design)endGesture();layout.refresh(card);mediaControls(editing);placeholders(editing);layout.setEditing(card,design);card.classList.toggle('content-editing',editing&&!design);controls(editing);modes.hidden=!editing;modes.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.editMode===editor.dataset.editMode)));}finally{syncing=false;}}
   form.addEventListener('card:insert-block',event=>insert(event.detail.key));form.addEventListener('card:editor-view',sync);form.addEventListener('input',sync);form.addEventListener('change',sync);

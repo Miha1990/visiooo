@@ -25,6 +25,7 @@
   const form=document.getElementById('editor-form'),source=form?.elements.namedItem('video_items'),first=form?.elements.namedItem('video_url');if(!source||!first)return;
   const fieldset=first.closest('fieldset');if(!fieldset)return;
   let extra;try{extra=JSON.parse(source.value||'[]');if(!Array.isArray(extra))return;}catch{return;}
+  window.CardVideos.clear=()=>assign([]);
   const fields={url:first,title:form.elements.namedItem('video_title'),embedUrl:form.elements.namedItem('video_player')};
   const firstRow=node('section',{class:'video-editor-row'}),firstActions=node('div',{class:'video-editor-actions'}),rows=node('div'),add=node('button',{type:'button',class:'button'},'Добавить видео');
   for(const input of Object.values(fields))firstRow.append(input.closest('div'));
