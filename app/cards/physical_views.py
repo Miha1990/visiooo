@@ -121,7 +121,8 @@ def index(request):
             messages.success(request, 'Ссылка создана. Используйте её и для QR, и для записи в NFC.')
             return redirect303(reverse('physical_edit', args=[item.pk]))
     items = PhysicalCard.objects.filter(workspace=workspace).select_related('card').order_by('-created_at')
-    return render(request, 'cards/physical_index.html', {'form': form, 'items': items},
+    return render(request, 'cards/physical_index.html', {'form': form, 'items': items,
+                  'local_only': urlsplit(settings.PUBLIC_BASE_URL).hostname in ('localhost', '127.0.0.1', '::1')},
                   status=422 if request.method == 'POST' else 200)
 
 

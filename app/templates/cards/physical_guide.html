@@ -1,7 +1,7 @@
-<section class="physical-guide panel" data-physical-guide data-stage="{% if item %}edit{% else %}create{% endif %}">
-  <h2>Какой у вас телефон?</h2>
-  <div class="physical-choice" role="group" aria-label="Ваш телефон"><button type="button" data-phone="iphone" aria-pressed="false">iPhone</button><button type="button" data-phone="android" aria-pressed="false">Android</button></div>
-  <div data-android-methods hidden><p class="micro">Как привязать карточку?</p><div class="physical-choice" role="group" aria-label="Способ привязки"><button type="button" data-bind-method="qr" aria-pressed="true">QR-код</button><button type="button" data-bind-method="nfc" aria-pressed="false">NFC</button></div></div>
-  <div data-guide-qr hidden><h3>Привязка через QR-код</h3><ol class="physical-steps"><li>Выберите электронную визитку и нажмите «{% if item %}Сохранить привязку{% else %}Создать привязку{% endif %}».</li><li>Скачайте QR-код и разместите его на карточке.</li><li>Наведите камеру телефона на QR и откройте ссылку.</li></ol></div>
+<section class="physical-guide panel" data-physical-guide data-local-only="{{ local_only|yesno:'true,false' }}" data-stage="{% if item %}edit{% else %}create{% endif %}">
+  <h2>QR-код или NFC</h2>
+  <p class="micro muted" data-nfc-capability role="status" aria-live="polite">QR-код доступен сразу. Поддержку записи NFC определим автоматически.</p>
+  <div data-nfc-methods hidden><div class="physical-choice" role="group" aria-label="Способ использования карточки"><button type="button" data-bind-method="qr" aria-pressed="true">QR-код</button><button type="button" data-bind-method="nfc" aria-pressed="false">Записать NFC</button></div></div>
+  <div data-guide-qr><h3>Использование QR-кода</h3><ol class="physical-steps"><li>Выберите электронную визитку и нажмите «{% if item %}Сохранить привязку{% else %}Создать привязку{% endif %}».</li><li>Скачайте QR-код и разместите его на карточке.</li><li>Наведите камеру телефона на QR и откройте ссылку.</li></ol></div>
   <div data-guide-nfc hidden><h3>Привязка через NFC</h3><ol class="physical-steps"><li>Выберите электронную визитку и нажмите «{% if item %}Сохранить привязку{% else %}Создать привязку{% endif %}».</li><li>Нажмите «Записать ссылку в NFC».</li><li>Приложите карточку к телефону и дождитесь подтверждения.</li></ol></div>
 </section>

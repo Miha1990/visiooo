@@ -112,14 +112,14 @@ class PhysicalCardTests(TestCase):
     def test_device_guide_on_create_and_edit_pages(self):
         for url in (reverse('physical_index'), reverse('physical_edit', args=[self.item.pk])):
             response = self.client.get(url)
-            self.assertContains(response, 'data-phone="iphone"')
-            self.assertContains(response, 'data-phone="android"')
-            self.assertContains(response, 'data-guide-qr hidden')
+            self.assertContains(response, 'data-nfc-capability')
+            self.assertNotContains(response, 'data-phone=')
+            self.assertContains(response, 'data-guide-qr>')
             self.assertContains(response, 'data-guide-nfc hidden')
             self.assertContains(response, 'physical.js')
         response = self.client.get(reverse('physical_edit', args=[self.item.pk]))
         self.assertContains(response, 'data-physical-nfc hidden')
-        self.assertContains(response, 'data-physical-qr hidden')
+        self.assertContains(response, 'data-physical-qr>')
 
     def test_public_qr_only_published_and_same_url_as_owner_qr(self):
         url = reverse('public_qr', args=[self.first.public_id])

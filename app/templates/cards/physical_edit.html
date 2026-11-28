@@ -13,7 +13,7 @@
       <p class="muted micro">Для посетителей нужна опубликованная визитка и действующая подписка.</p>
     </div>
     <div class="panel share-panel">
-      <div data-physical-qr hidden><h2>QR-код карточки</h2>
+      <div data-physical-qr><h2>QR-код карточки</h2>
       <img class="physical-qr" src="{% url 'physical_qr' item.pk %}" alt="QR физической визитки" width="240" height="240">
       <p><a href="{% url 'physical_qr' item.pk %}" download="physical-card-qr.png">Скачать QR PNG</a></p>
       </div>
