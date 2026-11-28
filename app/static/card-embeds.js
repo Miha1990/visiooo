@@ -4,7 +4,7 @@
   function video(value,override=''){
     try{
       const [url,host]=parsed(value),path=url.pathname;
-      if(override&&!['vk.com','m.vk.com','vkvideo.ru','dailymotion.com','dai.ly','geo.dailymotion.com'].includes(host))return '';
+      if(override&&!['vk.com','m.vk.com','vk.ru','m.vk.ru','vkvideo.ru','dailymotion.com','dai.ly','geo.dailymotion.com'].includes(host))return '';
       if(['youtube.com','m.youtube.com','youtu.be','youtube-nocookie.com'].includes(host)){
         const match=path.match(/^\/(?:shorts|embed|live)\/([\w-]{11})\/?$/),id=match?.[1]||(host==='youtu.be'?path.replace(/^\/|\/$/g,''):url.searchParams.get('v'));
         return !override&&/^[\w-]{11}$/.test(id||'')?`https://www.youtube-nocookie.com/embed/${id}`:'';
@@ -13,13 +13,13 @@
         const match=path.match(/^\/(?:video\/(?:private\/)?|shorts\/|play\/embed\/)([a-fA-F0-9]{32})\/?$/),key=url.searchParams.get('p');
         return match&&!override&&(!key||/^[\w-]{1,200}$/.test(key))?`https://rutube.ru/play/embed/${match[1]}${key?'/?'+new URLSearchParams({p:key}):''}`:'';
       }
-      if(['vk.com','m.vk.com','vkvideo.ru'].includes(host)){
+      if(['vk.com','m.vk.com','vk.ru','m.vk.ru','vkvideo.ru'].includes(host)){
         const match=path.match(/^\/video(-?\d{1,20})_(\d{1,20})\/?$/);if(!match&&path!=='/video_ext.php')return '';
-        let params=match?new URLSearchParams({oid:match[1],id:match[2]}):url.searchParams;
-        if(override){const [player,provider]=parsed(override);if(!['vk.com','vkvideo.ru'].includes(provider)||player.pathname!=='/video_ext.php')return '';params=player.searchParams;}
+        let playerHost=host,params=match?new URLSearchParams({oid:match[1],id:match[2]}):url.searchParams;
+        if(override){const [player,provider]=parsed(override);if(!['vk.com','vk.ru','vkvideo.ru'].includes(provider)||player.pathname!=='/video_ext.php')return '';params=player.searchParams;playerHost=provider;}
         const oid=params.get('oid'),id=params.get('id'),hash=params.get('hash');
         if(!/^-?\d{1,20}$/.test(oid||'')||!/^\d{1,20}$/.test(id||'')||(hash&&!/^[\w-]{1,200}$/.test(hash))||(match&&(oid!==match[1]||id!==match[2])))return '';
-        const clean=new URLSearchParams({oid,id});if(hash)clean.set('hash',hash);return `https://vk.com/video_ext.php?${clean}`;
+        const clean=new URLSearchParams({oid,id});if(hash)clean.set('hash',hash);return `https://${['vk.ru','m.vk.ru'].includes(playerHost)?'vk.ru':'vk.com'}/video_ext.php?${clean}`;
       }
       if(['vimeo.com','player.vimeo.com'].includes(host)){
         const match=path.match(/^\/(?:video\/)?(\d{1,20})(?:\/([A-Za-z0-9]{1,64}))?\/?$/),key=url.searchParams.get('h')||match?.[2]||'';

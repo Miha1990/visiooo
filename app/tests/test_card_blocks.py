@@ -3,7 +3,7 @@ from copy import deepcopy
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, SimpleTestCase, TestCase
-from cards.blocks import video_embed, map_embed
+from cards.blocks import video_embed, video_player_url, map_embed
 from cards.models import CardBlockSettings, Asset
 from cards.services import publish_card, save_card
 from cards.asset_cleanup import cleanup_unused_assets
@@ -12,6 +12,18 @@ layout = fixtures.layout
 
 
 class EmbedParsingTests(SimpleTestCase):
+    def test_vk_ru_player_and_video_links(self):
+        player = 'https://vk.ru/video_ext.php?oid=-243793209&id=456239017&hash=18d01ce3990d425a&hd=4&autoplay=1'
+        expected = 'https://vk.ru/video_ext.php?oid=-243793209&id=456239017&hash=18d01ce3990d425a'
+        self.assertEqual(video_player_url(player), expected)
+        self.assertEqual(video_player_url('https://vkvideo.ru/video-243793209_456239017', player), expected)
+        self.assertEqual(video_player_url('https://vk.ru/video-243793209_456239017'),
+                         'https://vk.ru/video_ext.php?oid=-243793209&id=456239017')
+        for original, override in [('https://vk.ru/video-243793209_1', player),
+                                   ('https://vk.ru/video-243793209_456239017', player.replace('vk.ru', 'vk.ru.evil.test'))]:
+            with self.subTest(original=original), self.assertRaises(ValidationError):
+                video_player_url(original, override)
+
     def test_supported_providers(self):
         self.assertEqual(video_embed('https://youtu.be/dQw4w9WgXcQ'), 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')
         self.assertEqual(video_embed('https://youtube.com/shorts/dQw4w9WgXcQ'), 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ')

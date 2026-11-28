@@ -37,7 +37,7 @@ def parsed_url(value):
 
 def video_embed(value, override=''):
     url, host, query = parsed_url(value)
-    if override and host not in ('vk.com', 'm.vk.com', 'vkvideo.ru', 'dailymotion.com', 'dai.ly', 'geo.dailymotion.com'):
+    if override and host not in ('vk.com', 'm.vk.com', 'vk.ru', 'm.vk.ru', 'vkvideo.ru', 'dailymotion.com', 'dai.ly', 'geo.dailymotion.com'):
         raise ValidationError('Дополнительная ссылка плеера доступна для ВК Видео и Dailymotion.')
     if host in ('youtube.com', 'm.youtube.com', 'youtu.be', 'youtube-nocookie.com'):
         video_id = url.path.strip('/') if host == 'youtu.be' else query.get('v', [''])[0]
@@ -56,12 +56,12 @@ def video_embed(value, override=''):
                 if not re.fullmatch(r'[A-Za-z0-9_-]{1,200}', key): raise ValidationError('Некорректный ключ видео.')
                 result += '/?' + urlencode({'p':key})
             return result
-    elif host in ('vk.com', 'm.vk.com', 'vkvideo.ru'):
+    elif host in ('vk.com', 'm.vk.com', 'vk.ru', 'm.vk.ru', 'vkvideo.ru'):
         match = re.fullmatch(r'/video(-?\d{1,20})_(\d{1,20})/?', url.path)
         if url.path == '/video_ext.php' or match:
             if override:
                 player, player_host, params = parsed_url(override)
-                if player_host not in ('vk.com', 'vkvideo.ru') or player.path != '/video_ext.php':
+                if player_host not in ('vk.com', 'vk.ru', 'vkvideo.ru') or player.path != '/video_ext.php':
                     raise ValidationError('Ссылка плеера должна вести на ВК Видео.')
             else: params = query if not match else {'oid':[match[1]],'id':[match[2]]}
             oid, video_id, key = (params.get(k, [''])[0] for k in ('oid','id','hash'))
@@ -73,7 +73,8 @@ def video_embed(value, override=''):
                 raise ValidationError('Проверьте ключ плеера ВК Видео.')
             params = {'oid':oid,'id':video_id}
             if key: params['hash'] = key
-            return 'https://vk.com/video_ext.php?' + urlencode(params)
+            player_domain = 'vk.ru' if (player_host if override else host) in ('vk.ru', 'm.vk.ru') else 'vk.com'
+            return f'https://{player_domain}/video_ext.php?' + urlencode(params)
     elif host in ('vimeo.com', 'player.vimeo.com'):
         match = re.fullmatch(r'/(?:video/)?(\d{1,20})(?:/([A-Za-z0-9]{1,64}))?/?', url.path)
         if match:
@@ -119,7 +120,7 @@ def video_player_url(value, override=''):
     else:
         raise ValidationError('Укажите адрес видеосервиса, а не IP-адрес.')
     embedded_hosts = ('youtube.com', 'm.youtube.com', 'youtu.be', 'youtube-nocookie.com',
-        'rutube.ru', 'vk.com', 'm.vk.com', 'vkvideo.ru', 'vimeo.com', 'player.vimeo.com',
+        'rutube.ru', 'vk.com', 'm.vk.com', 'vk.ru', 'm.vk.ru', 'vkvideo.ru', 'vimeo.com', 'player.vimeo.com',
         'ok.ru', 'm.ok.ru', 'tiktok.com', 'm.tiktok.com', 'dailymotion.com', 'dai.ly', 'geo.dailymotion.com')
     if host in embedded_hosts:
         # Short TikTok share links need a redirect; do not fetch user URLs on the server.

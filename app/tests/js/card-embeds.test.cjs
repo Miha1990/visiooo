@@ -13,6 +13,17 @@ test('map uses encoded address or explicit pin',()=>{
  assert.equal(new URL(embeds.map({address:'Дом',latitude:47.2,longitude:39.7})).searchParams.get('pt'),'39.7,47.2,pm2rdm');
 });
 
+test('VK ru player links preserve their domain and hash without forcing autoplay',()=>{
+ const player='https://vk.ru/video_ext.php?oid=-243793209&id=456239017&hash=18d01ce3990d425a&hd=4&autoplay=1';
+ const expected='https://vk.ru/video_ext.php?oid=-243793209&id=456239017&hash=18d01ce3990d425a';
+ assert.equal(embeds.video(player),expected);
+ assert.equal(embeds.video('https://vkvideo.ru/video-243793209_456239017',player),expected);
+ assert.equal(embeds.video('https://vk.ru/video-243793209_456239017'),'https://vk.ru/video_ext.php?oid=-243793209&id=456239017');
+ assert.equal(embeds.video('https://vk.ru/video-243793209_1',player),'');
+ assert.equal(embeds.video(player.replace('vk.ru','vk.ru.evil.test')),'');
+ assert.equal(embeds.video('https://vk.ru/video-243793209_456239017',player.replace('vk.ru','vk.ru.evil.test')),'');
+});
+
 test('additional video providers preserve private hashes and validate player identities',()=>{
  assert.equal(embeds.video('https://vimeo.com/123456789/abc123'),'https://player.vimeo.com/video/123456789?h=abc123');
  assert.equal(embeds.video('https://player.vimeo.com/video/123456789?h=abc123'),'https://player.vimeo.com/video/123456789?h=abc123');
